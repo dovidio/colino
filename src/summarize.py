@@ -178,9 +178,9 @@ Format your response in clean markdown with headers and bullet points."""
                         template_content = f.read()
                     break
         
-        # Final fallback to built-in template
+        # No fallback - fail if prompt not configured
         if not template_content:
-            template_content = self._get_fallback_template()
+            raise ValueError("No AI prompt configured. Add 'prompt' to ai section in config.yaml")
         
         # Prepare article data for template
         template_articles = []
@@ -208,31 +208,7 @@ Format your response in clean markdown with headers and bullet points."""
             article_count=len(articles)
         )
     
-    def _get_fallback_template(self) -> str:
-        """Fallback template if no template file found"""
-        return """You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts.
-
-Please create a comprehensive digest summary of these {{ article_count }} recent articles/posts:
-
-{% for article in articles %}
-## Article {{ loop.index }}: {{ article.title }}
-**Source:** {{ article.source }} | **Published:** {{ article.published }}
-**URL:** {{ article.url }}
-
-**Content:**
-{{ article.content[:1500] }}{% if article.content|length > 1500 %}...{% endif %}
-
----
-{% endfor %}
-
-Please provide:
-1. **Executive Summary** - 2-3 sentences covering the main themes
-2. **Key Highlights** - Bullet points of important developments  
-3. **Notable Insights** - Patterns, trends, or implications
-4. **Article Breakdown** - Brief summary for each article
-5. **Top Recommendations** - Which articles deserve deeper attention
-
-Keep it concise but comprehensive. Use clear markdown formatting."""
+    # Removed fallback template - now requires explicit configuration
     
     def _fallback_digest(self, articles: List[Dict[str, Any]]) -> str:
         """Generate a simple fallback digest if LLM fails"""
