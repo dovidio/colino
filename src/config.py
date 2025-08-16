@@ -1,35 +1,136 @@
 import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+import yaml
+from pathlib import Path
+from typing import Dict, Any, List
 
 class Config:
-    # Database Configuration
-    DATABASE_PATH = os.getenv('DATABASE_PATH', 'colino.db')
+    def __init__(self):
+        self._config = self._load_config()
     
-    # General Settings
-    MAX_POSTS_PER_FEED = int(os.getenv('MAX_POSTS_PER_FEED', '100'))
-    DEFAULT_LOOKBACK_HOURS = int(os.getenv('DEFAULT_LOOKBACK_HOURS', '24'))
+    def _load_config(self) -> Dict[str, Any]:
+        """Load configuration from YAML files"""
+        # Check config locations in order of preference
+        config_paths = [
+            Path.home() / '.config' / 'colino' / 'config.yaml',
+            Path('config.yaml'),
+            Path('.config') / 'config.yaml'
+        ]
+        
+        for config_path in config_paths:
+            if config_path.exists():
+                print(f"Loading config from: {config_path}")
+                with open(config_path, 'r') as f:
+                    return yaml.safe_load(f)
+        
+        # Fallback to environment variables for backward compatibility
+        return self._load_from_env()
     
-    # RSS Settings
-    RSS_FEEDS = os.getenv('RSS_FEEDS', '').split(',') if os.getenv('RSS_FEEDS') else []
-    RSS_USER_AGENT = os.getenv('RSS_USER_AGENT', 'Colino RSS Reader 1.0.0')
-    RSS_TIMEOUT = int(os.getenv('RSS_TIMEOUT', '30'))
+    def _load_from_env(self) -> Dict[str, Any]:
+        """Fallback to environment variables"""
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass
+        
+        return {
+            'rss': {
+                'feeds': os.getenv('RSS_FEEDS', '').split(',') if os.getenv('RSS_FEEDS') else [],
+                'user_agent': os.getenv('RSS_USER_AGENT', 'Colino RSS Reader 1.0.0'),
+                'timeout': int(os.getenv('RSS_TIMEOUT', '30')),
+                'max_posts_per_feed': int(os.getenv('MAX_POSTS_PER_FEED', '100'))
+            },
+            'filters': {
+                'include_keywords': os.getenv('FILTER_KEYWORDS', '').split(',') if os.getenv('FILTER_KEYWORDS') else [],
+                'exclude_keywords': os.getenv('EXCLUDE_KEYWORDS', '').split(',') if os.getenv('EXCLUDE_KEYWORDS') else []
+            },
+            'ai': {
+                'openai_api_key': os.getenv('OPENAI_API_KEY'),
+                'model': os.getenv('LLM_MODEL', 'gpt-3.5-turbo'),
+                'max_articles': int(os.getenv('LLM_MAX_ARTICLES', '10')),
+                'extract_web_content': os.getenv('LLM_SUMMARIZE_LINKS', 'true').lower() == 'true',
+                'auto_save': True,
+                'save_directory': 'digests'
+            },
+            'database': {
+                'path': os.getenv('DATABASE_PATH', 'colino.db')
+            },
+            'general': {
+                'default_lookback_hours': int(os.getenv('DEFAULT_LOOKBACK_HOURS', '24'))
+            }
+        }
     
-    # Content filtering
-    FILTER_KEYWORDS = os.getenv('FILTER_KEYWORDS', '').split(',') if os.getenv('FILTER_KEYWORDS') else []
-    EXCLUDE_KEYWORDS = os.getenv('EXCLUDE_KEYWORDS', '').split(',') if os.getenv('EXCLUDE_KEYWORDS') else []
+    # RSS Properties
+    @property
+    def RSS_FEEDS(self) -> List[str]:
+        return self._config.get('rss', {}).get('feeds', [])
     
-    # LLM/AI Configuration
-    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    LLM_MODEL = os.getenv('LLM_MODEL', 'gpt-3.5-turbo')
-    LLM_MAX_ARTICLES = int(os.getenv('LLM_MAX_ARTICLES', '10'))
-    LLM_SUMMARIZE_LINKS = os.getenv('LLM_SUMMARIZE_LINKS', 'true').lower() == 'true'
+    @property
+    def RSS_USER_AGENT(self) -> str:
+        return self._config.get('rss', {}).get('user_agent', 'Colino RSS Reader 1.0.0')
     
-    @classmethod
-    def validate_openai_config(cls):
+    @property
+    def RSS_TIMEOUT(self) -> int:
+        return self._config.get('rss', {}).get('timeout', 30)
+    
+    @property
+    def MAX_POSTS_PER_FEED(self) -> int:
+        return self._config.get('rss', {}).get('max_posts_per_feed', 100)
+    
+    # Filter Properties
+    @property
+    def FILTER_KEYWORDS(self) -> List[str]:
+        return self._config.get('filters', {}).get('include_keywords', [])
+    
+    @property
+    def EXCLUDE_KEYWORDS(self) -> List[str]:
+        return self._config.get('filters', {}).get('exclude_keywords', [])
+    
+    # AI Properties  
+    @property
+    def OPENAI_API_KEY(self) -> str:
+        # Always prioritize environment variable for security
+        return os.getenv('OPENAI_API_KEY') or self._config.get('ai', {}).get('openai_api_key')
+    
+    @property
+    def LLM_MODEL(self) -> str:
+        return self._config.get('ai', {}).get('model', 'gpt-3.5-turbo')
+    
+    @property
+    def LLM_MAX_ARTICLES(self) -> int:
+        return self._config.get('ai', {}).get('max_articles', 10)
+    
+    @property
+    def LLM_SUMMARIZE_LINKS(self) -> bool:
+        return self._config.get('ai', {}).get('extract_web_content', True)
+    
+    @property
+    def AI_AUTO_SAVE(self) -> bool:
+        return self._config.get('ai', {}).get('auto_save', True)
+    
+    @property
+    def AI_SAVE_DIRECTORY(self) -> str:
+        return self._config.get('ai', {}).get('save_directory', 'digests')
+    
+    @property
+    def AI_PROMPT_TEMPLATE(self) -> str:
+        return self._config.get('ai', {}).get('prompt', '')
+    
+    # Database Properties
+    @property
+    def DATABASE_PATH(self) -> str:
+        return self._config.get('database', {}).get('path', 'colino.db')
+    
+    # General Properties
+    @property
+    def DEFAULT_LOOKBACK_HOURS(self) -> int:
+        return self._config.get('general', {}).get('default_lookback_hours', 24)
+    
+    def validate_openai_config(self):
         """Validate OpenAI API credentials"""
-        if not cls.OPENAI_API_KEY:
-            raise ValueError("Missing OPENAI_API_KEY. Get one from https://platform.openai.com/api-keys")
-        return True 
+        if not self.OPENAI_API_KEY:
+            raise ValueError("Missing OPENAI_API_KEY environment variable. Get one from https://platform.openai.com/api-keys")
+        return True
+
+# Create global config instance
+Config = Config() 

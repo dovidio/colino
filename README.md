@@ -13,13 +13,12 @@ Colino is a simple, powerful, and completely free RSS feed aggregator that lets 
    pip install -r requirements.txt
    ```
 
-2. **Create your .env file:**
+2. **Configure:**
    ```bash
-   # RSS feeds
-   RSS_FEEDS=https://hnrss.org/frontpage,https://rss.cnn.com/rss/edition.rss
-   
-   # For AI digest (optional)
-   OPENAI_API_KEY=your_openai_api_key_here
+   # Copy and edit config file  
+   cp config.yaml ~/.config/colino/config.yaml
+   # Set OpenAI API key (secure)
+   export OPENAI_API_KEY="your_openai_api_key_here"
    ```
 
 3. **Fetch content:**

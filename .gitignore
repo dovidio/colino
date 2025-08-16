@@ -172,6 +172,10 @@ social_digest.db
 *.opml
 colino_feeds_*.opml
 
+# AI digest outputs
+digests/
+digest_*.md
+
 # Log files
 *.log
 logs/

@@ -156,13 +156,35 @@ Format your response in clean markdown with headers and bullet points."""
             return self._fallback_digest(articles)
     
     def _create_digest_prompt(self, articles: List[Dict[str, Any]]) -> str:
-        """Create the prompt for LLM digest generation"""
+        """Create the prompt for LLM digest generation using config template"""
+        from jinja2 import Template
+        from config import Config
+        import os
         
-        prompt = f"""Please create a comprehensive digest summary of these {len(articles)} recent articles/posts:
-
-"""
+        # First try to get prompt from config
+        template_content = Config.AI_PROMPT_TEMPLATE
         
-        for i, article in enumerate(articles, 1):
+        # If no prompt in config, try template files (backward compatibility)
+        if not template_content:
+            template_paths = [
+                'src/templates/digest_prompt.txt',
+                'templates/digest_prompt.txt',
+                os.path.expanduser('~/.config/colino/templates/digest_prompt.txt')
+            ]
+            
+            for template_path in template_paths:
+                if os.path.exists(template_path):
+                    with open(template_path, 'r') as f:
+                        template_content = f.read()
+                    break
+        
+        # Final fallback to built-in template
+        if not template_content:
+            template_content = self._get_fallback_template()
+        
+        # Prepare article data for template
+        template_articles = []
+        for article in articles:
             published = article['published']
             if isinstance(published, str):
                 try:
@@ -171,29 +193,46 @@ Format your response in clean markdown with headers and bullet points."""
                 except:
                     pass
             
-            prompt += f"""
-## Article {i}: {article['title']}
-**Source:** {article['source']} | **Published:** {published}
-**URL:** {article['url']}
+            template_articles.append({
+                'title': article['title'],
+                'source': article['source'],
+                'published': published,
+                'url': article['url'],
+                'content': article['content']
+            })
+        
+        # Render template
+        template = Template(template_content)
+        return template.render(
+            articles=template_articles,
+            article_count=len(articles)
+        )
+    
+    def _get_fallback_template(self) -> str:
+        """Fallback template if no template file found"""
+        return """You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts.
+
+Please create a comprehensive digest summary of these {{ article_count }} recent articles/posts:
+
+{% for article in articles %}
+## Article {{ loop.index }}: {{ article.title }}
+**Source:** {{ article.source }} | **Published:** {{ article.published }}
+**URL:** {{ article.url }}
 
 **Content:**
-{article['content'][:1500]}{'...' if len(article['content']) > 1500 else ''}
+{{ article.content[:1500] }}{% if article.content|length > 1500 %}...{% endif %}
 
 ---
-"""
-        
-        prompt += f"""
+{% endfor %}
 
 Please provide:
-1. **Executive Summary** - 2-3 sentences covering the main themes across all {len(articles)} articles
-2. **Key Highlights** - Bullet points of the most important developments (include most articles)
-3. **Notable Insights** - Interesting patterns, trends, or implications you see
-4. **Article Breakdown** - Brief one-line summary for each of the {len(articles)} articles
-5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why
+1. **Executive Summary** - 2-3 sentences covering the main themes
+2. **Key Highlights** - Bullet points of important developments  
+3. **Notable Insights** - Patterns, trends, or implications
+4. **Article Breakdown** - Brief summary for each article
+5. **Top Recommendations** - Which articles deserve deeper attention
 
 Keep it concise but comprehensive. Use clear markdown formatting."""
-        
-        return prompt
     
     def _fallback_digest(self, articles: List[Dict[str, Any]]) -> str:
         """Generate a simple fallback digest if LLM fails"""

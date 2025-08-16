@@ -1,0 +1,76 @@
+# Colino Configuration
+# Copy this to ~/.config/colino/config.yaml or keep in project root
+
+# RSS Feed Sources
+rss:
+  feeds:
+    - https://hnrss.org/frontpage
+  
+  # RSS fetching settings
+  user_agent: "Colino RSS Reader 1.0.0"
+  timeout: 30
+  max_posts_per_feed: 100
+
+# Content filtering
+filters:
+  include_keywords: []  # Only show posts with these words
+  exclude_keywords:     # Hide posts with these words
+    - ads
+    - sponsored
+    - advertisement
+
+# AI/LLM Configuration  
+ai:
+  # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)
+  # or uncomment and set here (not recommended for production)
+  # openai_api_key: "your_key_here"
+  
+  # Model settings
+  model: "gpt-3.5-turbo"  # or gpt-4, gpt-4-turbo
+  max_articles: 10
+  extract_web_content: true
+  
+  # Digest auto-save
+  auto_save: true
+  save_directory: "digests"
+  
+  # Custom AI prompt for digest generation
+  # Edit this to customize how the AI analyzes your articles
+  prompt: |
+    You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts. Focus on:
+    1. Key insights and takeaways
+    2. Important facts and developments  
+    3. Implications and context
+    4. Clear, engaging writing
+
+    Format your response in clean markdown with headers and bullet points.
+
+    Please create a comprehensive digest summary of these {{ article_count }} recent articles/posts:
+
+    {% for article in articles %}
+    ## Article {{ loop.index }}: {{ article.title }}
+    **Source:** {{ article.source }} | **Published:** {{ article.published }}
+    **URL:** {{ article.url }}
+
+    **Content:**
+    {{ article.content[:1500] }}{% if article.content|length > 1500 %}...{% endif %}
+
+    ---
+    {% endfor %}
+
+    Please provide:
+    1. **Executive Summary** - 2-3 sentences covering the main themes across all {{ article_count }} articles
+    2. **Key Highlights** - Bullet points of the most important developments (include most articles)
+    3. **Notable Insights** - Interesting patterns, trends, or implications you see
+    4. **Article Breakdown** - Brief one-line summary for each of the {{ article_count }} articles
+    5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why
+
+    Keep it concise but comprehensive. Use clear markdown formatting.
+
+# Database
+database:
+  path: "colino.db"
+
+# General settings
+general:
+  default_lookback_hours: 24 

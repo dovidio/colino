@@ -189,20 +189,29 @@ def generate_digest(hours: int = None, output_file: str = None):
         digest_generator = DigestGenerator()
         digest_content = digest_generator.summarize_articles(posts)
         
-        # Output to file or console
-        if output_file:
+        # Auto-save if enabled or output_file specified
+        if output_file or Config.AI_AUTO_SAVE:
+            if not output_file:
+                # Auto-generate filename
+                import os
+                os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                output_file = f"{Config.AI_SAVE_DIRECTORY}/digest_{timestamp}.md"
+            
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(digest_content)
             print(f"✅ Digest saved to {output_file}")
-        else:
+        
+        # Always show digest in console unless explicitly saving to file
+        if not output_file or Config.AI_AUTO_SAVE:
             print("\n" + "="*60)
             print(digest_content)
             print("="*60)
             
     except ValueError as e:
-        if "OPENAI_API_KEY" in str(e):
-            print("❌ OpenAI API key not configured")
-            print("   Add OPENAI_API_KEY to your .env file")
+        if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
+            print("❌ OpenAI API key not configured or invalid")
+            print("   Set environment variable: export OPENAI_API_KEY='your_key_here'")
             print("   Get one from: https://platform.openai.com/api-keys")
         else:
             print(f"❌ Configuration error: {e}")
