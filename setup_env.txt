@@ -1,0 +1,49 @@
+# Colino RSS Configuration
+
+Create a .env file in the project root with the following variables:
+
+# === RSS CONFIGURATION (COMPLETELY FREE!) ===
+
+# RSS Feeds - Add your favorite RSS/Atom feed URLs separated by commas
+RSS_FEEDS=https://hnrss.org/frontpage,https://rss.cnn.com/rss/edition.rss,https://feeds.bbci.co.uk/news/rss.xml,https://blog.python.org/feeds/posts/default.rss
+
+# RSS Settings
+RSS_USER_AGENT=Colino RSS Reader 1.0.0
+RSS_TIMEOUT=30
+
+# Database Configuration
+DATABASE_PATH=colino.db
+
+# General Settings
+MAX_POSTS_PER_FEED=100
+DEFAULT_LOOKBACK_HOURS=24
+
+# Content Filtering (Optional)
+# Only show posts containing these keywords (comma-separated, leave empty to disable)
+FILTER_KEYWORDS=
+
+# Hide posts containing these keywords (comma-separated)
+EXCLUDE_KEYWORDS=ads,sponsored,advertisement
+
+# === USAGE EXAMPLES ===
+
+# Fetch from all configured feeds:
+# python src/main.py fetch
+
+# Discover RSS feeds from any website:
+# python src/main.py discover https://example.com
+
+# Test a specific feed:
+# python src/main.py test https://feeds.example.com/rss
+
+# Fetch from specific feeds only:
+# python src/main.py fetch --urls https://feeds.hn.news/hnposts https://rss.cnn.com/rss/edition.rss
+
+# List recent posts:
+# python src/main.py list --hours 48 --limit 20
+
+# Export your feeds for backup:
+# python src/main.py export --output my_feeds.opml
+
+# Import feeds from OPML file:
+# python src/main.py import my_feeds.opml
