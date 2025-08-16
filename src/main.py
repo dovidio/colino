@@ -14,6 +14,7 @@ import xml.sax.saxutils
 from config import Config
 from db import Database
 from sources.rss import RSSSource
+from summarize import DigestGenerator
 
 # Configure logging
 logging.basicConfig(
@@ -164,6 +165,51 @@ def list_recent_posts(hours: int = 24, limit: int = None):
         
         print()
 
+def generate_digest(hours: int = None, output_file: str = None):
+    """Generate an AI-powered digest of recent articles"""
+    hours = hours or Config.DEFAULT_LOOKBACK_HOURS
+    since_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+    
+    logger.info(f"Generating digest for articles from last {hours} hours")
+    
+    # Get recent posts from database
+    db = setup_database()
+    posts = db.get_posts_since(since_time, source='rss')
+    
+    if not posts:
+        print(f"❌ No posts found from the last {hours} hours")
+        print("   Try running 'python src/main.py fetch' first or increase --hours")
+        return
+    
+    print(f"🤖 Generating AI digest for {len(posts)} recent articles...")
+    print(f"   Using model: {Config.LLM_MODEL}")
+    
+    try:
+        # Generate digest
+        digest_generator = DigestGenerator()
+        digest_content = digest_generator.summarize_articles(posts)
+        
+        # Output to file or console
+        if output_file:
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(digest_content)
+            print(f"✅ Digest saved to {output_file}")
+        else:
+            print("\n" + "="*60)
+            print(digest_content)
+            print("="*60)
+            
+    except ValueError as e:
+        if "OPENAI_API_KEY" in str(e):
+            print("❌ OpenAI API key not configured")
+            print("   Add OPENAI_API_KEY to your .env file")
+            print("   Get one from: https://platform.openai.com/api-keys")
+        else:
+            print(f"❌ Configuration error: {e}")
+    except Exception as e:
+        logger.error(f"Error generating digest: {e}")
+        print(f"❌ Error generating digest: {e}")
+
 def export_opml(output_file: str = None):
     """Export RSS feeds as OPML file for backup/sharing"""
     output_file = output_file or f"colino_feeds_{datetime.now().strftime('%Y%m%d')}.opml"
@@ -295,6 +341,11 @@ def main():
     list_parser.add_argument('--hours', type=int, default=24, help='Hours to look back (default: 24)')
     list_parser.add_argument('--limit', type=int, help='Maximum number of posts to show')
     
+    # Digest command
+    digest_parser = subparsers.add_parser('digest', help='Generate AI-powered summary of recent articles')
+    digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
+    digest_parser.add_argument('--output', help='Save digest to file instead of displaying')
+    
     # Export/Import commands
     export_parser = subparsers.add_parser('export', help='Export feeds as OPML')
     export_parser.add_argument('--output', help='Output OPML file name')
@@ -324,6 +375,9 @@ def main():
         
         elif args.command == 'list':
             list_recent_posts(args.hours, args.limit)
+        
+        elif args.command == 'digest':
+            generate_digest(args.hours, args.output)
         
         elif args.command == 'export':
             export_opml(args.output)

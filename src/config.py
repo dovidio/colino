@@ -19,4 +19,17 @@ class Config:
     
     # Content filtering
     FILTER_KEYWORDS = os.getenv('FILTER_KEYWORDS', '').split(',') if os.getenv('FILTER_KEYWORDS') else []
-    EXCLUDE_KEYWORDS = os.getenv('EXCLUDE_KEYWORDS', '').split(',') if os.getenv('EXCLUDE_KEYWORDS') else [] 
+    EXCLUDE_KEYWORDS = os.getenv('EXCLUDE_KEYWORDS', '').split(',') if os.getenv('EXCLUDE_KEYWORDS') else []
+    
+    # LLM/AI Configuration
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    LLM_MODEL = os.getenv('LLM_MODEL', 'gpt-3.5-turbo')
+    LLM_MAX_ARTICLES = int(os.getenv('LLM_MAX_ARTICLES', '10'))
+    LLM_SUMMARIZE_LINKS = os.getenv('LLM_SUMMARIZE_LINKS', 'true').lower() == 'true'
+    
+    @classmethod
+    def validate_openai_config(cls):
+        """Validate OpenAI API credentials"""
+        if not cls.OPENAI_API_KEY:
+            raise ValueError("Missing OPENAI_API_KEY. Get one from https://platform.openai.com/api-keys")
+        return True 
