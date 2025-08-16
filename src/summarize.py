@@ -27,9 +27,6 @@ class ContentFetcher:
     
     def fetch_article_content(self, url: str) -> Optional[str]:
         """Fetch and extract main content from a web page"""
-        if not HAS_READABILITY:
-            logger.debug(f"Skipping web content extraction for {url} (readability not available)")
-            return None
             
         try:
             logger.info(f"Fetching content from: {url}")
@@ -128,16 +125,6 @@ class DigestGenerator:
             response = self.client.chat.completions.create(
                 model=Config.LLM_MODEL,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": """You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts. Focus on:
-1. Key insights and takeaways
-2. Important facts and developments
-3. Implications and context
-4. Clear, engaging writing
-
-Format your response in clean markdown with headers and bullet points."""
-                    },
                     {
                         "role": "user", 
                         "content": prompt

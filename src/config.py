@@ -12,8 +12,7 @@ class Config:
         # Check config locations in order of preference
         config_paths = [
             Path.home() / '.config' / 'colino' / 'config.yaml',
-            Path('config.yaml'),
-            Path('.config') / 'config.yaml'
+            Path('config.yaml')
         ]
         
         for config_path in config_paths:
@@ -21,45 +20,9 @@ class Config:
                 print(f"Loading config from: {config_path}")
                 with open(config_path, 'r') as f:
                     return yaml.safe_load(f)
+                
+        raise ValueError("No config file found. Please create a config.yaml file in the current directory or in ~/.config/colino/")
         
-        # Fallback to environment variables for backward compatibility
-        return self._load_from_env()
-    
-    def _load_from_env(self) -> Dict[str, Any]:
-        """Fallback to environment variables"""
-        try:
-            from dotenv import load_dotenv
-            load_dotenv()
-        except ImportError:
-            pass
-        
-        return {
-            'rss': {
-                'feeds': os.getenv('RSS_FEEDS', '').split(',') if os.getenv('RSS_FEEDS') else [],
-                'user_agent': os.getenv('RSS_USER_AGENT', 'Colino RSS Reader 1.0.0'),
-                'timeout': int(os.getenv('RSS_TIMEOUT', '30')),
-                'max_posts_per_feed': int(os.getenv('MAX_POSTS_PER_FEED', '100'))
-            },
-            'filters': {
-                'include_keywords': os.getenv('FILTER_KEYWORDS', '').split(',') if os.getenv('FILTER_KEYWORDS') else [],
-                'exclude_keywords': os.getenv('EXCLUDE_KEYWORDS', '').split(',') if os.getenv('EXCLUDE_KEYWORDS') else []
-            },
-            'ai': {
-                'openai_api_key': os.getenv('OPENAI_API_KEY'),
-                'model': os.getenv('LLM_MODEL', 'gpt-3.5-turbo'),
-                'max_articles': int(os.getenv('LLM_MAX_ARTICLES', '10')),
-                'extract_web_content': os.getenv('LLM_SUMMARIZE_LINKS', 'true').lower() == 'true',
-                'auto_save': True,
-                'save_directory': 'digests'
-            },
-            'database': {
-                'path': os.getenv('DATABASE_PATH', 'colino.db')
-            },
-            'general': {
-                'default_lookback_hours': int(os.getenv('DEFAULT_LOOKBACK_HOURS', '24'))
-            }
-        }
-    
     # RSS Properties
     @property
     def RSS_FEEDS(self) -> List[str]:
