@@ -93,19 +93,26 @@ class DigestGenerator:
             
             # Start with RSS content
             content = article['content']
-            title = article.get('metadata', {}).get('entry_title', 'No title')
+
+            metadata = article.get('metadata', {})
+            title = metadata.get('entry_title', 'No title')
+            feed_title = metadata.get('feed_title', '')
             url = article.get('url', '')
             source = article.get('author_display_name', 'Unknown source')
             
             # Try to fetch full article content if enabled
-            if Config.LLM_SUMMARIZE_LINKS and url:
-                full_content = self.content_fetcher.fetch_article_content(url)
-                if full_content and len(full_content) > len(content):
-                    content = full_content
-                    logger.info(f"Using full article content for: {title}")
-            
+            if Config.LLM_SUMMARIZE_LINKS:
+                if article.get('source') == 'youtube':
+                    full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
+                elif url: 
+                    full_content = self.content_fetcher.fetch_article_content(url)
+                    if full_content and len(full_content) > len(content):
+                        content = full_content
+                        logger.info(f"Using full article content for: {title}")
+                
             article_summaries.append({
                 'title': title,
+                'feed_title': feed_title,
                 'content': content,
                 'url': url,
                 'source': source,

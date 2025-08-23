@@ -19,6 +19,11 @@ filters:
     - sponsored
     - advertisement
 
+youtube:
+  transcript_languages:
+    - en
+    - it
+
 # AI/LLM Configuration  
 ai:
   # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)
@@ -58,12 +63,15 @@ ai:
     ---
     {% endfor %}
 
+    If any of the previous articles don't have any meat, and they feel very clickbaity, make a note. We'll share a list later.
+
     Please provide:
     1. **Executive Summary** - 2-3 sentences covering the main themes across all {{ article_count }} articles
     2. **Key Highlights** - Bullet points of the most important developments (include most articles)
     3. **Notable Insights** - Interesting patterns, trends, or implications you see
-    4. **Article Breakdown** - Brief one-line summary for each of the {{ article_count }} articles
-    5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why
+    4. **Article Breakdown** - Brief one-line summary for each of the {{ article_count }} article together with the link of the article and the source.
+    5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why. Add the link to the article.
+    6. **Purge candidates** - List the articles that are not very novel and that you suggest to remove, and the reason why.
 
     Keep it concise but comprehensive. Use clear markdown formatting.
 

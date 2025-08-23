@@ -1,6 +1,6 @@
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 from config import Config
 
@@ -27,8 +27,18 @@ class Database:
                     reply_count INTEGER DEFAULT 0
                 )
             ''')
-            
-            # RSS feeds are managed via configuration, no need for following table
+
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS youtube_subscriptions (
+                    channel_id TEXT PRIMARY KEY,
+                    channel_title TEXT NOT NULL,
+                    channel_description TEXT,
+                    thumbnail_url TEXT,
+                    rss_url TEXT NOT NULL,
+                    subscribed_at TIMESTAMP,
+                    last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
             
             conn.execute('''
                 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
@@ -87,5 +97,26 @@ class Database:
                 posts.append(post)
             
             return posts
-    
-    # RSS feeds are managed via configuration files, not database following 
+
+    def save_subscription(self, sub: Dict[str, Any]) -> bool:
+        """Save a subscription to the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO youtube_subscriptions
+                    (channel_id, channel_title, channel_description, thumbnail_url, 
+                        rss_url, subscribed_at, last_synced)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    sub['channel_id'],
+                    sub['channel_title'],
+                    sub['channel_description'],
+                    sub['thumbnail_url'],
+                    sub['rss_url'],
+                    sub['subscribed_at'],
+                    datetime.now(timezone.utc).isoformat()
+                ))
+            return True
+        except Exception as e:
+            print(f"Error saving youtube subscription {sub.get('channel_id')}: {e}")
+            return False

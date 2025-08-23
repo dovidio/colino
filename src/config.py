@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 class Config:
+    YOUTUBE_TOKEN_FILE = 'youtube.token'
+    YOUTUBE_CLIENT_SECRETS_FILE = 'client_secrets.json'
     def __init__(self):
         self._config = self._load_config()
     
@@ -39,6 +41,35 @@ class Config:
     @property
     def MAX_POSTS_PER_FEED(self) -> int:
         return self._config.get('rss', {}).get('max_posts_per_feed', 100)
+    
+    # YouTube Properties
+    @property
+    def YOUTUBE_CLIENT_ID(self) -> str:
+        return os.getenv('YOUTUBE_CLIENT_ID') or self._config.get('youtube', {}).get('client_id', '')
+    
+    @property
+    def YOUTUBE_CLIENT_SECRET(self) -> str:
+        return os.getenv('YOUTUBE_CLIENT_SECRET') or self._config.get('youtube', {}).get('client_secret', '')
+    
+    @property
+    def YOUTUBE_API_KEY(self) -> str:
+        return os.getenv('YOUTUBE_API_KEY') or self._config.get('youtube', {}).get('api_key', '')
+    
+    @property
+    def YOUTUBE_MAX_RESULTS(self) -> int:
+        return self._config.get('youtube', {}).get('max_results', 50)
+    
+    @property
+    def YOUTUBE_EXTRACT_TRANSCRIPTS(self) -> bool:
+        return self._config.get('youtube', {}).get('extract_transcripts', True)
+    
+    @property
+    def YOUTUBE_TRANSCRIPT_LANGUAGES(self) -> List[str]:
+        return self._config.get('youtube', {}).get('transcript_languages', ['en', 'auto'])
+    
+    @property
+    def YOUTUBE_MAX_TRANSCRIPT_LENGTH(self) -> int:
+        return self._config.get('youtube', {}).get('max_transcript_length', 10000)
     
     # Filter Properties
     @property
@@ -94,6 +125,12 @@ class Config:
         if not self.OPENAI_API_KEY:
             raise ValueError("Missing OPENAI_API_KEY environment variable. Get one from https://platform.openai.com/api-keys")
         return True
+    
+    def validate_youtube_config(self):
+        """Validate YouTube API credentials"""
+        if not self.YOUTUBE_CLIENT_ID or not self.YOUTUBE_CLIENT_SECRET:
+            raise ValueError("Missing YouTube OAuth credentials. Add youtube.client_id and youtube.client_secret to config.yaml")
+        return True
 
 # Create global config instance
-Config = Config() 
+Config = Config()
