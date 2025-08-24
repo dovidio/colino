@@ -3,6 +3,9 @@ import json
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 from config import Config
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Database:
     def __init__(self, db_path: str = None):
@@ -74,6 +77,26 @@ class Database:
             print(f"Error saving post {post_data.get('id')}: {e}")
             return False
     
+    def get_post_by(self, id: str) -> Dict[str, Any]:
+        """Get post by id""" 
+        query = "SELECT * FROM posts WHERE id = ?" 
+        params = [id]
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(query, params)
+            
+            posts = []
+            rows = cursor.fetchall()
+            if len(rows) != 1:
+                logger.info(f"Couldn't find post with id: {id}")
+                return None
+
+            post = dict(rows[0])
+            if post['metadata']:
+                post['metadata'] = json.loads(post['metadata'])
+            
+            return post
+
     def get_posts_since(self, since: datetime, source: str = None) -> List[Dict[str, Any]]:
         """Get posts since a specific timestamp"""
         query = "SELECT * FROM posts WHERE datetime(created_at) >= datetime(?)"
