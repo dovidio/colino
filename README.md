@@ -68,6 +68,9 @@ python src/main.py list --hours 48 --limit 20
 python src/main.py digest --hours 24
 python src/main.py digest --output daily_digest.md
 
+# Generate AI-powered article digest
+python src/main.py digest --post-id yt:video:zBWTiAss25E
+
 # Export your feeds for backup
 python src/main.py export --output my_feeds.opml
 
