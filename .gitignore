@@ -215,3 +215,7 @@ Thumbs.db
 .vim/ 
 
 .env.backup*
+
+# YouTube credentials
+client_secrets.json
+youtube.token
