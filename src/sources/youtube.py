@@ -190,11 +190,6 @@ class YouTubeSource:
             transcript_text = transcript_text.replace('\n', ' ')
             transcript_text = ' '.join(transcript_text.split())  # Remove extra whitespace
             
-            # Limit transcript length for LLM processing
-            max_chars = Config.YOUTUBE_MAX_TRANSCRIPT_LENGTH
-            if len(transcript_text) > max_chars:
-                transcript_text = transcript_text[:max_chars] + "..."
-            
             logger.info(f"Extracted transcript for video {video_id} ({len(transcript_text)} chars)")
             return transcript_text
             

@@ -66,12 +66,7 @@ class Config:
     @property
     def YOUTUBE_TRANSCRIPT_LANGUAGES(self) -> List[str]:
         return self._config.get('youtube', {}).get('transcript_languages', ['en', 'auto'])
-    
-    @property
-    def YOUTUBE_MAX_TRANSCRIPT_LENGTH(self) -> int:
-        return self._config.get('youtube', {}).get('max_transcript_length', 10000)
-    
-    # Filter Properties
+
     @property
     def FILTER_KEYWORDS(self) -> List[str]:
         return self._config.get('filters', {}).get('include_keywords', [])
@@ -109,6 +104,10 @@ class Config:
     @property
     def AI_PROMPT_TEMPLATE(self) -> str:
         return self._config.get('ai', {}).get('prompt', '')
+
+    @property
+    def AI_ARTICLE_PROMPT_TEMPLATE(self) -> str:
+        return self._config.get('ai', {}).get('article_prompt', '')
     
     # Database Properties
     @property

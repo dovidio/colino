@@ -31,8 +31,8 @@ ai:
   # openai_api_key: "your_key_here"
   
   # Model settings
-  model: "gpt-3.5-turbo"  # or gpt-4, gpt-4-turbo
-  max_articles: 10
+  model: "gpt-5-mini"
+  max_articles: 100
   extract_web_content: true
   
   # Digest auto-save
@@ -74,6 +74,21 @@ ai:
     6. **Purge candidates** - List the articles that are not very novel and that you suggest to remove, and the reason why.
 
     Keep it concise but comprehensive. Use clear markdown formatting.
+
+  article_prompt: |
+    You are an expert news curator and summarizer.
+    Create an insightful summary of the article content below.
+    The content can come from news articles, youtube videos transcripts or blog posts.
+    Format your response in clean markdown with headers and bullet points if required.
+
+    ## Article {{ article.title }}
+    **Source:** {{ article.source }} | **Published:** {{ article.published }}
+    **URL:** {{ article.url }}
+
+    **Content:**
+    {{ article.content[:10000] }}{% if article.content|length > 10000 %}...{% endif %}
+
+
 
 # Database
 database:

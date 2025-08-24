@@ -275,7 +275,7 @@ def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
         # Show entry title if available
         title = post.get('metadata', {}).get('entry_title', '')
         if title:
-            print(f"   📌 {title}")
+            print(f"   📌 {title} - {post.get('id')}")
         
         print(f"   {post['content'][:200]}{'...' if len(post['content']) > 200 else ''}")
         print(f"   🔗 {post['url']}")
@@ -319,7 +319,7 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
         digest_content = digest_generator.summarize_articles(posts)
         
         # Auto-save if enabled or output_file specified
-        if output_file or Config.AI_AUTO_SAVE:
+        if Config.AI_AUTO_SAVE:
             if not output_file:
                 # Auto-generate filename
                 import os
@@ -456,6 +456,47 @@ def import_opml(opml_file: str):
     except Exception as e:
         print(f"❌ Error importing OPML file: {e}")
 
+def generate_post_digest(post_id: str, output_file: str = None):
+    db = setup_database()
+    post = db.get_post_by(id=post_id)
+
+    try:
+        # Generate digest
+        digest_generator = DigestGenerator()
+        digest_content = digest_generator.summarize_article(post)
+        
+        # Auto-save if enabled or output_file specified
+        if output_file or Config.AI_AUTO_SAVE:
+            if not output_file:
+                # Auto-generate filename
+                import os
+                os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                print(f"post source {post['source']}")
+                source_suffix = "suffix" 
+                output_file = f"{Config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
+            
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(digest_content)
+            print(f"✅ Digest saved to {output_file}")
+        
+        # Always show digest in console unless explicitly saving to file
+        if not output_file or Config.AI_AUTO_SAVE:
+            print("\n" + "="*60)
+            print(digest_content)
+            print("="*60)
+            
+    except ValueError as e:
+        if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
+            print("❌ OpenAI API key not configured or invalid")
+            print("   Set environment variable: export OPENAI_API_KEY='your_key_here'")
+            print("   Get one from: https://platform.openai.com/api-keys")
+        else:
+            print(f"❌ Configuration error: {e}")
+    except Exception as e:
+        logger.error(f"Error generating digest: {e}")
+        print(f"❌ Error generating digest: {e}")
+
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description='Colino - Your hackable RSS feed aggregator')
@@ -497,6 +538,10 @@ def main():
     digest_parser.add_argument('--output', help='Save digest to file instead of displaying')
     digest_parser.add_argument('--source', choices=['rss', 'youtube'], help='Generate digest for specific source')
     
+    digest_subparsers = digest_parser.add_subparsers(dest='subcommand', help='the possible digest subcommands')
+    digest_post_parser = digest_subparsers.add_parser('post', help='Generate AI-Powered summary of a given post')
+    digest_post_parser.add_argument('--post-id', required=True, type=str, help='The post id, viewable using the list command')
+
     # Export/Import commands
     export_parser = subparsers.add_parser('export', help='Export feeds as OPML')
     export_parser.add_argument('--output', help='Output OPML file name')
@@ -537,7 +582,10 @@ def main():
         elif args.command == 'list':
             list_recent_posts(args.hours, args.limit, args.source)
         
-        elif args.command == 'digest':
+        elif args.command == 'digest' and args.subcommand == 'post':
+            generate_post_digest(args.post_id)
+            
+        elif args.command == 'digest' and not args.subcommand:
             generate_digest(args.hours, args.output, args.source)
         
         elif args.command == 'export':
