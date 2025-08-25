@@ -88,7 +88,14 @@ ai:
     **Content:**
     {{ article.content[:10000] }}{% if article.content|length > 10000 %}...{% endif %}
 
+  youtube_prompt: |
+    You are an expert video summarizer.
+    I'm going to send you the transcript of a video and you'll summarize it for me.
+    Format your response in clean markdown with headers and bullet points if required.
 
+    Video transcript: {{ transcript }}
+
+    If possible, find links to existing theories, philosophic positions, trends and suggest possible follow ups. If not, don't mention any of that.
 
 # Database
 database:
