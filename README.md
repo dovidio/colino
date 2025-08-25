@@ -71,12 +71,16 @@ python src/main.py digest --output daily_digest.md
 # Generate AI-powered article digest
 python src/main.py digest --post-id yt:video:zBWTiAss25E
 
+# Generate AI-powered video digest from a youtube video
+python src/main digest video --youtube-video-url https://www.youtube.com/watch?v=vQJKtTXkpCI
+
 # Export your feeds for backup
 python src/main.py export --output my_feeds.opml
 
 # Import feeds from OPML file
 python src/main.py import my_feeds.opml
 ```
+
 
 ### Feedback and contribution
 

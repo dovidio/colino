@@ -77,6 +77,60 @@ class DigestGenerator:
         self.client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
         self.content_fetcher = ContentFetcher()
 
+    def summarize_video(self, transcript: str) -> str:
+        prompt = self.create_digest_video_prompt(transcript)
+        try:
+            response = self.client.chat.completions.create(
+                model=Config.LLM_MODEL,
+                messages=[
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ],
+                max_completion_tokens=4096
+            )
+            digest = response.choices[0].message.content
+            logger.info("Generated AI digest successfully")
+            return digest
+            
+        except Exception as e:
+            logger.error(f"Error generating LLM digest: {e}")
+            return ''
+
+    def create_digest_video_prompt(self, transcript: str) -> str:
+        """Create the prompt for LLM digest generation using config template"""
+        from jinja2 import Template
+        from config import Config
+        import os
+        
+        # First try to get prompt from config
+        template_content = Config.AI_PROMPT_YOUTUBE
+        
+        # If no prompt in config, try template files (backward compatibility)
+        if not template_content:
+            template_paths = [
+                'src/templates/youtube_digest_prompt.txt',
+                'templates/youtube_digest_prompt.txt',
+                os.path.expanduser('~/.config/colino/templates/article_digest_prompt.txt')
+            ]
+            
+            for template_path in template_paths:
+                if os.path.exists(template_path):
+                    with open(template_path, 'r') as f:
+                        template_content = f.read()
+                    break
+        
+        # No fallback - fail if prompt not configured
+        if not template_content:
+            raise ValueError("No AI prompt configured. Add 'prompt' to ai section in config.yaml")
+        
+        # Render template
+        template = Template(template_content)
+        return template.render(
+            transcript=transcript
+        )
+
     def summarize_article(self, article: Dict[str, Any]) -> str:
         # Start with RSS content
         content = article['content']

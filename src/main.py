@@ -456,6 +456,50 @@ def import_opml(opml_file: str):
     except Exception as e:
         print(f"❌ Error importing OPML file: {e}")
 
+def generate_youtube_digest(youtube_video_url: str, output_file: str = None, source: str = None):
+    print(f"Generating youtube digest for video {youtube_video_url}")
+    youtube_source = YouTubeSource()
+    video_id = youtube_source.extract_video_id(youtube_video_url)
+    transcript = youtube_source.get_video_transcript(video_id)
+
+    if not transcript:
+        print("Sorry, the video doesn't have transcript 😭")
+
+    try:
+        digest_generator = DigestGenerator()
+        digest_content = digest_generator.summarize_video(transcript)
+        # Auto-save if enabled or output_file specified
+        if output_file or Config.AI_AUTO_SAVE:
+            if not output_file:
+                # Auto-generate filename
+                import os
+                os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                source_suffix = "_youtube_video" 
+                output_file = f"{Config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
+            
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(digest_content)
+            print(f"✅ Digest saved to {output_file}")
+        
+        # Always show digest in console unless explicitly saving to file
+        if not output_file or Config.AI_AUTO_SAVE:
+            print("\n" + "="*60)
+            print(digest_content)
+            print("="*60)
+            
+    except ValueError as e:
+        if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
+            print("❌ OpenAI API key not configured or invalid")
+            print("   Set environment variable: export OPENAI_API_KEY='your_key_here'")
+            print("   Get one from: https://platform.openai.com/api-keys")
+        else:
+            print(f"❌ Configuration error: {e}")
+    except Exception as e:
+        logger.error(f"Error generating digest: {e}")
+        print(f"❌ Error generating digest: {e}")
+
+
 def generate_post_digest(post_id: str, output_file: str = None):
     db = setup_database()
     post = db.get_post_by(id=post_id)
@@ -472,8 +516,7 @@ def generate_post_digest(post_id: str, output_file: str = None):
                 import os
                 os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                print(f"post source {post['source']}")
-                source_suffix = "suffix" 
+                source_suffix = post['source'] 
                 output_file = f"{Config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
             
             with open(output_file, 'w', encoding='utf-8') as f:
@@ -541,6 +584,8 @@ def main():
     digest_subparsers = digest_parser.add_subparsers(dest='subcommand', help='the possible digest subcommands')
     digest_post_parser = digest_subparsers.add_parser('post', help='Generate AI-Powered summary of a given post')
     digest_post_parser.add_argument('--post-id', required=True, type=str, help='The post id, viewable using the list command')
+    digest_youtube_parser = digest_subparsers.add_parser('video', help='Generate AI-Powered summary of a given youtube video') 
+    digest_youtube_parser.add_argument('--youtube-video-url', required=True, type=str, help='The url of the youtube video to summarize')
 
     # Export/Import commands
     export_parser = subparsers.add_parser('export', help='Export feeds as OPML')
@@ -584,6 +629,9 @@ def main():
         
         elif args.command == 'digest' and args.subcommand == 'post':
             generate_post_digest(args.post_id)
+
+        elif args.command == 'digest' and args.subcommand == 'video':
+            generate_youtube_digest(args.youtube_video_url)
             
         elif args.command == 'digest' and not args.subcommand:
             generate_digest(args.hours, args.output, args.source)

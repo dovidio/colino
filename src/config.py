@@ -108,6 +108,10 @@ class Config:
     @property
     def AI_ARTICLE_PROMPT_TEMPLATE(self) -> str:
         return self._config.get('ai', {}).get('article_prompt', '')
+
+    @property
+    def AI_PROMPT_YOUTUBE(self) -> str:
+        return self._config.get('ai', {}).get('youtube_prompt', '')
     
     # Database Properties
     @property
