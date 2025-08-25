@@ -499,7 +499,6 @@ def generate_youtube_digest(youtube_video_url: str, output_file: str = None, sou
         logger.error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
 
-
 def generate_post_digest(post_id: str, output_file: str = None):
     db = setup_database()
     post = db.get_post_by(id=post_id)
@@ -586,6 +585,7 @@ def main():
     digest_post_parser.add_argument('--post-id', required=True, type=str, help='The post id, viewable using the list command')
     digest_youtube_parser = digest_subparsers.add_parser('video', help='Generate AI-Powered summary of a given youtube video') 
     digest_youtube_parser.add_argument('--youtube-video-url', required=True, type=str, help='The url of the youtube video to summarize')
+
 
     # Export/Import commands
     export_parser = subparsers.add_parser('export', help='Export feeds as OPML')
