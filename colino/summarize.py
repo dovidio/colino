@@ -4,7 +4,7 @@ import openai
 from typing import List, Dict, Any, Optional
 import logging
 from datetime import datetime
-from config import Config
+from .config import Config
 from readability import Document
 
 logger = logging.getLogger(__name__)

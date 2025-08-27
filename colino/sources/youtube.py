@@ -15,7 +15,7 @@ from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
-from config import Config
+from ..config import Config
 
 logger = logging.getLogger(__name__)
 

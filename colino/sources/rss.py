@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any
 import logging
 from urllib.parse import urljoin, urlparse
-from config import Config
+from ..config import Config
 
 
 logger = logging.getLogger(__name__)

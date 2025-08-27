@@ -2,7 +2,7 @@ import sqlite3
 import json
 from datetime import datetime, timezone
 from typing import List, Dict, Any
-from config import Config
+from .config import Config
 import logging
 
 logger = logging.getLogger(__name__)
