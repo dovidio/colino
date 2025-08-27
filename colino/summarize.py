@@ -5,14 +5,7 @@ from typing import List, Dict, Any, Optional
 import logging
 from datetime import datetime
 from config import Config
-
-# Optional dependency - web content extraction
-try:
-    from readability import Document
-    HAS_READABILITY = True
-except ImportError:
-    HAS_READABILITY = False
-    logger.warning("readability-lxml not installed. Web content extraction disabled.")
+from readability import Document
 
 logger = logging.getLogger(__name__)
 
