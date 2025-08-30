@@ -12,75 +12,82 @@ Currently, it supports the following sources:
 ## Status
 Colino is in active development and apis and commands are expected to change quickly before the official release.
 
-## Quick Start
+## Setup project
 
-1. **Install dependencies:**
+The project uses pyenv and poetry to manage python version and dependencies
+
+1. **Use correct python version**
    ```bash
-   pip install -r requirements.txt
+   pyenv local
    ```
 
-2. **Configure:**
+2. **Install dependencies:**
    ```bash
-   # Copy and edit config file  
-   cp config.yaml ~/.config/colino/config.yaml
-   # Set OpenAI API key (secure)
-   export OPENAI_API_KEY="your_openai_api_key_here"
+   poetry install
    ```
 
-2.1. ** Configuring Youtube Data source:**
 
-To configure a youtube data source, you'll need access to OAuth 2.0 credentials.
+3. **Fetch RSS content:**
+   ```bash
+   poetry run colino fetch --source rss
+   ```
+
+4. **Generate AI digest:**
+   ```bash
+   poetry run colino digest --source rss
+   ```
+
+## Configuring the Youtube Data source
+
+Currently the Youtube data source relies on the Youtube Api to fetch users subscriptions.
+To use the Youtube Api, you'll need access to OAuth 2.0 credentials.
 To do so, follow these steps:
 - Go to [Google Cloud Console](https://console.cloud.google.com/) and create a new project
 - Enable the Youtube Data API v3
 - Create OAuth 2.0 credentials
 - Download the `credentials.json` file and store it in the config folder 
 
-3. **Fetch RSS content:**
-   ```bash
-   python src/main.py fetch --source rss
-   ```
+## Install colino as command line tool 
 
-4. **Generate AI digest:**
-   ```bash
-   python src/main.py digest --source rss
-   ```
+```bash
+poetry build
+pipx install dist/colino-0.1.0-py3-none-any.whl
+```
 
 ## Usage Examples
 
 ```bash
 # Discover RSS feeds from any website
-python src/main.py discover https://example.com
+colino discover https://example.com
 
 # Test a specific feed
-python src/main.py test https://feeds.example.com/rss
+colino test https://feeds.example.com/rss
 
 # Fetch from specific feeds only
-python src/main.py fetch --urls https://hnrss.org/frontpage
+colino fetch --urls https://hnrss.org/frontpage
 
 # Fetch from youtube
-python src/main.py fetch --source youtube
+colino fetch --source youtube
 
 # List recent posts with filtering
-python src/main.py list --hours 48 --limit 20
+colino list --hours 48 --limit 20
 
 # Generate AI-powered digest
-python src/main.py digest --hours 24
-python src/main.py digest --output daily_digest.md
+colino digest --hours 24
+colino digest --output daily_digest.md
 
 # Generate AI-powered article digest
-python src/main.py digest --post-id yt:video:zBWTiAss25E
+colino digest --post-id yt:video:zBWTiAss25E
 
 # Generate AI-powered video digest from a youtube video
-python src/main digest video --youtube-video-url https://www.youtube.com/watch?v=vQJKtTXkpCI
+colino digest video --youtube-video-url https://www.youtube.com/watch?v=vQJKtTXkpCI
 
 # Export your feeds for backup
-python src/main.py export --output my_feeds.opml
+colino export --output my_feeds.opml
 
 # Import feeds from OPML file
-python src/main.py import my_feeds.opml
+colino import my_feeds.opml
 ```
-
 
 ### Feedback and contribution
 

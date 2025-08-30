@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "colino"
+version = "0.1.0"
+description = "Your personal news digest"
+authors = ["Umberto D'Ovidio <umbertod@fastmail.com>"]
+readme = "README.md"
+packages = [{include = "colino"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.14"
+pyyaml = "^6.0.2"
+feedparser = "^6.0.11"
+requests = "^2.32.5"
+google-auth = "^2.40.3"
+google-auth-oauthlib = "^1.2.2"
+google-auth-httplib2 = "^0.2.0"
+google-api-python-client = "^2.179.0"
+youtube-transcript-api = "^1.2.2"
+beautifulsoup4 = "^4.12.0"  # Note: use beautifulsoup4, not bs4
+openai = "^1.102.0"
+readability-lxml = "^0.8.4.1"
+jinja2 = "^3.1.6"
+
+[tool.poetry.scripts]
+colino = "colino.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

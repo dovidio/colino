@@ -11,11 +11,11 @@ from typing import List, Optional
 import re
 import xml.sax.saxutils
 
-from config import Config
-from db import Database
-from sources.rss import RSSSource
-from sources.youtube import YouTubeSource
-from summarize import DigestGenerator
+from .config import Config
+from .db import Database
+from .sources.rss import RSSSource
+from .sources.youtube import YouTubeSource
+from .summarize import DigestGenerator
 
 # Configure logging
 logging.basicConfig(
