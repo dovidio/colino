@@ -6,7 +6,9 @@ import logging
 from datetime import datetime
 from .config import Config
 from readability import Document
-
+from jinja2 import Template
+import os
+        
 logger = logging.getLogger(__name__)
 
 class ContentFetcher:
@@ -94,7 +96,6 @@ class DigestGenerator:
     def create_digest_video_prompt(self, transcript: str) -> str:
         """Create the prompt for LLM digest generation using config template"""
         from jinja2 import Template
-        from config import Config
         import os
         
         # First try to get prompt from config
@@ -182,10 +183,7 @@ class DigestGenerator:
 
     def _create_digest_article_prompt(self, article: Dict[str, Any]) -> str:
         """Create the prompt for LLM digest generation using config template"""
-        from jinja2 import Template
-        from config import Config
-        import os
-        
+       
         # First try to get prompt from config
         template_content = Config.AI_ARTICLE_PROMPT_TEMPLATE
         
@@ -303,10 +301,6 @@ class DigestGenerator:
     
     def _create_digest_prompt(self, articles: List[Dict[str, Any]]) -> str:
         """Create the prompt for LLM digest generation using config template"""
-        from jinja2 import Template
-        from config import Config
-        import os
-        
         # First try to get prompt from config
         template_content = Config.AI_PROMPT_TEMPLATE
         
