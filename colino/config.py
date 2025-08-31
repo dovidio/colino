@@ -52,16 +52,6 @@ class Config:
         return "https://oqh6f9ear9.execute-api.us-east-1.amazonaws.com/Prod"
 
     @property
-    def YOUTUBE_MAX_RESULTS(self) -> int:
-        return cast(int, self._config.get("youtube", {}).get("max_results", 50))
-
-    @property
-    def YOUTUBE_EXTRACT_TRANSCRIPTS(self) -> bool:
-        return cast(
-            bool, self._config.get("youtube", {}).get("extract_transcripts", True)
-        )
-
-    @property
     def YOUTUBE_TRANSCRIPT_LANGUAGES(self) -> list[str]:
         return cast(
             list[str],
