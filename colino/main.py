@@ -12,7 +12,6 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import re
-import xml.sax.saxutils
 
 from .config import Config
 from .db import Database
@@ -267,113 +266,6 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
         get_logger().error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
 
-def export_opml(output_file: str = None):
-    """Export RSS feeds as OPML file for backup/sharing"""
-    output_file = output_file or f"colino_feeds_{datetime.now().strftime('%Y%m%d')}.opml"
-    
-    if not Config.RSS_FEEDS:
-        print("❌ No RSS feeds configured to export")
-        return
-    
-    # Basic OPML structure
-    opml_content = '''<?xml version="1.0" encoding="UTF-8"?>
-<opml version="2.0">
-<head>
-<title>Colino RSS Feeds</title>
-<dateCreated>{date}</dateCreated>
-</head>
-<body>
-'''.format(date=datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z'))
-    
-    rss_source = RSSSource()
-    
-    for feed_url in Config.RSS_FEEDS:
-        if not feed_url.strip():
-            continue
-            
-        # Try to get feed title
-        feed_data = rss_source.parse_feed(feed_url.strip())
-        title = feed_data['title'] if feed_data else feed_url
-        
-        # Escape XML characters for proper OPML format
-        escaped_title = xml.sax.saxutils.escape(title)
-        escaped_url = xml.sax.saxutils.escape(feed_url.strip())
-        
-        opml_content += f'<outline type="rss" text="{escaped_title}" xmlUrl="{escaped_url}" />\n'
-    
-    opml_content += '''</body>
-</opml>'''
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(opml_content)
-    
-    print(f"✅ Exported {len(Config.RSS_FEEDS)} feeds to {output_file}")
-
-def import_opml(opml_file: str):
-    """Import RSS feeds from OPML file and update .env"""
-    try:
-        import xml.etree.ElementTree as ET
-        import shutil
-        import os
-        
-        tree = ET.parse(opml_file)
-        root = tree.getroot()
-        
-        feeds = []
-        for outline in root.findall('.//outline[@type="rss"]'):
-            xml_url = outline.get('xmlUrl')
-            if xml_url:
-                feeds.append(xml_url)
-        
-        if not feeds:
-            print("❌ No RSS feeds found in OPML file")
-            return
-        
-        print(f"📥 Found {len(feeds)} feeds in OPML file:")
-        for i, feed_url in enumerate(feeds, 1):
-            print(f"   {i}. {feed_url}")
-        
-        # Backup existing .env file if it exists
-        env_file = '.env'
-        if os.path.exists(env_file):
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_file = f'.env.backup.{timestamp}'
-            shutil.copy2(env_file, backup_file)
-            print(f"\n💾 Backed up existing .env to {backup_file}")
-        
-        # Read existing .env content
-        env_lines = []
-        rss_feeds_updated = False
-        
-        if os.path.exists(env_file):
-            with open(env_file, 'r') as f:
-                env_lines = f.readlines()
-        
-        # Update or add RSS_FEEDS line
-        new_rss_line = f"RSS_FEEDS={','.join(feeds)}\n"
-        
-        for i, line in enumerate(env_lines):
-            if line.strip().startswith('RSS_FEEDS='):
-                env_lines[i] = new_rss_line
-                rss_feeds_updated = True
-                break
-        
-        # If RSS_FEEDS line not found, add it
-        if not rss_feeds_updated:
-            if env_lines and not env_lines[-1].endswith('\n'):
-                env_lines.append('\n')
-            env_lines.append(new_rss_line)
-        
-        # Write updated .env file
-        with open(env_file, 'w') as f:
-            f.writelines(env_lines)
-        
-        print(f"✅ Updated {env_file} with {len(feeds)} RSS feeds")
-        print(f"🔄 You can now run: python src/main.py ingest")
-        
-    except Exception as e:
-        print(f"❌ Error importing OPML file: {e}")
-
 def generate_youtube_digest(youtube_video_url: str, output_file: str = None, source: str = None):
     print(f"Generating youtube digest for video {youtube_video_url}")
     youtube_source = YouTubeSource()
@@ -520,14 +412,6 @@ def main():
     digest_youtube_parser = digest_subparsers.add_parser('video', help='Generate AI-Powered summary of a given youtube video') 
     digest_youtube_parser.add_argument('--youtube-video-url', required=True, type=str, help='The url of the youtube video to summarize')
 
-
-    # Export/Import commands
-    export_parser = subparsers.add_parser('export', help='Export feeds as OPML')
-    export_parser.add_argument('--output', help='Output OPML file name')
-    
-    import_parser = subparsers.add_parser('import', help='Import feeds from OPML')
-    import_parser.add_argument('file', help='OPML file to import')
-    
     args = parser.parse_args()
     
     if not args.command:
@@ -570,12 +454,6 @@ def main():
             
         elif args.command == 'digest' and not args.subcommand:
             generate_digest(args.hours, args.output, args.source)
-        
-        elif args.command == 'export':
-            export_opml(args.output)
-        
-        elif args.command == 'import':
-            import_opml(args.file)
         
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")
