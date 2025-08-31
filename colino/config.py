@@ -82,7 +82,7 @@ class Config:
 
     @property
     def LLM_MODEL(self) -> str:
-        return cast(str, self._config.get("ai", {}).get("model", "gpt-3.5-turbo"))
+        return cast(str, self._config.get("ai", {}).get("model", "gpt-5-mini"))
 
     @property
     def LLM_MAX_ARTICLES(self) -> int:
