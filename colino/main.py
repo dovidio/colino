@@ -159,31 +159,6 @@ def discover_rss_feeds(website_url: str):
         
         print(f"\n💡 To use these feeds:")
         print(f"   Add to .env: RSS_FEEDS={','.join(feed_urls)}")
-        print(f"   Or test individually: python src/main.py test {feed_urls[0]}")
-
-def test_feed(feed_url: str):
-    """Test a single RSS feed"""
-    get_logger().info(f"Testing RSS feed: {feed_url}")
-    
-    rss_source = RSSSource()
-    feed_data = rss_source.parse_feed(feed_url)
-    
-    if not feed_data:
-        print(f"❌ Failed to parse feed: {feed_url}")
-        return
-    
-    print(f"✅ Feed parsed successfully!")
-    print(f"   Title: {feed_data['title']}")
-    print(f"   Description: {feed_data['description'][:100]}{'...' if len(feed_data['description']) > 100 else ''}")
-    print(f"   Entries: {len(feed_data['entries'])}")
-    print(f"   Last updated: {feed_data.get('updated', 'Unknown')}")
-    
-    if feed_data['entries']:
-        print(f"\n📖 Recent entries:")
-        for i, entry in enumerate(feed_data['entries'][:5], 1):
-            title = entry.get('title', 'No title')
-            pub_date = getattr(entry, 'published', 'Unknown date')
-            print(f"   {i}. {title} ({pub_date})")
 
 def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
     """List recent posts from the database"""
@@ -527,10 +502,6 @@ def main():
     discover_parser = subparsers.add_parser('discover', help='Discover RSS feeds from a website')
     discover_parser.add_argument('url', help='Website URL to scan for RSS feeds')
     
-    # Test command
-    test_parser = subparsers.add_parser('test', help='Test a single RSS feed')
-    test_parser.add_argument('url', help='RSS feed URL to test')
-    
     # List command
     list_parser = subparsers.add_parser('list', help='List recent posts from database')
     list_parser.add_argument('--hours', type=int, default=24, help='Hours to look back (default: 24)')
@@ -587,9 +558,6 @@ def main():
         
         elif args.command == 'discover':
             discover_rss_feeds(args.url)
-        
-        elif args.command == 'test':
-            test_feed(args.url)
         
         elif args.command == 'list':
             list_recent_posts(args.hours, args.limit, args.source)
