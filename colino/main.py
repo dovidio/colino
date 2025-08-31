@@ -284,9 +284,10 @@ def main():
     # Digest command
     digest_parser = subparsers.add_parser('digest', help='Generate AI-powered summary of recent articles or specific URLs')
     digest_parser.add_argument('url', nargs='?', help='URL to digest (YouTube video or website)')
-    digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24) - for recent articles mode')
+    digest_parser.add_argument('--rss', action='store_true', help='Digest recent RSS articles')
+    digest_parser.add_argument('--youtube', action='store_true', help='Digest recent YouTube videos')
+    digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
     digest_parser.add_argument('--output', help='Save digest to file instead of displaying')
-    digest_parser.add_argument('--source', choices=['rss', 'youtube'], help='Generate digest for specific source - for recent articles mode')
 
     args = parser.parse_args()
     
@@ -300,7 +301,9 @@ def main():
         print(f"   View: python src/main.py list")
         print(f"   Digest URL: python src/main.py digest https://example.com")
         print(f"   Digest YouTube: python src/main.py digest https://www.youtube.com/watch?v=VIDEO_ID")
-        print(f"   Digest recent: python src/main.py digest --source rss")
+        print(f"   Digest RSS: python src/main.py digest --rss")
+        print(f"   Digest YouTube: python src/main.py digest --youtube")
+        print(f"   Digest all: python src/main.py digest")
         return
     
     try:
@@ -329,9 +332,15 @@ def main():
             if args.url:
                 # Digest specific URL
                 digest_url(args.url, args.output)
+            elif args.rss:
+                # Digest recent RSS articles
+                generate_digest(args.hours, args.output, 'rss')
+            elif args.youtube:
+                # Digest recent YouTube videos
+                generate_digest(args.hours, args.output, 'youtube')
             else:
-                # Digest recent articles
-                generate_digest(args.hours, args.output, args.source)
+                # Digest recent articles from all sources
+                generate_digest(args.hours, args.output, None)
         
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")
