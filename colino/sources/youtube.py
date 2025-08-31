@@ -5,8 +5,8 @@ from urllib.parse import parse_qs, urlparse
 
 import requests
 from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build  # type: ignore[import-untyped]
+from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
@@ -26,8 +26,8 @@ class YouTubeSource(BaseSource):
 
     def __init__(self, db: Database | None = None) -> None:
         super().__init__(db)
-        self.credentials = None
-        self.youtube_service = None
+        self.credentials: Credentials | None = None
+        self.youtube_service: Any | None = None
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": config.RSS_USER_AGENT})
 
@@ -50,7 +50,8 @@ class YouTubeSource(BaseSource):
         try:
             # Get subscriptions and their RSS feeds
             subscriptions = self.get_subscriptions()
-            self.sync_subscriptions_to_db(subscriptions, self.db)
+            if self.db is not None:
+                self.sync_subscriptions_to_db(subscriptions, self.db)
 
             if not subscriptions:
                 logger.warning("No YouTube channels found")
@@ -131,6 +132,9 @@ class YouTubeSource(BaseSource):
 
         if not self.authenticate():
             raise Exception("Failed to authenticate with YouTube API")
+
+        if self.youtube_service is None:
+            raise Exception("YouTube service not initialized")
 
         subscriptions = []
         next_page_token = None
@@ -268,7 +272,7 @@ class YouTubeSource(BaseSource):
 
         return post_data
 
-    def sync_subscriptions_to_db(self, subscriptions: list[dict[str, Any]], db: Database) -> None:
+    def sync_subscriptions_to_db(self, subscriptions: list[dict[str, Any]], db: Database) -> int:
         """Sync YouTube subscriptions to database"""
         saved_count = 0
         for sub in subscriptions:

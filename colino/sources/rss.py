@@ -204,11 +204,11 @@ class RSSSource(BaseSource):
     def _extract_rss_content(self, entry: Any) -> str:
         """Extract content from RSS entry in order of preference"""
         if hasattr(entry, "content") and entry.content:
-            return entry.content[0].value
+            return str(entry.content[0].value)
         elif hasattr(entry, "summary"):
-            return entry.summary
+            return str(entry.summary)
         elif hasattr(entry, "description"):
-            return entry.description
+            return str(entry.description)
         return ""
 
     def _parse_entry_date(self, entry: Any) -> datetime | None:

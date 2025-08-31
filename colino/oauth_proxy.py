@@ -81,7 +81,7 @@ class OAuthProxyClient:
 
             data = response.json()
             logger.info("Access token refreshed successfully")
-            return data["access_token"]
+            return str(data["access_token"])
 
         except requests.RequestException as e:
             logger.error(f"Failed to refresh token: {e}")
@@ -135,8 +135,8 @@ class OAuthProxyClient:
         """
         url = f"{self.base_url}/auth/poll/{session_id}"
         start_time = time.time()
-        poll_interval = 2  # Start with 2 seconds
-        max_interval = 10  # Max 10 seconds between polls
+        poll_interval = 2.0  # Start with 2 seconds
+        max_interval = 10.0  # Max 10 seconds between polls
 
         logger.info(f"Polling for OAuth completion at: {url}")
         logger.info(f"Timeout: {self.timeout} seconds")
@@ -150,7 +150,7 @@ class OAuthProxyClient:
                     # Success - tokens available
                     tokens = response.json()
                     logger.info("Authentication completed successfully")
-                    return tokens
+                    return dict(tokens)
 
                 elif response.status_code == 202:
                     # Still pending - continue polling
@@ -184,8 +184,8 @@ class TokenManager:
     """Manages OAuth tokens with automatic refresh using database storage"""
 
     def __init__(
-        self, oauth_client: OAuthProxyClient, db=None, service: str = "youtube"
-    ):
+        self, oauth_client: OAuthProxyClient, db: Any = None, service: str = "youtube"
+    ) -> None:
         """
         Initialize token manager
 
@@ -196,9 +196,9 @@ class TokenManager:
         """
         self.oauth_client = oauth_client
         self.service = service
-        self._access_token = None
-        self._refresh_token = None
-        self._expires_at = None
+        self._access_token: str | None = None
+        self._refresh_token: str | None = None
+        self._expires_at: float | None = None
 
         # Initialize database if not provided
         if db is None:
@@ -223,14 +223,18 @@ class TokenManager:
         if self._refresh_token:
             try:
                 self._refresh_access_token()
-                return self._access_token
+                if self._access_token:
+                    return self._access_token
             except Exception as e:
                 logger.warning(f"Token refresh failed: {e}")
 
         # Need to re-authenticate
         logger.info("Re-authentication required")
         self._authenticate()
-        return self._access_token
+        if self._access_token:
+            return self._access_token
+        
+        raise Exception("Failed to obtain access token")
 
     def authenticate(self) -> str:
         """
@@ -240,9 +244,12 @@ class TokenManager:
             New access token
         """
         self._authenticate()
-        return self._access_token
+        if self._access_token:
+            return self._access_token
+        
+        raise Exception("Failed to authenticate")
 
-    def _authenticate(self):
+    def _authenticate(self) -> None:
         """Perform full OAuth authentication"""
         access_token, refresh_token = self.oauth_client.authenticate()
 
@@ -253,8 +260,11 @@ class TokenManager:
 
         self._save_tokens()
 
-    def _refresh_access_token(self):
+    def _refresh_access_token(self) -> None:
         """Refresh the access token"""
+        if self._refresh_token is None:
+            raise Exception("No refresh token available")
+            
         new_access_token = self.oauth_client.refresh_token(self._refresh_token)
 
         self._access_token = new_access_token
@@ -271,7 +281,7 @@ class TokenManager:
         # Consider token expired 5 minutes before actual expiry
         return time.time() < (self._expires_at - 300)
 
-    def _load_tokens(self):
+    def _load_tokens(self) -> None:
         """Load tokens from database"""
         try:
             tokens = self.db.get_oauth_tokens(self.service)
@@ -288,9 +298,13 @@ class TokenManager:
         except Exception as e:
             logger.error(f"Error loading tokens from database: {e}")
 
-    def _save_tokens(self):
+    def _save_tokens(self) -> None:
         """Save tokens to database"""
         try:
+            if self._access_token is None:
+                logger.error("Cannot save tokens: access_token is None")
+                return
+                
             success = self.db.save_oauth_tokens(
                 service=self.service,
                 access_token=self._access_token,
@@ -310,7 +324,7 @@ class TokenManager:
         except Exception as e:
             logger.error(f"Error saving tokens to database: {e}")
 
-    def clear_tokens(self):
+    def clear_tokens(self) -> None:
         """Clear stored tokens (for logout/reset)"""
         try:
             self.db.delete_oauth_tokens(self.service)
