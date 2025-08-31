@@ -57,9 +57,6 @@ pipx install dist/colino-0.1.0-py3-none-any.whl
 ## Usage Examples
 
 ```bash
-# Discover RSS feeds from any website
-colino discover https://example.com
-
 # Test a specific feed
 colino test https://feeds.example.com/rss
 

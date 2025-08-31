@@ -150,23 +150,6 @@ def apply_content_filter(posts: List[dict]) -> List[dict]:
     
     return filtered_posts
 
-def discover_rss_feeds(website_url: str):
-    """Discover RSS feeds from a website"""
-    get_logger().info(f"Discovering RSS feeds for {website_url}")
-    
-    rss_source = RSSSource()
-    feed_urls = rss_source.discover_feed_url(website_url)
-    
-    print(f"\n🔍 Discovered RSS feeds for {website_url}:")
-    if not feed_urls:
-        print("  No RSS feeds found.")
-        print("  Try checking the website manually for RSS/Atom links.")
-    else:
-        for i, feed_url in enumerate(feed_urls, 1):
-            print(f"  {i}. {feed_url}")
-        
-        print(f"\n💡 To use these feeds:")
-        print(f"   Add to .env: RSS_FEEDS={','.join(feed_urls)}")
 
 def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
     """List recent posts from the database"""
@@ -271,10 +254,6 @@ def main():
     ingest_parser.add_argument('--all', action='store_true', help='Ingest from all configured sources (default)')
     ingest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
     
-    # Discover command
-    discover_parser = subparsers.add_parser('discover', help='Discover RSS feeds from a website')
-    discover_parser.add_argument('url', help='Website URL to scan for RSS feeds')
-    
     # List command
     list_parser = subparsers.add_parser('list', help='List recent posts from database')
     list_parser.add_argument('--hours', type=int, default=24, help='Hours to look back (default: 24)')
@@ -321,9 +300,6 @@ def main():
                     sources.append('youtube')
             
             ingest(sources, args.hours)
-        
-        elif args.command == 'discover':
-            discover_rss_feeds(args.url)
         
         elif args.command == 'list':
             list_recent_posts(args.hours, args.limit, args.source)
