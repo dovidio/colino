@@ -11,6 +11,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
 from ..config import config
+from ..db import Database
 from ..oauth_proxy import OAuthProxyClient, TokenManager
 from .base import BaseSource
 
@@ -23,7 +24,7 @@ class YouTubeSource(BaseSource):
     # YouTube API scopes
     SCOPES: ClassVar[list[str]] = ["https://www.googleapis.com/auth/youtube.readonly"]
 
-    def __init__(self, db=None):
+    def __init__(self, db: Database | None = None) -> None:
         super().__init__(db)
         self.credentials = None
         self.youtube_service = None
@@ -267,7 +268,7 @@ class YouTubeSource(BaseSource):
 
         return post_data
 
-    def sync_subscriptions_to_db(self, subscriptions, db):
+    def sync_subscriptions_to_db(self, subscriptions: list[dict[str, Any]], db: Database) -> None:
         """Sync YouTube subscriptions to database"""
         saved_count = 0
         for sub in subscriptions:
@@ -277,7 +278,7 @@ class YouTubeSource(BaseSource):
         logger.info(f"Synced {saved_count}/{len(subscriptions)} YouTube subscriptions")
         return saved_count
 
-    def get_synced_rss_feeds(self, db) -> list[str]:
+    def get_synced_rss_feeds(self, db: Database) -> list[str]:
         """Get RSS feed URLs from synced subscriptions"""
 
         try:

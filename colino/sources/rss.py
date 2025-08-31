@@ -100,7 +100,7 @@ class RSSSource(BaseSource):
 
     def _process_rss_entry(
         self,
-        entry,
+        entry: Any,
         feed_data: dict[str, Any],
         feed_url: str,
         since_time: datetime | None = None,
@@ -147,7 +147,7 @@ class RSSSource(BaseSource):
             },
         )
 
-    def _create_post_data(self, **kwargs) -> dict[str, Any]:
+    def _create_post_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Create a standardized post data structure
 
@@ -191,7 +191,7 @@ class RSSSource(BaseSource):
             logger.debug(f"Skipping old post: {url}")
             return True
 
-        if self.db.get_content_by(id):
+        if self.db and self.db.get_content_by(id):
             logger.debug(f"Content already exists for {url}, skipping")
             return True
 
@@ -201,7 +201,7 @@ class RSSSource(BaseSource):
 
         return False
 
-    def _extract_rss_content(self, entry) -> str:
+    def _extract_rss_content(self, entry: Any) -> str:
         """Extract content from RSS entry in order of preference"""
         if hasattr(entry, "content") and entry.content:
             return entry.content[0].value
@@ -211,15 +211,15 @@ class RSSSource(BaseSource):
             return entry.description
         return ""
 
-    def _parse_entry_date(self, entry) -> datetime:
+    def _parse_entry_date(self, entry: Any) -> datetime | None:
         """Parse publication date from RSS entry"""
         if hasattr(entry, "published_parsed") and entry.published_parsed:
-            return datetime(*entry.published_parsed[:6], tzinfo=UTC)
+            return datetime(*entry.published_parsed[:6]).replace(tzinfo=UTC)
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
-            return datetime(*entry.updated_parsed[:6], tzinfo=UTC)
+            return datetime(*entry.updated_parsed[:6]).replace(tzinfo=UTC)
         return None
 
-    def _enhance_content(self, rss_content: str, article_url: str, entry) -> str:
+    def _enhance_content(self, rss_content: str, article_url: str, entry: Any) -> str:
         """Enhance RSS content with scraped full article content if available"""
         full_content = rss_content
 

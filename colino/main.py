@@ -9,20 +9,21 @@ import logging
 from datetime import UTC, datetime, timedelta
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Any
 
 from .db import Database
 from .digest_manager import DigestManager
 from .ingest_manager import IngestManager
 
 
-def setup_database():
+def setup_database() -> Database:
     """Initialize the database"""
     get_logger().info("Setting up database...")
     db = Database()
     return db
 
 
-def ingest(sources: list[str] | None = None, since_hours: int | None = None):
+def ingest(sources: list[str] | None = None, since_hours: int | None = None) -> list[dict[str, Any]]:
     """Ingest content from specified sources"""
     db = setup_database()
     ingest_manager = IngestManager(db)
@@ -31,7 +32,7 @@ def ingest(sources: list[str] | None = None, since_hours: int | None = None):
 
 def list_recent_posts(
     hours: int = 24, limit: int | None = None, source: str | None = None
-):
+) -> None:
     """List recent posts from the database"""
     since_time = datetime.now(UTC) - timedelta(hours=hours)
 
@@ -90,7 +91,7 @@ def generate_digest(
     output_file: str | None = None,
     source: str | None = None,
     auto_ingest: bool = True,
-):
+) -> bool:
     """Generate an AI-powered digest of recent articles"""
     digest_manager = DigestManager()
     return digest_manager.digest_recent_articles(
@@ -98,13 +99,13 @@ def generate_digest(
     )
 
 
-def digest_url(url: str, output_file: str | None = None):
+def digest_url(url: str, output_file: str | None = None) -> bool:
     """Digest content from a specific URL"""
     digest_manager = DigestManager()
     return digest_manager.digest_url(url, output_file)
 
 
-def initialize_logging():
+def initialize_logging() -> None:
     log_dir = Path.home() / "Library" / "Logs" / "Colino"
     log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -128,12 +129,12 @@ def initialize_logging():
     )
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     """Get or create logger"""
     return logging.getLogger(__name__)
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     initialize_logging()
     parser = argparse.ArgumentParser(

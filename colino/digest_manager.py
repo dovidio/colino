@@ -224,7 +224,7 @@ class DigestManager:
 
     def _save_or_display_digest(
         self, digest_content: str, output_file: str | None = None, source_type: str = ""
-    ):
+    ) -> None:
         """Helper function to save or display digest content"""
         # Auto-save if enabled or output_file specified
         if output_file or config.AI_AUTO_SAVE:
@@ -247,7 +247,7 @@ class DigestManager:
             print(digest_content)
             print("=" * 60)
 
-    def _handle_api_error(self, e: ValueError):
+    def _handle_api_error(self, e: ValueError) -> None:
         """Handle API-related errors"""
         if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
             print("❌ OpenAI API key not configured or invalid")
@@ -258,7 +258,7 @@ class DigestManager:
 
     def _auto_ingest_recent_content(
         self, source: str | None = None, hours: int | None = None
-    ):
+    ) -> None:
         """
         Automatically ingest recent content before digesting
 
