@@ -19,6 +19,7 @@ from .sources.rss import RSSSource
 from .sources.youtube import YouTubeSource
 from .summarize import DigestGenerator
 from .digest_manager import DigestManager
+from .ingest_manager import IngestManager
 
 def setup_database():
     """Initialize the database"""
@@ -28,128 +29,9 @@ def setup_database():
 
 def ingest(sources: List[str] = None, since_hours: int = None):
     """Ingest content from specified sources"""
-    sources = sources or ["rss", "youtube"]  # Default to all sources
-    all_posts = []
-    
-    for source in sources:
-        if source == "rss":
-            print("📰 RSS: Fetching posts from RSS feeds")
-            posts = ingest_rss(since_hours)
-            all_posts.extend(posts)
-            print(f"✅ Fetched {len(posts)} new posts from RSS feeds")
-        elif source == "youtube":
-            print("📺 YouTube: Fetching posts from YouTube subscriptions")
-            posts = fetch_youtube_posts(since_hours)
-            all_posts.extend(posts)
-            print(f"✅ Fetched {len(posts)} posts from YouTube")
-        else:
-            raise ValueError(f"Unknown source: {source}")
-    
-    return all_posts
-
-def ingest_rss(since_hours: int = None):
-    """Ingest posts from RSS feeds"""
-    feed_urls = Config.RSS_FEEDS
-    since_hours = since_hours or Config.DEFAULT_LOOKBACK_HOURS
-    since_time = datetime.now(timezone.utc) - timedelta(hours=since_hours)
-    if not feed_urls:
-        get_logger().warning("No RSS feeds configured. Add feeds to your .env file or provide URLs.")
-        return []
-    get_logger().info(f"Fetching RSS posts from {len(feed_urls)} feeds since {since_time}")
     db = setup_database()
-    rss_source = RSSSource(db=db)  # Pass database instance
-    posts = rss_source.get_recent_posts(feed_urls, since_time)
-    # Apply content filtering if configured
-    if Config.FILTER_KEYWORDS or Config.EXCLUDE_KEYWORDS:
-        posts = apply_content_filter(posts)
-
-    # Save posts to database
-    saved_count = 0
-    for post in posts:
-        if db.save_content(post):
-            saved_count += 1
-    get_logger().info(f"Successfully saved {saved_count}/{len(posts)} RSS posts")
-    return posts
-
-def fetch_youtube_posts(since_hours: int = None):
-    """Fetch posts from YouTube subscriptions"""
-    since_hours = since_hours or Config.DEFAULT_LOOKBACK_HOURS
-    since_time = datetime.now(timezone.utc) - timedelta(hours=since_hours)
-    
-    get_logger().info(f"Fetching YouTube posts since {since_time}")
-    
-    try:
-        youtube_source = YouTubeSource()
-        youtube_source.authenticate()
-
-        if not youtube_source.is_authenticated:
-            get_logger().error("YouTube authentication required. Run: python src/main.py authenticate --source youtube")
-            return []
-        db = setup_database() 
-        channels = youtube_source.get_subscriptions()
-        youtube_source.sync_subscriptions_to_db(channels, db)
-        if not channels:
-            get_logger().warning("No YouTube channels found. Make sure you're subscribed to some channels.")
-            return []
-
-        rss_source = RSSSource()
-        youtube_posts = []
-        for channel in channels:
-            posts = rss_source.get_recent_posts([channel['rss_url']], since_time)
-            for post in posts:
-                post['source'] = 'youtube'
-                post['metadata']['video_id'] = youtube_source.extract_video_id(post['url'])
-                post['metadata']['channel_id'] = channel['channel_id']
-                
-                # Check if we already have this content in the database
-                existing_content = db.get_content_by(post['url'])
-                if existing_content:
-                    get_logger().debug(f"YouTube video already exists in cache: {post['url']}, skipping")
-                    continue
-                
-                # Enhance with transcript only for new posts
-                post = youtube_source.enhance_youtube_post(post)
-                youtube_posts.append(post)
-
-        if Config.FILTER_KEYWORDS or Config.EXCLUDE_KEYWORDS:
-            youtube_posts = apply_content_filter(youtube_posts)
-
-        saved_count = 0
-        for post in youtube_posts:
-            if db.save_content(post):
-                saved_count += 1
-
-        get_logger().info(f"Successfully saved {saved_count}/{len(youtube_posts)} YouTube posts")
-        return youtube_posts
-
-    except Exception as e:
-        get_logger().error(f"Error fetching YouTube posts: {e}")
-        return []
-
-def apply_content_filter(posts: List[dict]) -> List[dict]:
-    """Apply keyword filtering to posts"""
-    filtered_posts = []
-    
-    for post in posts:
-        content_text = f"{post['content']} {post.get('metadata', {}).get('entry_title', '')}".lower()
-        
-        # If filter keywords are set, only include posts that contain them
-        if Config.FILTER_KEYWORDS:
-            if not any(keyword.lower() in content_text for keyword in Config.FILTER_KEYWORDS if keyword.strip()):
-                continue
-        
-        # Exclude posts with exclude keywords
-        if Config.EXCLUDE_KEYWORDS:
-            if any(keyword.lower() in content_text for keyword in Config.EXCLUDE_KEYWORDS if keyword.strip()):
-                continue
-        
-        filtered_posts.append(post)
-    
-    if Config.FILTER_KEYWORDS or Config.EXCLUDE_KEYWORDS:
-        get_logger().info(f"Content filtering: {len(filtered_posts)}/{len(posts)} posts kept")
-    
-    return filtered_posts
-
+    ingest_manager = IngestManager(db)
+    return ingest_manager.ingest(sources, since_hours)
 
 def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
     """List recent posts from the database"""
@@ -202,10 +84,10 @@ def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
         
         print()
 
-def generate_digest(hours: int = None, output_file: str = None, source: str = None):
+def generate_digest(hours: int = None, output_file: str = None, source: str = None, auto_ingest: bool = True):
     """Generate an AI-powered digest of recent articles"""
     digest_manager = DigestManager()
-    return digest_manager.digest_recent_articles(hours, output_file, source)
+    return digest_manager.digest_recent_articles(hours, output_file, source, auto_ingest)
 
 def digest_url(url: str, output_file: str = None):
     """Digest content from a specific URL"""
@@ -267,6 +149,7 @@ def main():
     digest_parser.add_argument('--youtube', action='store_true', help='Digest recent YouTube videos')
     digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
     digest_parser.add_argument('--output', help='Save digest to file instead of displaying')
+    digest_parser.add_argument('--skip-ingest', action='store_true', help='Skip automatic ingestion of recent sources before digesting')
 
     args = parser.parse_args()
     
@@ -310,13 +193,13 @@ def main():
                 digest_url(args.url, args.output)
             elif args.rss:
                 # Digest recent RSS articles
-                generate_digest(args.hours, args.output, 'rss')
+                generate_digest(args.hours, args.output, 'rss', not args.skip_ingest)
             elif args.youtube:
                 # Digest recent YouTube videos
-                generate_digest(args.hours, args.output, 'youtube')
+                generate_digest(args.hours, args.output, 'youtube', not args.skip_ingest)
             else:
                 # Digest recent articles from all sources
-                generate_digest(args.hours, args.output, None)
+                generate_digest(args.hours, args.output, None, not args.skip_ingest)
         
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")

@@ -12,6 +12,7 @@ from .db import Database
 from .sources.rss import RSSSource
 from .sources.youtube import YouTubeSource
 from .summarize import DigestGenerator
+from .ingest_manager import IngestManager
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class DigestManager:
             print(f"❌ Error processing URL: {e}")
             return False
     
-    def digest_recent_articles(self, hours: int = None, output_file: str = None, source: str = None) -> bool:
+    def digest_recent_articles(self, hours: int = None, output_file: str = None, source: str = None, auto_ingest: bool = True) -> bool:
         """
         Generate digest of recent articles
         
@@ -64,12 +65,17 @@ class DigestManager:
             hours: Hours to look back (uses config default if None)
             output_file: Optional path to save digest to file
             source: Filter by source ('rss' or 'youtube')
+            auto_ingest: Whether to automatically ingest recent content before digesting
             
         Returns:
             bool: True if successful, False otherwise
         """
         hours = hours or Config.DEFAULT_LOOKBACK_HOURS
         since_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        
+        # Auto-ingest recent content if enabled
+        if auto_ingest:
+            self._auto_ingest_recent_content(source, hours)
         
         source_filter = f" from {source}" if source else ""
         logger.info(f"Generating digest for articles{source_filter} from last {hours} hours")
@@ -226,3 +232,28 @@ class DigestManager:
             print("   Get one from: https://platform.openai.com/api-keys")
         else:
             print(f"❌ Configuration error: {e}")
+    
+    def _auto_ingest_recent_content(self, source: str = None, hours: int = None):
+        """
+        Automatically ingest recent content before digesting
+        
+        Args:
+            source: Source to ingest from ('rss', 'youtube', or None for all)
+            hours: Hours to look back for ingestion
+        """
+        print("🔄 Auto-ingesting recent content before generating digest...")
+        
+        # Determine which sources to ingest
+        if source:
+            sources = [source]
+        else:
+            sources = ['rss', 'youtube']
+        
+        # Use IngestManager to ingest recent content
+        ingest_manager = IngestManager(db=self.db)
+        ingested_posts = ingest_manager.ingest(sources, hours)
+        
+        if ingested_posts:
+            print(f"✅ Auto-ingested {len(ingested_posts)} recent posts")
+        else:
+            print("ℹ️  No new posts to ingest")
