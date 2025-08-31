@@ -16,7 +16,7 @@ class Database:
         """Initialize the database with required tables"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute('''
-                CREATE TABLE IF NOT EXISTS posts (
+                CREATE TABLE IF NOT EXISTS content_cache (
                     id TEXT PRIMARY KEY,
                     source TEXT NOT NULL,
                     author_username TEXT NOT NULL,
@@ -57,11 +57,11 @@ class Database:
             ''')
             
             conn.execute('''
-                CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
+                CREATE INDEX IF NOT EXISTS idx_content_cache_created_at ON content_cache(created_at);
             ''')
             
             conn.execute('''
-                CREATE INDEX IF NOT EXISTS idx_posts_source_author ON posts(source, author_username);
+                CREATE INDEX IF NOT EXISTS idx_content_cache_source_author ON content_cache(source, author_username);
             ''')
     
     def save_post(self, post_data: Dict[str, Any]) -> bool:
@@ -69,7 +69,7 @@ class Database:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute('''
-                    INSERT OR REPLACE INTO posts 
+                    INSERT OR REPLACE INTO content_cache 
                     (id, source, author_username, author_display_name, content, url, 
                      created_at, metadata, like_count, reply_count)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -92,7 +92,7 @@ class Database:
     
     def get_post_by(self, id: str) -> Dict[str, Any]:
         """Get post by id""" 
-        query = "SELECT * FROM posts WHERE id = ?" 
+        query = "SELECT * FROM content_cache WHERE id = ?" 
         params = [id]
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -112,7 +112,7 @@ class Database:
 
     def get_posts_since(self, since: datetime, source: str = None) -> List[Dict[str, Any]]:
         """Get posts since a specific timestamp"""
-        query = "SELECT * FROM posts WHERE datetime(created_at) >= datetime(?)"
+        query = "SELECT * FROM content_cache WHERE datetime(created_at) >= datetime(?)"
         params = [since.isoformat()]
         
         if source:
