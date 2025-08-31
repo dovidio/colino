@@ -4,8 +4,6 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 class Config:
-    YOUTUBE_TOKEN_FILE = 'youtube.token'
-    YOUTUBE_CLIENT_SECRETS_FILE = 'client_secrets.json'
     def __init__(self):
         self._config = self._load_config()
     
@@ -44,16 +42,9 @@ class Config:
     
     # YouTube Properties
     @property
-    def YOUTUBE_CLIENT_ID(self) -> str:
-        return os.getenv('YOUTUBE_CLIENT_ID') or self._config.get('youtube', {}).get('client_id', '')
-    
-    @property
-    def YOUTUBE_CLIENT_SECRET(self) -> str:
-        return os.getenv('YOUTUBE_CLIENT_SECRET') or self._config.get('youtube', {}).get('client_secret', '')
-    
-    @property
-    def YOUTUBE_API_KEY(self) -> str:
-        return os.getenv('YOUTUBE_API_KEY') or self._config.get('youtube', {}).get('api_key', '')
+    def YOUTUBE_OAUTH_PROXY_URL(self) -> str:
+        """Hardcoded OAuth proxy URL for YouTube authentication"""
+        return "https://oqh6f9ear9.execute-api.us-east-1.amazonaws.com/Prod"
     
     @property
     def YOUTUBE_MAX_RESULTS(self) -> int:
@@ -130,9 +121,8 @@ class Config:
         return True
     
     def validate_youtube_config(self):
-        """Validate YouTube API credentials"""
-        if not self.YOUTUBE_CLIENT_ID or not self.YOUTUBE_CLIENT_SECRET:
-            raise ValueError("Missing YouTube OAuth credentials. Add youtube.client_id and youtube.client_secret to config.yaml")
+        """Validate YouTube API credentials - OAuth proxy is always used"""
+        # OAuth proxy URL is hardcoded, no validation needed
         return True
 
 # Create global config instance

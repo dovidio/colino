@@ -7,15 +7,14 @@ import logging
 from urllib.parse import urljoin, urlparse, parse_qs
 
 import requests
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
 from ..config import Config
+from ..oauth_proxy import OAuthProxyClient, TokenManager
 
 logger = logging.getLogger(__name__)
 
@@ -25,61 +24,52 @@ class YouTubeSource:
     # YouTube API scopes
     SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
     
-    def __init__(self):
+    def __init__(self, db=None):
         self.credentials = None
         self.youtube_service = None
-        self.token_file = Config.YOUTUBE_TOKEN_FILE
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': Config.RSS_USER_AGENT
         })
+        
+        # Initialize database if not provided
+        if db is None:
+            from ..db import Database
+            self.db = Database()
+        else:
+            self.db = db
+        
+        # Initialize OAuth proxy client (always used)
+        self.oauth_client = OAuthProxyClient(Config.YOUTUBE_OAUTH_PROXY_URL)
+        self.token_manager = TokenManager(self.oauth_client, self.db, "youtube")
     
     def authenticate(self) -> bool:
-        """Authenticate with YouTube API using OAuth2"""
-        
-        # Load existing credentials
-        if os.path.exists(self.token_file):
-            self.credentials = Credentials.from_authorized_user_file(
-                self.token_file, self.SCOPES
-            )
-        
-        # If credentials don't exist or are invalid, run OAuth flow
-        if not self.credentials or not self.credentials.valid:
-            if self.credentials and self.credentials.expired and self.credentials.refresh_token:
-                try:
-                    self.credentials.refresh(Request())
-                    logger.info("YouTube credentials refreshed")
-                except Exception as e:
-                    logger.warning(f"Failed to refresh YouTube credentials: {e}")
-                    self.credentials = None
-            
-            if not self.credentials:
-                if not Config.YOUTUBE_CLIENT_SECRETS_FILE or not os.path.exists(Config.YOUTUBE_CLIENT_SECRETS_FILE):
-                    raise ValueError(
-                        "YouTube client secrets file not found. "
-                        "Download it from Google Cloud Console and set YOUTUBE_CLIENT_SECRETS_FILE in config"
-                    )
-                
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    Config.YOUTUBE_CLIENT_SECRETS_FILE, self.SCOPES
-                )
-                
-                logger.info("Opening browser for YouTube authentication...")
-                self.credentials = flow.run_local_server(port=8080)
-                
-                # Save credentials for next run
-                with open(self.token_file, 'w') as f:
-                    f.write(self.credentials.to_json())
-                logger.info(f"YouTube credentials saved to {self.token_file}")
-        
-        # Build YouTube service
+        """Authenticate with YouTube API using OAuth proxy"""
         try:
+            access_token = self.token_manager.get_access_token()
+            
+            # Create credentials object from access token
+            self.credentials = Credentials(token=access_token)
+            
+            # Build YouTube service
             self.youtube_service = build('youtube', 'v3', credentials=self.credentials)
-            logger.info("YouTube API service initialized")
+            logger.info("YouTube API service initialized via OAuth proxy")
             return True
+            
         except Exception as e:
-            logger.error(f"Failed to initialize YouTube service: {e}")
-            return False
+            logger.error(f"Failed to authenticate via OAuth proxy: {e}")
+            
+            # If authentication fails, try to force re-authentication
+            try:
+                logger.info("Attempting forced re-authentication...")
+                access_token = self.token_manager.authenticate()
+                self.credentials = Credentials(token=access_token)
+                self.youtube_service = build('youtube', 'v3', credentials=self.credentials)
+                logger.info("YouTube API service initialized after re-authentication")
+                return True
+            except Exception as e2:
+                logger.error(f"Re-authentication also failed: {e2}")
+                return False
     
     def get_subscriptions(self) -> List[Dict[str, Any]]:
         """Get user's YouTube subscriptions"""

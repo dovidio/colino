@@ -20,6 +20,9 @@ filters:
     - advertisement
 
 youtube:
+  # YouTube authentication is handled via OAuth proxy server
+  # No configuration needed - authentication is automatic
+  
   transcript_languages:
     - en
     - it

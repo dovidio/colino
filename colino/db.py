@@ -44,6 +44,19 @@ class Database:
             ''')
             
             conn.execute('''
+                CREATE TABLE IF NOT EXISTS oauth_tokens (
+                    service TEXT PRIMARY KEY,
+                    access_token TEXT NOT NULL,
+                    refresh_token TEXT,
+                    expires_at REAL,
+                    token_type TEXT DEFAULT 'Bearer',
+                    scope TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            conn.execute('''
                 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
             ''')
             
@@ -143,3 +156,63 @@ class Database:
         except Exception as e:
             print(f"Error saving youtube subscription {sub.get('channel_id')}: {e}")
             return False
+
+    def save_oauth_tokens(self, service: str, access_token: str, refresh_token: str = None, 
+                         expires_at: float = None, token_type: str = 'Bearer', scope: str = None) -> bool:
+        """Save OAuth tokens to the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO oauth_tokens
+                    (service, access_token, refresh_token, expires_at, token_type, scope, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    service,
+                    access_token,
+                    refresh_token,
+                    expires_at,
+                    token_type,
+                    scope,
+                    datetime.now(timezone.utc).isoformat()
+                ))
+            logger.info(f"OAuth tokens saved for service: {service}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving OAuth tokens for {service}: {e}")
+            return False
+
+    def get_oauth_tokens(self, service: str) -> Dict[str, Any]:
+        """Get OAuth tokens from the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute('''
+                    SELECT * FROM oauth_tokens WHERE service = ?
+                ''', (service,))
+                
+                row = cursor.fetchone()
+                if row:
+                    tokens = dict(row)
+                    logger.info(f"OAuth tokens loaded for service: {service}")
+                    return tokens
+                else:
+                    logger.info(f"No OAuth tokens found for service: {service}")
+                    return {}
+        except Exception as e:
+            logger.error(f"Error loading OAuth tokens for {service}: {e}")
+            return {}
+
+    def delete_oauth_tokens(self, service: str) -> bool:
+        """Delete OAuth tokens from the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('DELETE FROM oauth_tokens WHERE service = ?', (service,))
+            logger.info(f"OAuth tokens deleted for service: {service}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting OAuth tokens for {service}: {e}")
+            return False
+
+    def get_connection(self):
+        """Get a database connection (for backward compatibility)"""
+        return sqlite3.connect(self.db_path)
