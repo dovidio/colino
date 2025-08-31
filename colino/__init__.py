@@ -1,1 +1,1 @@
-# Social Digest package 
+# Social Digest package

@@ -20,6 +20,9 @@ filters:
     - advertisement
 
 youtube:
+  # YouTube authentication is handled via OAuth proxy server
+  # No configuration needed - authentication is automatic
+  
   transcript_languages:
     - en
     - it
@@ -73,7 +76,7 @@ ai:
     5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why. Add the link to the article.
     6. **Purge candidates** - List the articles that are not very novel and that you suggest to remove, and the reason why.
 
-    Keep it concise but comprehensive. Use clear markdown formatting.
+    Keep it concise but comprehensive. Use clear markdown formatting. Do not offer any follow up help.
 
   article_prompt: |
     You are an expert news curator and summarizer.
@@ -96,6 +99,7 @@ ai:
     Video transcript: {{ transcript }}
 
     If possible, find links to existing theories, philosophic positions, trends and suggest possible follow ups. If not, don't mention any of that.
+    Do not offer any follow up help.
 
 # Database
 database:
