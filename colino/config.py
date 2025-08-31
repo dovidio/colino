@@ -17,7 +17,6 @@ class Config:
         
         for config_path in config_paths:
             if config_path.exists():
-                print(f"Loading config from: {config_path}")
                 with open(config_path, 'r') as f:
                     return yaml.safe_load(f)
                 

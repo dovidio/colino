@@ -6,6 +6,9 @@ Your own hackable RSS feed aggregator and filter.
 
 import argparse
 import logging
+from logging.handlers import RotatingFileHandler
+import os
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import re
@@ -17,16 +20,9 @@ from .sources.rss import RSSSource
 from .sources.youtube import YouTubeSource
 from .summarize import DigestGenerator
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
 def setup_database():
     """Initialize the database"""
-    logger.info("Setting up database...")
+    get_logger().info("Setting up database...")
     db = Database()
     return db
 
@@ -45,9 +41,9 @@ def fetch_rss_posts(feed_urls: List[str] = None, since_hours: int = None):
     since_hours = since_hours or Config.DEFAULT_LOOKBACK_HOURS
     since_time = datetime.now(timezone.utc) - timedelta(hours=since_hours)
     if not feed_urls:
-        logger.warning("No RSS feeds configured. Add feeds to your .env file or provide URLs.")
+        get_logger().warning("No RSS feeds configured. Add feeds to your .env file or provide URLs.")
         return []
-    logger.info(f"Fetching RSS posts from {len(feed_urls)} feeds since {since_time}")
+    get_logger().info(f"Fetching RSS posts from {len(feed_urls)} feeds since {since_time}")
     db = setup_database()
     rss_source = RSSSource()
     posts = rss_source.get_recent_posts(feed_urls, since_time)
@@ -60,7 +56,7 @@ def fetch_rss_posts(feed_urls: List[str] = None, since_hours: int = None):
     for post in posts:
         if db.save_post(post):
             saved_count += 1
-    logger.info(f"Successfully saved {saved_count}/{len(posts)} RSS posts")
+    get_logger().info(f"Successfully saved {saved_count}/{len(posts)} RSS posts")
     return posts
 
 def fetch_youtube_posts(since_hours: int = None):
@@ -68,20 +64,20 @@ def fetch_youtube_posts(since_hours: int = None):
     since_hours = since_hours or Config.DEFAULT_LOOKBACK_HOURS
     since_time = datetime.now(timezone.utc) - timedelta(hours=since_hours)
     
-    logger.info(f"Fetching YouTube posts since {since_time}")
+    get_logger().info(f"Fetching YouTube posts since {since_time}")
     
     try:
         youtube_source = YouTubeSource()
         youtube_source.authenticate()
 
         if not youtube_source.is_authenticated:
-            logger.error("YouTube authentication required. Run: python src/main.py authenticate --source youtube")
+            get_logger().error("YouTube authentication required. Run: python src/main.py authenticate --source youtube")
             return []
         db = setup_database() 
         channels = youtube_source.get_subscriptions()
         youtube_source.sync_subscriptions_to_db(channels, db)
         if not channels:
-            logger.warning("No YouTube channels found. Make sure you're subscribed to some channels.")
+            get_logger().warning("No YouTube channels found. Make sure you're subscribed to some channels.")
             return []
 
         rss_source = RSSSource()
@@ -103,52 +99,16 @@ def fetch_youtube_posts(since_hours: int = None):
             if db.save_post(post):
                 saved_count += 1
 
-        logger.info(f"Successfully saved {saved_count}/{len(youtube_posts)} YouTube posts")
+        get_logger().info(f"Successfully saved {saved_count}/{len(youtube_posts)} YouTube posts")
         return youtube_posts
 
     except Exception as e:
-        logger.error(f"Error fetching YouTube posts: {e}")
+        get_logger().error(f"Error fetching YouTube posts: {e}")
         return []
-
-def authenticate_source(source: str):
-    """Authenticate with a specific source"""
-    if source == "youtube":
-        authenticate_youtube()
-    else:
-        raise ValueError(f"Authentication not supported for source: {source}")
-
-def authenticate_youtube():
-    """Authenticate with YouTube/Google OAuth"""
-    logger.info("Starting YouTube authentication...")
-    
-    try:
-        youtube_source = YouTubeSource()
-        # 
-        if youtube_source.is_authenticated:
-            print("✅ Already authenticated with YouTube!")
-            return
-        
-        print("🔐 Starting YouTube authentication...")
-        print("   This will open your browser to grant permissions to Colino")
-        print("   We need access to read your YouTube subscriptions")
-        #
-        success = youtube_source.authenticate()
-        
-        if success:
-            print("✅ YouTube authentication successful!")
-            print("   You can now fetch from your YouTube subscriptions")
-            print("   Run: python src/main.py fetch --source youtube")
-        else:
-            print("❌ YouTube authentication failed")
-            print("   Please check your internet connection and try again")
-        
-    except Exception as e:
-        logger.error(f"Error during YouTube authentication: {e}")
-        print(f"❌ Authentication error: {e}")
 
 def list_youtube_channels():
     """List subscribed YouTube channels"""
-    logger.info("Listing YouTube channels...")
+    get_logger().info("Listing YouTube channels...")
     
     try:
         youtube_source = YouTubeSource()
@@ -172,7 +132,7 @@ def list_youtube_channels():
         print("❌ YouTube channel listing not yet implemented")
         print("   This feature is in development")
     except Exception as e:
-        logger.error(f"Error listing YouTube channels: {e}")
+        get_logger().error(f"Error listing YouTube channels: {e}")
         print(f"❌ Error: {e}")
 
 def apply_content_filter(posts: List[dict]) -> List[dict]:
@@ -195,13 +155,13 @@ def apply_content_filter(posts: List[dict]) -> List[dict]:
         filtered_posts.append(post)
     
     if Config.FILTER_KEYWORDS or Config.EXCLUDE_KEYWORDS:
-        logger.info(f"Content filtering: {len(filtered_posts)}/{len(posts)} posts kept")
+        get_logger().info(f"Content filtering: {len(filtered_posts)}/{len(posts)} posts kept")
     
     return filtered_posts
 
 def discover_rss_feeds(website_url: str):
     """Discover RSS feeds from a website"""
-    logger.info(f"Discovering RSS feeds for {website_url}")
+    get_logger().info(f"Discovering RSS feeds for {website_url}")
     
     rss_source = RSSSource()
     feed_urls = rss_source.discover_feed_url(website_url)
@@ -220,7 +180,7 @@ def discover_rss_feeds(website_url: str):
 
 def test_feed(feed_url: str):
     """Test a single RSS feed"""
-    logger.info(f"Testing RSS feed: {feed_url}")
+    get_logger().info(f"Testing RSS feed: {feed_url}")
     
     rss_source = RSSSource()
     feed_data = rss_source.parse_feed(feed_url)
@@ -299,7 +259,7 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
     since_time = datetime.now(timezone.utc) - timedelta(hours=hours)
     
     source_filter = f" from {source}" if source else ""
-    logger.info(f"Generating digest for articles{source_filter} from last {hours} hours")
+    get_logger().info(f"Generating digest for articles{source_filter} from last {hours} hours")
     
     # Get recent posts from database
     db = setup_database()
@@ -346,7 +306,7 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
         else:
             print(f"❌ Configuration error: {e}")
     except Exception as e:
-        logger.error(f"Error generating digest: {e}")
+        get_logger().error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
 
 def export_opml(output_file: str = None):
@@ -496,7 +456,7 @@ def generate_youtube_digest(youtube_video_url: str, output_file: str = None, sou
         else:
             print(f"❌ Configuration error: {e}")
     except Exception as e:
-        logger.error(f"Error generating digest: {e}")
+        get_logger().error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
 
 def generate_post_digest(post_id: str, output_file: str = None):
@@ -536,11 +496,39 @@ def generate_post_digest(post_id: str, output_file: str = None):
         else:
             print(f"❌ Configuration error: {e}")
     except Exception as e:
-        logger.error(f"Error generating digest: {e}")
+        get_logger().error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
+
+def initialize_logging():
+    log_dir = Path.home() / "Library" / "Logs" / "Colino"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    
+    log_file = log_dir / "colino.log"
+    
+    # Configure rotating file handler
+    file_handler = RotatingFileHandler(
+        str(log_file),
+        maxBytes=10*1024*1024,  # 10MB per file
+        backupCount=5,          # Keep 5 backup files
+        encoding='utf-8'
+    )
+    
+    # Configure logging with rotation
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            file_handler,
+        ]
+    )
+
+def get_logger():
+    """Get or create logger"""
+    return logging.getLogger(__name__)
 
 def main():
     """Main entry point"""
+    initialize_logging()
     parser = argparse.ArgumentParser(description='Colino - Your hackable RSS feed aggregator')
     
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -551,11 +539,6 @@ def main():
                             help='Source to fetch from (default: rss)')
     fetch_parser.add_argument('--urls', nargs='+', help='Specific RSS feed URLs to fetch from (RSS only)')
     fetch_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
-    
-    # Authenticate command
-    auth_parser = subparsers.add_parser('authenticate', help='Authenticate with external sources')
-    auth_parser.add_argument('--source', choices=['youtube'], required=True,
-                           help='Source to authenticate with')
     
     # List channels command
     channels_parser = subparsers.add_parser('channels', help='List subscribed channels (YouTube only)')
@@ -612,9 +595,6 @@ def main():
             else:
                 fetch_posts(args.source, None, args.hours)
         
-        elif args.command == 'authenticate':
-            authenticate_source(args.source)
-        
         elif args.command == 'channels':
             list_youtube_channels()
         
@@ -643,9 +623,9 @@ def main():
             import_opml(args.file)
         
     except KeyboardInterrupt:
-        logger.info("Operation cancelled by user")
+        get_logger().info("Operation cancelled by user")
     except Exception as e:
-        logger.error(f"Error: {e}")
+        get_logger().error(f"Error: {e}")
         raise
 
 if __name__ == '__main__':
