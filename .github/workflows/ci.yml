@@ -21,5 +21,14 @@ jobs:
     - name: Install dependencies
       run: poetry install
     
+    - name: Run ruff linter
+      run: poetry run ruff check .
+    
+    - name: Run ruff formatter check
+      run: poetry run ruff format --check .
+    
+    - name: Run mypy type checker
+      run: poetry run mypy colino/
+    
     - name: Check package builds
       run: poetry build

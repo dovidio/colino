@@ -8,4 +8,4 @@ from .base import BaseSource
 from .rss import RSSSource
 from .youtube import YouTubeSource
 
-__all__ = ['BaseSource', 'RSSSource', 'YouTubeSource']
+__all__ = ["BaseSource", "RSSSource", "YouTubeSource"]
