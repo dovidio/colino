@@ -49,6 +49,12 @@ class RSSSource:
             logger.error(f"Error parsing RSS feed {feed_url}: {e}")
             return None
     
+    def is_youtube_shorts(self, url: str) -> bool:
+        """Check if a URL is a YouTube Shorts video"""
+        if not url:
+            return False
+        return '/shorts/' in url
+    
     def get_recent_posts(self, feed_urls: List[str], since_time: datetime = None) -> List[Dict[str, Any]]:
         """Get recent posts from multiple RSS feeds"""
         all_posts = []
@@ -96,6 +102,11 @@ class RSSSource:
                     full_content = rss_content
                     article_url = entry.get('link', '') 
                     
+                    # Skip YouTube Shorts
+                    if self.is_youtube_shorts(article_url):
+                        logger.debug(f"Skipping YouTube Shorts: {article_url}")
+                        continue
+                    
                     scraped_content = self.scraper.scrape_article_content(article_url)
                     if scraped_content and len(scraped_content) > len(rss_content):
                         full_content = full_content + "\nFull Content:\n" + scraped_content
@@ -136,4 +147,4 @@ class RSSSource:
         all_posts.sort(key=lambda x: x['created_at'], reverse=True)
         
         logger.info(f"Retrieved {len(all_posts)} RSS posts from {len(feed_urls)} feeds")
-        return all_posts 
+        return all_posts

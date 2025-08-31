@@ -156,6 +156,13 @@ class YouTubeSource:
                         return url.split('/v/')[-1].split('?')[0]
         
         return None
+
+    def is_youtube_shorts(self, url: str) -> bool:
+        """Check if a URL is a YouTube Shorts video"""
+        if not url:
+            return False
+        
+        return '/shorts/' in url
     
     def get_video_transcript(self, video_id: str) -> Optional[str]:
         """Get transcript for a YouTube video"""
