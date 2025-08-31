@@ -1,68 +1,12 @@
-import requests
-from bs4 import BeautifulSoup
 import openai
 from typing import List, Dict, Any, Optional
 import logging
 from datetime import datetime
 from .config import Config
-from readability import Document
 from jinja2 import Template
 import os
         
 logger = logging.getLogger(__name__)
-
-class ContentFetcher:
-    """Fetches and cleans web content from URLs"""
-    
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (compatible; Colino RSS Reader/1.0)'
-        })
-    
-    def fetch_article_content(self, url: str) -> Optional[str]:
-        """Fetch and extract main content from a web page"""
-            
-        try:
-            logger.info(f"Fetching content from: {url}")
-            
-            response = self.session.get(url, timeout=Config.RSS_TIMEOUT)
-            response.raise_for_status()
-            
-            # Use readability to extract main content
-            doc = Document(response.text)  # Use .text instead of .content
-            
-            # Parse with BeautifulSoup for cleaning
-            soup = BeautifulSoup(doc.content(), 'html.parser')
-            
-            # Remove unwanted elements
-            for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
-                element.decompose()
-            
-            # Get text content
-            content = soup.get_text(separator=' ', strip=True)
-            
-            # Clean up whitespace
-            content = ' '.join(content.split())
-            
-            # Limit content length (LLMs have token limits)
-            max_chars = 8000  # Roughly 2000 tokens
-            if len(content) > max_chars:
-                content = content[:max_chars] + "..."
-            
-            if len(content) > 100:  # Only use if we got substantial content
-                logger.info(f"Extracted {len(content)} characters from {url}")
-                return content
-            else:
-                logger.debug(f"Extracted content too short from {url}, using RSS content instead")
-                return None
-            
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Network error fetching {url}: {e}")
-            return None
-        except Exception as e:
-            logger.warning(f"Could not parse content from {url}: {e}")
-            return None
 
 class DigestGenerator:
     """Generates AI-powered summaries of RSS content"""
@@ -70,7 +14,6 @@ class DigestGenerator:
     def __init__(self):
         Config.validate_openai_config()
         self.client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
-        self.content_fetcher = ContentFetcher()
 
     def summarize_video(self, transcript: str) -> str:
         prompt = self.create_digest_video_prompt(transcript)
@@ -126,7 +69,7 @@ class DigestGenerator:
         )
 
     def summarize_article(self, article: Dict[str, Any]) -> str:
-        # Start with RSS content
+        # Use the content that was already scraped during ingestion
         content = article['content']
 
         metadata = article.get('metadata', {})
@@ -135,17 +78,19 @@ class DigestGenerator:
         url = article.get('url', '')
         source = article.get('author_display_name', 'Unknown source')
         
-        # Try to fetch full article content if enabled
-        if Config.LLM_SUMMARIZE_LINKS:
-            if article.get('source') == 'youtube':
-                full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
-            elif url: 
-                full_content = self.content_fetcher.fetch_article_content(url)
-            if full_content and len(full_content) > len(content):
+        # For YouTube content, use transcript if available
+        if article.get('source') == 'youtube':
+            full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
+            if full_content:
                 content = full_content
-                logger.info(f"Using full article content for: {title}")
+        
+        # Limit content length for LLM processing if needed
+        max_chars = 8000  # Roughly 2000 tokens
+        if len(content) > max_chars:
+            content = content[:max_chars] + "..."
+            logger.info(f"Truncated content for LLM processing: {title}")
 
-        article = {
+        article_data = {
             'title': title,
             'feed_title': feed_title,
             'content': content,
@@ -153,7 +98,7 @@ class DigestGenerator:
             'source': source,
             'published': article.get('created_at', '')
         } 
-        return self.generate_llm_article_digest(article)
+        return self.generate_llm_article_digest(article_data)
 
     def generate_llm_article_digest(self, article: Dict[str, Any]):
         """Use LLM to generate a comprehensive digest"""
@@ -242,7 +187,7 @@ class DigestGenerator:
         for i, article in enumerate(articles, 1):
             logger.info(f"Processing article {i}/{len(articles)}: {article.get('metadata', {}).get('entry_title', 'No title')}")
             
-            # Start with RSS content
+            # Use the content that was already scraped during ingestion
             content = article['content']
 
             metadata = article.get('metadata', {})
@@ -251,15 +196,17 @@ class DigestGenerator:
             url = article.get('url', '')
             source = article.get('author_display_name', 'Unknown source')
             
-            # Try to fetch full article content if enabled
-            if Config.LLM_SUMMARIZE_LINKS:
-                if article.get('source') == 'youtube':
-                    full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
-                elif url: 
-                    full_content = self.content_fetcher.fetch_article_content(url)
-                if full_content and len(full_content) > len(content):
+            # For YouTube content, use transcript if available
+            if article.get('source') == 'youtube':
+                full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
+                if full_content:
                     content = full_content
-                    logger.info(f"Using full article content for: {title}")
+            
+            # Limit content length for LLM processing if needed
+            max_chars = 8000  # Roughly 2000 tokens
+            if len(content) > max_chars:
+                content = content[:max_chars] + "..."
+                logger.debug(f"Truncated content for LLM processing: {title}")
             
             article_summaries.append({
                 'title': title,

@@ -45,7 +45,7 @@ def fetch_rss_posts(feed_urls: List[str] = None, since_hours: int = None):
         return []
     get_logger().info(f"Fetching RSS posts from {len(feed_urls)} feeds since {since_time}")
     db = setup_database()
-    rss_source = RSSSource()
+    rss_source = RSSSource(db=db)  # Pass database instance
     posts = rss_source.get_recent_posts(feed_urls, since_time)
     # Apply content filtering if configured
     if Config.FILTER_KEYWORDS or Config.EXCLUDE_KEYWORDS:

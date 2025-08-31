@@ -79,10 +79,6 @@ class Config:
         return self._config.get('ai', {}).get('max_articles', 10)
     
     @property
-    def LLM_SUMMARIZE_LINKS(self) -> bool:
-        return self._config.get('ai', {}).get('extract_web_content', True)
-    
-    @property
     def AI_AUTO_SAVE(self) -> bool:
         return self._config.get('ai', {}).get('auto_save', True)
     

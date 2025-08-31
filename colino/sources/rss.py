@@ -5,17 +5,21 @@ from typing import List, Dict, Any
 import logging
 from urllib.parse import urljoin, urlparse
 from ..config import Config
+from ..scraper import ArticleScraper
+from ..db import Database
 
 
 logger = logging.getLogger(__name__)
 
 class RSSSource:
-    def __init__(self):
+    def __init__(self, db: Database = None):
         """Initialize RSS feed parser"""
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': Config.RSS_USER_AGENT
         })
+        self.scraper = ArticleScraper()
+        self.db = db
     
     def parse_feed(self, feed_url: str) -> Dict[str, Any]:
         """Parse a single RSS feed"""
@@ -68,36 +72,59 @@ class RSSSource:
                     if since_time and pub_date and pub_date < since_time:
                         continue
                     
-                    # Extract content
-                    content = ""
-                    if hasattr(entry, 'content') and entry.content:
-                        content = entry.content[0].value
-                    elif hasattr(entry, 'summary'):
-                        content = entry.summary
-                    elif hasattr(entry, 'description'):
-                        content = entry.description
+                    # Create unique ID for the post
+                    post_id = entry.get('id', entry.get('link', ''))
+                    if not post_id:
+                        continue
                     
-                    # Clean up content (remove HTML tags for preview)
+                    # Check if we already have this content in cache
+                    if self.db:
+                        existing_content = self.db.get_content_by(post_id)
+                        if existing_content:
+                            logger.debug(f"Content already exists for {post_id}, using cached version")
+                            all_posts.append(existing_content)
+                            continue
+                    
+                    # Extract initial content from RSS
+                    rss_content = ""
+                    if hasattr(entry, 'content') and entry.content:
+                        rss_content = entry.content[0].value
+                    elif hasattr(entry, 'summary'):
+                        rss_content = entry.summary
+                    elif hasattr(entry, 'description'):
+                        rss_content = entry.description
+                    
+                    # Try to scrape full article content if URL available and scraping enabled
+                    full_content = rss_content
+                    article_url = entry.get('link', '') 
+                    
+                    scraped_content = self.scraper.scrape_article_content(article_url)
+                    if scraped_content and len(scraped_content) > len(rss_content):
+                        full_content = full_content + "\nFull Content:\n" + scraped_content
+                        logger.info(f"Using scraped content for: {entry.get('title', 'Unknown')}")
+                    
+                    # Clean up content for preview (remove HTML tags)
                     import re
-                    content_preview = re.sub('<[^<]+?>', '', content)[:500]
+                    content_preview = re.sub('<[^<]+?>', '', rss_content)[:500]
                     
                     post_data = {
-                        'id': entry.get('id', entry.get('link', '')),
+                        'id': post_id,
                         'source': 'rss',
                         'author_username': feed_data['title'],
                         'author_display_name': feed_data['title'],
-                        'content': content_preview,
-                        'url': entry.get('link', ''),
+                        'content': full_content,  # Store full scraped content
+                        'url': article_url,
                         'created_at': pub_date or datetime.now(timezone.utc),
-                        'like_count': 0,  # Most RSS feeds don't have engagement metrics
-                        'reply_count': 0,  # Could be populated if RSS feed includes comment counts
+                        'like_count': 0,
+                        'reply_count': 0,
                         'metadata': {
                             'feed_url': feed_url,
                             'feed_title': feed_data['title'],
                             'entry_title': entry.get('title', ''),
                             'entry_author': entry.get('author', ''),
                             'entry_tags': [tag.term for tag in getattr(entry, 'tags', [])],
-                            'full_content': content
+                            'rss_content': rss_content,  # Keep original RSS content as backup
+                            'content_preview': content_preview
                         }
                     }
                     
