@@ -260,7 +260,7 @@ def get_logger():
 def main():
     """Main entry point"""
     initialize_logging()
-    parser = argparse.ArgumentParser(description='Colino - Your hackable RSS feed aggregator')
+    parser = argparse.ArgumentParser(description='Colino - News and digests from the terminal')
     
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     
