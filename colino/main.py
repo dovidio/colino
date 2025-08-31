@@ -118,35 +118,6 @@ def fetch_youtube_posts(since_hours: int = None):
         get_logger().error(f"Error fetching YouTube posts: {e}")
         return []
 
-def list_youtube_channels():
-    """List subscribed YouTube channels"""
-    get_logger().info("Listing YouTube channels...")
-    
-    try:
-        youtube_source = YouTubeSource()
-        if not youtube_source.is_authenticated():
-            print("❌ Not authenticated with YouTube")
-            print("   Run: python src/main.py authenticate --source youtube")
-            return
-
-        channels = youtube_source.get_subscribed_channels()
-        print(f"\n📺 Your YouTube Subscriptions ({len(channels)} channels):\n")
-        if not channels:
-            print("  No subscriptions found")
-            print("  Make sure you're subscribed to some channels on YouTube")
-            return
-        for i, channel in enumerate(channels, 1):
-            print(f"     Channel ID: {channel['id']}")
-            print(f"     Subscribers: {channel.get('subscriber_count', 'Unknown')}")
-            print(f"     RSS Feed: https://www.youtube.com/feeds/videos.xml?channel_id={channel['id']}")
-            print()
-        # Placeholder implementation
-        print("❌ YouTube channel listing not yet implemented")
-        print("   This feature is in development")
-    except Exception as e:
-        get_logger().error(f"Error listing YouTube channels: {e}")
-        print(f"❌ Error: {e}")
-
 def apply_content_filter(posts: List[dict]) -> List[dict]:
     """Apply keyword filtering to posts"""
     filtered_posts = []
@@ -552,9 +523,6 @@ def main():
     ingest_parser.add_argument('--all', action='store_true', help='Ingest from all configured sources (default)')
     ingest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
     
-    # List channels command
-    channels_parser = subparsers.add_parser('channels', help='List subscribed channels (YouTube only)')
-    
     # Discover command
     discover_parser = subparsers.add_parser('discover', help='Discover RSS feeds from a website')
     discover_parser.add_argument('url', help='Website URL to scan for RSS feeds')
@@ -616,9 +584,6 @@ def main():
                     sources.append('youtube')
             
             ingest(sources, args.hours)
-        
-        elif args.command == 'channels':
-            list_youtube_channels()
         
         elif args.command == 'discover':
             discover_rss_feeds(args.url)
