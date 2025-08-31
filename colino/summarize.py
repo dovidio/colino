@@ -15,13 +15,22 @@ class DigestGenerator:
         Config.validate_openai_config()
         self.client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
     
-    def _load_prompt_template(self, config_key: str, fallback_paths: List[str]) -> str:
+    def _get_fallback_template_paths(self, filename: str) -> List[str]:
+        """Generate standard fallback paths for a template filename"""
+        return [
+            f'src/templates/{filename}',
+            f'templates/{filename}',
+            os.path.expanduser(f'~/.config/colino/templates/{filename}')
+        ]
+    
+    def _load_prompt_template(self, config_key: str, template_filename: str) -> str:
         """Load prompt template from config or fallback file paths"""
         # First try to get prompt from config
         template_content = getattr(Config, config_key, None)
         
         # If no prompt in config, try template files (backward compatibility)
         if not template_content:
+            fallback_paths = self._get_fallback_template_paths(template_filename)
             for template_path in fallback_paths:
                 if os.path.exists(template_path):
                     with open(template_path, 'r') as f:
@@ -68,13 +77,7 @@ class DigestGenerator:
 
     def _create_video_prompt(self, transcript: str) -> str:
         """Create the prompt for video digest generation"""
-        fallback_paths = [
-            'src/templates/youtube_digest_prompt.txt',
-            'templates/youtube_digest_prompt.txt',
-            os.path.expanduser('~/.config/colino/templates/youtube_digest_prompt.txt')
-        ]
-        
-        template_content = self._load_prompt_template('AI_PROMPT_YOUTUBE', fallback_paths)
+        template_content = self._load_prompt_template('AI_PROMPT_YOUTUBE', 'youtube_digest_prompt.txt')
         template = Template(template_content)
         return template.render(transcript=transcript)
 
@@ -103,13 +106,7 @@ class DigestGenerator:
 
     def _create_article_prompt(self, article: Dict[str, Any]) -> str:
         """Create the prompt for single article digest generation"""
-        fallback_paths = [
-            'src/templates/article_digest_prompt.txt',
-            'templates/article_digest_prompt.txt',
-            os.path.expanduser('~/.config/colino/templates/article_digest_prompt.txt')
-        ]
-        
-        template_content = self._load_prompt_template('AI_ARTICLE_PROMPT_TEMPLATE', fallback_paths)
+        template_content = self._load_prompt_template('AI_ARTICLE_PROMPT_TEMPLATE', 'article_digest_prompt.txt')
         
         # Prepare article data for template
         template_article = {
@@ -152,13 +149,7 @@ class DigestGenerator:
     
     def _create_multi_article_prompt(self, articles: List[Dict[str, Any]]) -> str:
         """Create the prompt for multi-article digest generation"""
-        fallback_paths = [
-            'src/templates/digest_prompt.txt',
-            'templates/digest_prompt.txt',
-            os.path.expanduser('~/.config/colino/templates/digest_prompt.txt')
-        ]
-        
-        template_content = self._load_prompt_template('AI_PROMPT_TEMPLATE', fallback_paths)
+        template_content = self._load_prompt_template('AI_PROMPT_TEMPLATE', 'digest_prompt.txt')
         
         # Prepare article data for template
         template_articles = []
