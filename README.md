@@ -45,6 +45,7 @@ Or you can choose to digest only content from a specific source:
 ```bash
 poetry build
 pipx install dist/colino-*.whl
+
 ```
 
 ### Feedback and contribution

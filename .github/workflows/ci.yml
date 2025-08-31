@@ -29,6 +29,6 @@ jobs:
     
     - name: Run mypy type checker
       run: poetry run mypy colino/
-    
+      
     - name: Check package builds
       run: poetry build

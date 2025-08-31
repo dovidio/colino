@@ -1,3 +1,4 @@
+
 import json
 import logging
 import sqlite3
@@ -102,7 +103,6 @@ class Database:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute(query, params)
-
             rows = cursor.fetchall()
             if len(rows) != 1:
                 logger.info(f"Couldn't find content with id: {id}")
@@ -186,6 +186,7 @@ class Database:
                         datetime.now(UTC).isoformat(),
                     ),
                 )
+
             return True
         except Exception as e:
             print(f"Error saving youtube subscription {sub.get('channel_id')}: {e}")

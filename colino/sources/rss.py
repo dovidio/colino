@@ -1,3 +1,4 @@
+
 import logging
 import re
 from datetime import UTC, datetime
@@ -71,12 +72,12 @@ class RSSSource(BaseSource):
     ) -> list[dict[str, Any]]:
         """Get recent posts from multiple RSS feeds"""
         all_posts = []
-
         for feed_url in feed_urls:
             try:
                 feed_data = self.parse_feed(feed_url)
                 if not feed_data:
                     continue
+
 
                 for entry in feed_data["entries"]:
                     post_data = self._process_rss_entry(
