@@ -196,7 +196,6 @@ class YouTubeSource:
         if not video_id:
             return post_data
         
-        # Get transcript
         transcript = self.get_video_transcript(video_id)
         
         if transcript:

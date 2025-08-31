@@ -99,6 +99,14 @@ def fetch_youtube_posts(since_hours: int = None):
                 post['source'] = 'youtube'
                 post['metadata']['video_id'] = youtube_source.extract_video_id(post['url'])
                 post['metadata']['channel_id'] = channel['channel_id']
+                
+                # Check if we already have this content in the database
+                existing_content = db.get_content_by(post['url'])
+                if existing_content:
+                    get_logger().debug(f"YouTube video already exists in cache: {post['url']}, skipping")
+                    continue
+                
+                # Enhance with transcript only for new posts
                 post = youtube_source.enhance_youtube_post(post)
                 youtube_posts.append(post)
 
