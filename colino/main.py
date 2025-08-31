@@ -23,7 +23,9 @@ def setup_database() -> Database:
     return db
 
 
-def ingest(sources: list[str] | None = None, since_hours: int | None = None) -> list[dict[str, Any]]:
+def ingest(
+    sources: list[str] | None = None, since_hours: int | None = None
+) -> list[dict[str, Any]]:
     """Ingest content from specified sources"""
     db = setup_database()
     ingest_manager = IngestManager(db)

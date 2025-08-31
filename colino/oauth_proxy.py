@@ -233,7 +233,7 @@ class TokenManager:
         self._authenticate()
         if self._access_token:
             return self._access_token
-        
+
         raise Exception("Failed to obtain access token")
 
     def authenticate(self) -> str:
@@ -246,7 +246,7 @@ class TokenManager:
         self._authenticate()
         if self._access_token:
             return self._access_token
-        
+
         raise Exception("Failed to authenticate")
 
     def _authenticate(self) -> None:
@@ -264,7 +264,7 @@ class TokenManager:
         """Refresh the access token"""
         if self._refresh_token is None:
             raise Exception("No refresh token available")
-            
+
         new_access_token = self.oauth_client.refresh_token(self._refresh_token)
 
         self._access_token = new_access_token
@@ -304,7 +304,7 @@ class TokenManager:
             if self._access_token is None:
                 logger.error("Cannot save tokens: access_token is None")
                 return
-                
+
             success = self.db.save_oauth_tokens(
                 service=self.service,
                 access_token=self._access_token,

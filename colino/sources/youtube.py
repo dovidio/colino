@@ -272,7 +272,9 @@ class YouTubeSource(BaseSource):
 
         return post_data
 
-    def sync_subscriptions_to_db(self, subscriptions: list[dict[str, Any]], db: Database) -> int:
+    def sync_subscriptions_to_db(
+        self, subscriptions: list[dict[str, Any]], db: Database
+    ) -> int:
         """Sync YouTube subscriptions to database"""
         saved_count = 0
         for sub in subscriptions:
