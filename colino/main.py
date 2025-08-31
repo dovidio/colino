@@ -26,18 +26,30 @@ def setup_database():
     db = Database()
     return db
 
-def fetch_posts(source: str = "rss", feed_urls: List[str] = None, since_hours: int = None):
-    """Fetch posts from specified source"""
-    if source == "rss":
-        return fetch_rss_posts(feed_urls, since_hours)
-    elif source == "youtube":
-        return fetch_youtube_posts(since_hours)
-    else:
-        raise ValueError(f"Unknown source: {source}")
+def ingest(sources: List[str] = None, since_hours: int = None):
+    """Ingest content from specified sources"""
+    sources = sources or ["rss", "youtube"]  # Default to all sources
+    all_posts = []
+    
+    for source in sources:
+        if source == "rss":
+            print("📰 RSS: Fetching posts from RSS feeds")
+            posts = ingest_rss(since_hours)
+            all_posts.extend(posts)
+            print(f"✅ Fetched {len(posts)} new posts from RSS feeds")
+        elif source == "youtube":
+            print("📺 YouTube: Fetching posts from YouTube subscriptions")
+            posts = fetch_youtube_posts(since_hours)
+            all_posts.extend(posts)
+            print(f"✅ Fetched {len(posts)} posts from YouTube")
+        else:
+            raise ValueError(f"Unknown source: {source}")
+    
+    return all_posts
 
-def fetch_rss_posts(feed_urls: List[str] = None, since_hours: int = None):
-    """Fetch posts from RSS feeds"""
-    feed_urls = feed_urls or Config.RSS_FEEDS
+def ingest_rss(since_hours: int = None):
+    """Ingest posts from RSS feeds"""
+    feed_urls = Config.RSS_FEEDS
     since_hours = since_hours or Config.DEFAULT_LOOKBACK_HOURS
     since_time = datetime.now(timezone.utc) - timedelta(hours=since_hours)
     if not feed_urls:
@@ -176,7 +188,7 @@ def discover_rss_feeds(website_url: str):
         
         print(f"\n💡 To use these feeds:")
         print(f"   Add to .env: RSS_FEEDS={','.join(feed_urls)}")
-        print(f"   Or test individually: python src/main.py ingest --urls {feed_urls[0]}")
+        print(f"   Or test individually: python src/main.py test {feed_urls[0]}")
 
 def test_feed(feed_url: str):
     """Test a single RSS feed"""
@@ -535,9 +547,9 @@ def main():
     
     # Ingest command
     ingest_parser = subparsers.add_parser('ingest', help='Ingest from RSS feeds or other sources')
-    ingest_parser.add_argument('--source', choices=['rss', 'youtube'], default='rss', 
-                            help='Source to ingest from (default: rss)')
-    ingest_parser.add_argument('--urls', nargs='+', help='Specific RSS feed URLs to ingest from (RSS only)')
+    ingest_parser.add_argument('--rss', action='store_true', help='Ingest from RSS feeds')
+    ingest_parser.add_argument('--youtube', action='store_true', help='Ingest from YouTube subscriptions')
+    ingest_parser.add_argument('--all', action='store_true', help='Ingest from all configured sources (default)')
     ingest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
     
     # List channels command
@@ -582,18 +594,28 @@ def main():
     if not args.command:
         parser.print_help()
         print(f"\n💡 Quick start:")
-        print(f"   RSS: Add feeds to config.yaml, then run: python src/main.py ingest")
+        print(f"   RSS: Add feeds to config.yaml, then run: python src/main.py ingest --rss")
         print(f"   YouTube: Run: python src/main.py authenticate --source youtube")
-        print(f"   Then: python src/main.py ingest --source youtube")
+        print(f"   Then: python src/main.py ingest --youtube")
+        print(f"   All sources: python src/main.py ingest --all (or just: python src/main.py ingest)")
         print(f"   View: python src/main.py list")
         return
     
     try:
         if args.command == 'ingest':
-            if args.source == 'rss' and args.urls:
-                fetch_posts('rss', args.urls, args.hours)
+            # Determine which sources to ingest from
+            sources = []
+            
+            # If no flags are specified or --all is specified, ingest from all sources
+            if args.all or (not args.rss and not args.youtube):
+                sources = ['rss', 'youtube']
             else:
-                fetch_posts(args.source, None, args.hours)
+                if args.rss:
+                    sources.append('rss')
+                if args.youtube:
+                    sources.append('youtube')
+            
+            ingest(sources, args.hours)
         
         elif args.command == 'channels':
             list_youtube_channels()

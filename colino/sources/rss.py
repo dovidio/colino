@@ -82,7 +82,6 @@ class RSSSource:
                         existing_content = self.db.get_content_by(post_id)
                         if existing_content:
                             logger.debug(f"Content already exists for {post_id}, using cached version")
-                            all_posts.append(existing_content)
                             continue
                     
                     # Extract initial content from RSS
