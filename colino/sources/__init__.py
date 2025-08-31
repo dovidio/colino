@@ -1,4 +1,3 @@
-
 """
 Content sources for Colino
 
