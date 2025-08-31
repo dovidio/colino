@@ -109,6 +109,29 @@ class Database:
             
             return content
 
+    def get_content_by_url(self, url: str) -> Dict[str, Any]:
+        """Get content by URL""" 
+        query = "SELECT * FROM content_cache WHERE url = ? ORDER BY created_at DESC" 
+        params = [url]
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(query, params)
+            
+            rows = cursor.fetchall()
+            if len(rows) == 0:
+                logger.debug(f"Couldn't find content with URL: {url}")
+                return None
+            
+            # If multiple entries exist with same URL, return the most recent one
+            if len(rows) > 1:
+                logger.debug(f"Found {len(rows)} entries with URL {url}, returning most recent")
+            
+            content = dict(rows[0])  # Most recent due to ORDER BY in query
+            if content['metadata']:
+                content['metadata'] = json.loads(content['metadata'])
+            
+            return content
+
     def get_content_since(self, since: datetime, source: str = None) -> List[Dict[str, Any]]:
         """Get content since a specific timestamp"""
         query = "SELECT * FROM content_cache WHERE datetime(created_at) >= datetime(?)"

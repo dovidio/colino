@@ -274,7 +274,7 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
         get_logger().error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
 
-def generate_youtube_digest(youtube_video_url: str, output_file: str = None, source: str = None):
+def generate_youtube_digest(youtube_video_url: str, output_file: str = None):
     print(f"Generating youtube digest for video {youtube_video_url}")
     youtube_source = YouTubeSource()
     video_id = youtube_source.extract_video_id(youtube_video_url)
@@ -282,29 +282,14 @@ def generate_youtube_digest(youtube_video_url: str, output_file: str = None, sou
 
     if not transcript:
         print("Sorry, the video doesn't have transcript 😭")
+        return
 
     try:
         digest_generator = DigestGenerator()
         digest_content = digest_generator.summarize_video(transcript)
-        # Auto-save if enabled or output_file specified
-        if output_file or Config.AI_AUTO_SAVE:
-            if not output_file:
-                # Auto-generate filename
-                import os
-                os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                source_suffix = "_youtube_video" 
-                output_file = f"{Config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
-            
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(digest_content)
-            print(f"✅ Digest saved to {output_file}")
         
-        # Always show digest in console unless explicitly saving to file
-        if not output_file or Config.AI_AUTO_SAVE:
-            print("\n" + "="*60)
-            print(digest_content)
-            print("="*60)
+        # Save or display digest
+        _save_or_display_digest(digest_content, output_file, "youtube_video")
             
     except ValueError as e:
         if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
@@ -321,30 +306,17 @@ def generate_post_digest(post_id: str, output_file: str = None):
     db = setup_database()
     post = db.get_content_by(id=post_id)
 
+    if not post:
+        print(f"❌ Post not found with ID: {post_id}")
+        return
+
     try:
         # Generate digest
         digest_generator = DigestGenerator()
         digest_content = digest_generator.summarize_article(post)
         
-        # Auto-save if enabled or output_file specified
-        if output_file or Config.AI_AUTO_SAVE:
-            if not output_file:
-                # Auto-generate filename
-                import os
-                os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                source_suffix = post['source'] 
-                output_file = f"{Config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
-            
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(digest_content)
-            print(f"✅ Digest saved to {output_file}")
-        
-        # Always show digest in console unless explicitly saving to file
-        if not output_file or Config.AI_AUTO_SAVE:
-            print("\n" + "="*60)
-            print(digest_content)
-            print("="*60)
+        # Save or display digest
+        _save_or_display_digest(digest_content, output_file, post['source'])
             
     except ValueError as e:
         if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
@@ -357,6 +329,123 @@ def generate_post_digest(post_id: str, output_file: str = None):
         get_logger().error(f"Error generating digest: {e}")
         print(f"❌ Error generating digest: {e}")
 
+def digest_url(url: str, output_file: str = None):
+    """Digest content from a specific URL"""
+    get_logger().info(f"Processing digest for URL: {url}")
+    
+    try:
+        db = setup_database()
+        
+        # First, try to find content by ID (the URL itself might be the ID)
+        existing_content = db.get_content_by(url)
+        
+        # If not found by ID, try to find by URL
+        if not existing_content:
+            existing_content = db.get_content_by_url(url)
+        
+        if existing_content:
+            print(f"✅ Found cached content for {url}")
+            print(f"   Source: {existing_content['source']}")
+            print(f"   Cached at: {existing_content['fetched_at']}")
+            
+            # Generate digest from cached content
+            digest_generator = DigestGenerator()
+            digest_content = digest_generator.summarize_article(existing_content)
+            
+            # Save or display digest
+            _save_or_display_digest(digest_content, output_file, f"cached_{existing_content['source']}")
+        
+        else:
+            print(f"🔍 Content not found in cache for {url}")
+            
+            # Check if it's a YouTube URL
+            youtube_source = YouTubeSource()
+            video_id = youtube_source.extract_video_id(url)
+            
+            if video_id:
+                print(f"📺 Detected YouTube video: {video_id}")
+                print("🎬 Fetching transcript...")
+                
+                # Fetch transcript directly
+                transcript = youtube_source.get_video_transcript(video_id)
+                
+                if not transcript:
+                    print("❌ No transcript available for this video")
+                    return
+                
+                print(f"✅ Extracted transcript ({len(transcript)} characters)")
+                
+                # Generate digest from transcript
+                digest_generator = DigestGenerator()
+                digest_content = digest_generator.summarize_video(transcript)
+                
+                # Save or display digest
+                _save_or_display_digest(digest_content, output_file, "youtube_video")
+            
+            else:
+                print(f"🌐 Detected website URL")
+                print("📄 Fetching and processing content...")
+                
+                # For regular websites, use RSS scraper to get content
+                rss_source = RSSSource()
+                scraped_content = rss_source.scraper.scrape_article_content(url)
+                
+                if not scraped_content:
+                    print("❌ Could not extract content from the website")
+                    return
+                
+                print(f"✅ Extracted content ({len(scraped_content)} characters)")
+                
+                # Create article data structure for digest
+                article_data = {
+                    'title': 'Scraped Article',
+                    'feed_title': '',
+                    'content': scraped_content,
+                    'url': url,
+                    'source': 'website',
+                    'published': datetime.now().isoformat()
+                }
+                
+                # Generate digest
+                digest_generator = DigestGenerator()
+                digest_content = digest_generator.generate_llm_article_digest(article_data)
+                
+                # Save or display digest
+                _save_or_display_digest(digest_content, output_file, "website")
+                
+    except ValueError as e:
+        if "openai_api_key" in str(e) or "Incorrect API key" in str(e):
+            print("❌ OpenAI API key not configured or invalid")
+            print("   Set environment variable: export OPENAI_API_KEY='your_key_here'")
+            print("   Get one from: https://platform.openai.com/api-keys")
+        else:
+            print(f"❌ Configuration error: {e}")
+    except Exception as e:
+        get_logger().error(f"Error processing URL digest: {e}")
+        print(f"❌ Error processing URL: {e}")
+
+def _save_or_display_digest(digest_content: str, output_file: str = None, source_type: str = ""):
+    """Helper function to save or display digest content"""
+    # Auto-save if enabled or output_file specified
+    if output_file or Config.AI_AUTO_SAVE:
+        if not output_file:
+            # Auto-generate filename
+            import os
+            os.makedirs(Config.AI_SAVE_DIRECTORY, exist_ok=True)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            source_suffix = f"_{source_type}" if source_type else ""
+            output_file = f"{Config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(digest_content)
+        print(f"✅ Digest saved to {output_file}")
+    
+    # Always show digest in console unless explicitly saving to file
+    if not output_file or Config.AI_AUTO_SAVE:
+        print("\n" + "="*60)
+        print(digest_content)
+        print("="*60)
+        
 def initialize_logging():
     log_dir = Path.home() / "Library" / "Logs" / "Colino"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -409,16 +498,13 @@ def main():
     list_parser.add_argument('--source', choices=['rss', 'youtube'], help='Filter by source')
     
     # Digest command
-    digest_parser = subparsers.add_parser('digest', help='Generate AI-powered summary of recent articles')
-    digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
+    digest_parser = subparsers.add_parser('digest', help='Generate AI-powered summary of recent articles or specific URLs')
+    digest_parser.add_argument('url', nargs='?', help='URL to digest (YouTube video or website)')
+    digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24) - for recent articles mode')
     digest_parser.add_argument('--output', help='Save digest to file instead of displaying')
-    digest_parser.add_argument('--source', choices=['rss', 'youtube'], help='Generate digest for specific source')
-    
-    digest_subparsers = digest_parser.add_subparsers(dest='subcommand', help='the possible digest subcommands')
-    digest_post_parser = digest_subparsers.add_parser('post', help='Generate AI-Powered summary of a given post')
-    digest_post_parser.add_argument('--post-id', required=True, type=str, help='The post id, viewable using the list command')
-    digest_youtube_parser = digest_subparsers.add_parser('video', help='Generate AI-Powered summary of a given youtube video') 
-    digest_youtube_parser.add_argument('--youtube-video-url', required=True, type=str, help='The url of the youtube video to summarize')
+    digest_parser.add_argument('--source', choices=['rss', 'youtube'], help='Generate digest for specific source - for recent articles mode')
+    digest_parser.add_argument('--post-id', type=str, help='Generate digest for a specific post ID')
+    digest_parser.add_argument('--youtube-video-url', type=str, help='Generate digest for a specific YouTube video URL')
 
     args = parser.parse_args()
     
@@ -430,6 +516,10 @@ def main():
         print(f"   Then: python src/main.py ingest --youtube")
         print(f"   All sources: python src/main.py ingest --all (or just: python src/main.py ingest)")
         print(f"   View: python src/main.py list")
+        print(f"   Digest URL: python src/main.py digest https://example.com")
+        print(f"   Digest YouTube: python src/main.py digest https://www.youtube.com/watch?v=VIDEO_ID")
+        print(f"   Digest post: python src/main.py digest --post-id POST_ID")
+        print(f"   Digest recent: python src/main.py digest --source rss")
         return
     
     try:
@@ -454,14 +544,19 @@ def main():
         elif args.command == 'list':
             list_recent_posts(args.hours, args.limit, args.source)
         
-        elif args.command == 'digest' and args.subcommand == 'post':
-            generate_post_digest(args.post_id)
-
-        elif args.command == 'digest' and args.subcommand == 'video':
-            generate_youtube_digest(args.youtube_video_url)
-            
-        elif args.command == 'digest' and not args.subcommand:
-            generate_digest(args.hours, args.output, args.source)
+        elif args.command == 'digest':
+            if args.post_id:
+                # Digest specific post by ID
+                generate_post_digest(args.post_id, args.output)
+            elif args.youtube_video_url:
+                # Digest specific YouTube video
+                generate_youtube_digest(args.youtube_video_url, args.output)
+            elif args.url:
+                # Digest specific URL
+                digest_url(args.url, args.output)
+            else:
+                # Digest recent articles
+                generate_digest(args.hours, args.output, args.source)
         
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")
