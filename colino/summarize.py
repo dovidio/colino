@@ -77,18 +77,6 @@ class DigestGenerator:
         feed_title = metadata.get('feed_title', '')
         url = article.get('url', '')
         source = article.get('author_display_name', 'Unknown source')
-        
-        # For YouTube content, use transcript if available
-        if article.get('source') == 'youtube':
-            full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
-            if full_content:
-                content = full_content
-        
-        # Limit content length for LLM processing if needed
-        max_chars = 8000  # Roughly 2000 tokens
-        if len(content) > max_chars:
-            content = content[:max_chars] + "..."
-            logger.info(f"Truncated content for LLM processing: {title}")
 
         article_data = {
             'title': title,
@@ -195,18 +183,6 @@ class DigestGenerator:
             feed_title = metadata.get('feed_title', '')
             url = article.get('url', '')
             source = article.get('author_display_name', 'Unknown source')
-            
-            # For YouTube content, use transcript if available
-            if article.get('source') == 'youtube':
-                full_content = metadata.get('youtube_transcript', metadata.get('full_content', ''))
-                if full_content:
-                    content = full_content
-            
-            # Limit content length for LLM processing if needed
-            max_chars = 8000  # Roughly 2000 tokens
-            if len(content) > max_chars:
-                content = content[:max_chars] + "..."
-                logger.debug(f"Truncated content for LLM processing: {title}")
             
             article_summaries.append({
                 'title': title,

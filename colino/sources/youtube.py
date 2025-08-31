@@ -200,19 +200,17 @@ class YouTubeSource:
         transcript = self.get_video_transcript(video_id)
         
         if transcript:
-            # Add transcript to metadata
+            # Add video ID to metadata for reference
             if 'metadata' not in post_data:
                 post_data['metadata'] = {}
             
             post_data['metadata']['youtube_video_id'] = video_id
-            post_data['metadata']['youtube_transcript'] = transcript
             
-            # Enhance content with transcript preview
-            transcript_preview = transcript[:300] + "..." if len(transcript) > 300 else transcript
+            # Append full transcript to content
             original_content = post_data.get('content', '')
-            post_data['content'] = f"{original_content}\n\nTranscript preview: {transcript_preview}"
+            post_data['content'] = f"{original_content}\n\n--- YouTube Transcript ---\n{transcript}"
             
-            logger.info(f"Enhanced YouTube post {video_id} with transcript")
+            logger.info(f"Enhanced YouTube post {video_id} with full transcript ({len(transcript)} chars)")
         
         return post_data
     
