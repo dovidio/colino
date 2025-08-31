@@ -15,16 +15,18 @@ from youtube_transcript_api.formatters import TextFormatter
 
 from ..config import Config
 from ..oauth_proxy import OAuthProxyClient, TokenManager
+from .base import BaseSource
 
 logger = logging.getLogger(__name__)
 
-class YouTubeSource:
+class YouTubeSource(BaseSource):
     """YouTube source for fetching subscriptions and video transcripts"""
     
     # YouTube API scopes
     SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
     
     def __init__(self, db=None):
+        super().__init__(db)
         self.credentials = None
         self.youtube_service = None
         self.session = requests.Session()
@@ -32,17 +34,68 @@ class YouTubeSource:
             'User-Agent': Config.RSS_USER_AGENT
         })
         
-        # Initialize database if not provided
-        if db is None:
-            from ..db import Database
-            self.db = Database()
-        else:
-            self.db = db
-        
         # Initialize OAuth proxy client (always used)
         self.oauth_client = OAuthProxyClient(Config.YOUTUBE_OAUTH_PROXY_URL)
         self.token_manager = TokenManager(self.oauth_client, self.db, "youtube")
     
+    @property
+    def source_name(self) -> str:
+        return 'youtube'
+    
+    def get_recent_content(self, since_time: datetime = None) -> List[Dict[str, Any]]:
+        """Get recent content from YouTube subscriptions"""
+        if not self.authenticate():
+            logger.error("YouTube authentication required")
+            return []
+        
+        try:
+            # Get subscriptions and their RSS feeds
+            subscriptions = self.get_subscriptions()
+            self.sync_subscriptions_to_db(subscriptions, self.db)
+            
+            if not subscriptions:
+                logger.warning("No YouTube channels found")
+                return []
+            
+            # Import here to avoid circular dependency
+            from .rss import RSSSource
+            rss_source = RSSSource(db=self.db)
+            
+            # Get RSS feeds for all subscriptions
+            rss_feeds = [sub['rss_url'] for sub in subscriptions]
+            
+            # Fetch posts from RSS feeds
+            youtube_posts = rss_source.get_posts_from_feeds(rss_feeds, since_time)
+            
+            # Process each post to add YouTube-specific metadata and transcripts
+            processed_posts = []
+            for post in youtube_posts:
+                # Set source to youtube instead of rss
+                post['source'] = 'youtube'
+                
+                # Add YouTube-specific metadata
+                video_id = self.extract_video_id(post['url'])
+                if video_id:
+                    post['metadata']['video_id'] = video_id
+                    
+                    # Find the channel info for this post
+                    for sub in subscriptions:
+                        if sub['rss_url'] == post['metadata'].get('feed_url'):
+                            post['metadata']['channel_id'] = sub['channel_id']
+                            break
+                    
+                    # Enhance with transcript if available
+                    post = self.enhance_youtube_post(post)
+                
+                processed_posts.append(post)
+            
+            logger.info(f"Successfully processed {len(processed_posts)} YouTube posts")
+            return processed_posts
+            
+        except Exception as e:
+            logger.error(f"Error fetching YouTube posts: {e}")
+            return []
+
     def authenticate(self) -> bool:
         """Authenticate with YouTube API using OAuth proxy"""
         try:
@@ -117,11 +170,6 @@ class YouTubeSource:
         logger.info(f"Retrieved {len(subscriptions)} YouTube subscriptions")
         return subscriptions
     
-    def get_rss_feeds(self) -> List[str]:
-        """Get RSS feed URLs for all subscriptions"""
-        subscriptions = self.get_subscriptions()
-        return [sub['rss_url'] for sub in subscriptions]
-    
     def extract_video_id(self, url: str) -> Optional[str]:
         """Extract YouTube video ID from URL"""
         
@@ -156,13 +204,6 @@ class YouTubeSource:
                         return url.split('/v/')[-1].split('?')[0]
         
         return None
-
-    def is_youtube_shorts(self, url: str) -> bool:
-        """Check if a URL is a YouTube Shorts video"""
-        if not url:
-            return False
-        
-        return '/shorts/' in url
     
     def get_video_transcript(self, video_id: str) -> Optional[str]:
         """Get transcript for a YouTube video"""
@@ -244,8 +285,3 @@ class YouTubeSource:
         except Exception as e:
             logger.error(f"Error getting synced YouTube feeds: {e}")
             return []
-
-    @property
-    def is_authenticated(self) -> bool:
-        """Check if the YouTube service is authenticated and ready."""
-        return self.youtube_service is not None

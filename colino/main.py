@@ -50,10 +50,6 @@ def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
         print("  No posts found. Try:")
         print("  - Increasing the time range with --hours")
         print("  - Running 'python src/main.py ingest' to get new posts")
-        if not source:
-            print("  - Adding more RSS feeds to your configuration")
-            print("  - Setting up YouTube with: python src/main.py authenticate --source youtube")
-        return
     
     for i, post in enumerate(posts, 1):
         created_at = datetime.fromisoformat(post['created_at']).strftime('%Y-%m-%d %H:%M')
@@ -157,8 +153,7 @@ def main():
         parser.print_help()
         print(f"\n💡 Quick start:")
         print(f"   RSS: Add feeds to config.yaml, then run: python src/main.py ingest --rss")
-        print(f"   YouTube: Run: python src/main.py authenticate --source youtube")
-        print(f"   Then: python src/main.py ingest --youtube")
+        print(f"   YouTube: Run: python src/main.py ingest --youtube")
         print(f"   All sources: python src/main.py ingest --all (or just: python src/main.py ingest)")
         print(f"   View: python src/main.py list")
         print(f"   Digest URL: python src/main.py digest https://example.com")
