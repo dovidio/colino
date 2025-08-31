@@ -93,14 +93,14 @@ class RSSSource(BaseSource):
         pub_date = self._parse_entry_date(entry)
         
         # Create unique ID for the post
-        post_id = entry.get('id', entry.get('link', ''))
-        if not post_id:
+        entry_id = entry.get('id', entry.get('link', ''))
+        if not entry_id:
             return None
         
         article_url = entry.get('link', '')
         
         # Skip if should be filtered out
-        if self._should_skip_post(article_url, since_time, pub_date):
+        if self._should_skip_content(entry_id, article_url, since_time, pub_date):
             return None
         
         # Extract and enhance content
@@ -112,7 +112,7 @@ class RSSSource(BaseSource):
         
         # Create standardized post data
         return self._create_post_data(
-            id=post_id,
+            id=entry_id,
             source='rss',
             author_username=feed_data['title'],
             author_display_name=feed_data['title'],
@@ -151,11 +151,12 @@ class RSSSource(BaseSource):
         
         return required_fields
 
-    def _should_skip_post(self, url: str, since_time: datetime = None, pub_date: datetime = None) -> bool:
+    def _should_skip_content(self, id: str, url: str, since_time: datetime = None, pub_date: datetime = None) -> bool:
         """
         Common logic to determine if a post should be skipped
         
         Args:
+            id: Unique content ID
             url: Post URL
             since_time: Time threshold for filtering
             pub_date: Publication date of the post
@@ -163,13 +164,11 @@ class RSSSource(BaseSource):
         Returns:
             True if the post should be skipped
         """
-        # Skip if too old
         if since_time and pub_date and pub_date < since_time:
             logger.debug(f"Skipping old post: {url}")
             return True
-        
-        # Check if already in cache
-        if self.db and self.db.get_content_by(url):
+
+        if self.db.get_content_by(id):
             logger.debug(f"Content already exists for {url}, skipping")
             return True
         

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class BaseSource(ABC):
     """Abstract base class for all content sources"""
     
-    def __init__(self, db=None):
+    def __init__(self, db):
         self.db = db
     
     @abstractmethod
