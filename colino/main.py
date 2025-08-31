@@ -224,16 +224,6 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
     digest_manager = DigestManager()
     return digest_manager.digest_recent_articles(hours, output_file, source)
 
-def generate_youtube_digest(youtube_video_url: str, output_file: str = None):
-    """Generate digest for a specific YouTube video"""
-    digest_manager = DigestManager()
-    return digest_manager.digest_youtube_video(youtube_video_url, output_file)
-
-def generate_post_digest(post_id: str, output_file: str = None):
-    """Generate digest for a specific post"""
-    digest_manager = DigestManager()
-    return digest_manager.digest_post(post_id, output_file)
-
 def digest_url(url: str, output_file: str = None):
     """Digest content from a specific URL"""
     digest_manager = DigestManager()
@@ -297,8 +287,6 @@ def main():
     digest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24) - for recent articles mode')
     digest_parser.add_argument('--output', help='Save digest to file instead of displaying')
     digest_parser.add_argument('--source', choices=['rss', 'youtube'], help='Generate digest for specific source - for recent articles mode')
-    digest_parser.add_argument('--post-id', type=str, help='Generate digest for a specific post ID')
-    digest_parser.add_argument('--youtube-video-url', type=str, help='Generate digest for a specific YouTube video URL')
 
     args = parser.parse_args()
     
@@ -312,7 +300,6 @@ def main():
         print(f"   View: python src/main.py list")
         print(f"   Digest URL: python src/main.py digest https://example.com")
         print(f"   Digest YouTube: python src/main.py digest https://www.youtube.com/watch?v=VIDEO_ID")
-        print(f"   Digest post: python src/main.py digest --post-id POST_ID")
         print(f"   Digest recent: python src/main.py digest --source rss")
         return
     
@@ -339,13 +326,7 @@ def main():
             list_recent_posts(args.hours, args.limit, args.source)
         
         elif args.command == 'digest':
-            if args.post_id:
-                # Digest specific post by ID
-                generate_post_digest(args.post_id, args.output)
-            elif args.youtube_video_url:
-                # Digest specific YouTube video
-                generate_youtube_digest(args.youtube_video_url, args.output)
-            elif args.url:
+            if args.url:
                 # Digest specific URL
                 digest_url(args.url, args.output)
             else:
