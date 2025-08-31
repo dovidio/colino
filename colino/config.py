@@ -42,7 +42,6 @@ class Config:
     # YouTube Properties
     @property
     def YOUTUBE_OAUTH_PROXY_URL(self) -> str:
-        """Hardcoded OAuth proxy URL for YouTube authentication"""
         return "https://oqh6f9ear9.execute-api.us-east-1.amazonaws.com/Prod"
     
     @property
@@ -117,11 +116,6 @@ class Config:
         """Validate OpenAI API credentials"""
         if not self.OPENAI_API_KEY:
             raise ValueError("Missing OPENAI_API_KEY environment variable. Get one from https://platform.openai.com/api-keys")
-        return True
-    
-    def validate_youtube_config(self):
-        """Validate YouTube API credentials - OAuth proxy is always used"""
-        # OAuth proxy URL is hardcoded, no validation needed
         return True
 
 # Create global config instance
