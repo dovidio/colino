@@ -54,7 +54,7 @@ def fetch_rss_posts(feed_urls: List[str] = None, since_hours: int = None):
     # Save posts to database
     saved_count = 0
     for post in posts:
-        if db.save_post(post):
+        if db.save_content(post):
             saved_count += 1
     get_logger().info(f"Successfully saved {saved_count}/{len(posts)} RSS posts")
     return posts
@@ -96,7 +96,7 @@ def fetch_youtube_posts(since_hours: int = None):
 
         saved_count = 0
         for post in youtube_posts:
-            if db.save_post(post):
+            if db.save_content(post):
                 saved_count += 1
 
         get_logger().info(f"Successfully saved {saved_count}/{len(youtube_posts)} YouTube posts")
@@ -207,7 +207,7 @@ def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
     since_time = datetime.now(timezone.utc) - timedelta(hours=hours)
     
     db = setup_database()
-    posts = db.get_posts_since(since_time, source=source)
+    posts = db.get_content_since(since_time, source=source)
     
     if limit:
         posts = posts[:limit]
@@ -263,7 +263,7 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
     
     # Get recent posts from database
     db = setup_database()
-    posts = db.get_posts_since(since_time, source=source)
+    posts = db.get_content_since(since_time, source=source)
     
     if not posts:
         print(f"❌ No posts found{source_filter} from the last {hours} hours")
@@ -461,7 +461,7 @@ def generate_youtube_digest(youtube_video_url: str, output_file: str = None, sou
 
 def generate_post_digest(post_id: str, output_file: str = None):
     db = setup_database()
-    post = db.get_post_by(id=post_id)
+    post = db.get_content_by(id=post_id)
 
     try:
         # Generate digest

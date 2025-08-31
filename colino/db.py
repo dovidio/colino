@@ -64,8 +64,8 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_content_cache_source_author ON content_cache(source, author_username);
             ''')
     
-    def save_post(self, post_data: Dict[str, Any]) -> bool:
-        """Save a post to the database"""
+    def save_content(self, content_data: Dict[str, Any]) -> bool:
+        """Save content to the database"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute('''
@@ -74,44 +74,43 @@ class Database:
                      created_at, metadata, like_count, reply_count)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
-                    post_data['id'],
-                    post_data['source'],
-                    post_data['author_username'],
-                    post_data.get('author_display_name'),
-                    post_data['content'],
-                    post_data.get('url'),
-                    post_data['created_at'],
-                    json.dumps(post_data.get('metadata', {})),
-                    post_data.get('like_count', 0),
-                    post_data.get('reply_count', 0)
+                    content_data['id'],
+                    content_data['source'],
+                    content_data['author_username'],
+                    content_data.get('author_display_name'),
+                    content_data['content'],
+                    content_data.get('url'),
+                    content_data['created_at'],
+                    json.dumps(content_data.get('metadata', {})),
+                    content_data.get('like_count', 0),
+                    content_data.get('reply_count', 0)
                 ))
             return True
         except Exception as e:
-            print(f"Error saving post {post_data.get('id')}: {e}")
+            print(f"Error saving content {content_data.get('id')}: {e}")
             return False
     
-    def get_post_by(self, id: str) -> Dict[str, Any]:
-        """Get post by id""" 
+    def get_content_by(self, id: str) -> Dict[str, Any]:
+        """Get content by id""" 
         query = "SELECT * FROM content_cache WHERE id = ?" 
         params = [id]
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute(query, params)
             
-            posts = []
             rows = cursor.fetchall()
             if len(rows) != 1:
-                logger.info(f"Couldn't find post with id: {id}")
+                logger.info(f"Couldn't find content with id: {id}")
                 return None
 
-            post = dict(rows[0])
-            if post['metadata']:
-                post['metadata'] = json.loads(post['metadata'])
+            content = dict(rows[0])
+            if content['metadata']:
+                content['metadata'] = json.loads(content['metadata'])
             
-            return post
+            return content
 
-    def get_posts_since(self, since: datetime, source: str = None) -> List[Dict[str, Any]]:
-        """Get posts since a specific timestamp"""
+    def get_content_since(self, since: datetime, source: str = None) -> List[Dict[str, Any]]:
+        """Get content since a specific timestamp"""
         query = "SELECT * FROM content_cache WHERE datetime(created_at) >= datetime(?)"
         params = [since.isoformat()]
         
@@ -125,14 +124,14 @@ class Database:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute(query, params)
             
-            posts = []
+            content_list = []
             for row in cursor.fetchall():
-                post = dict(row)
-                if post['metadata']:
-                    post['metadata'] = json.loads(post['metadata'])
-                posts.append(post)
+                content = dict(row)
+                if content['metadata']:
+                    content['metadata'] = json.loads(content['metadata'])
+                content_list.append(content)
             
-            return posts
+            return content_list
 
     def save_subscription(self, sub: Dict[str, Any]) -> bool:
         """Save a subscription to the database"""
