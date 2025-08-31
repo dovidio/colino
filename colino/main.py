@@ -176,7 +176,7 @@ def discover_rss_feeds(website_url: str):
         
         print(f"\n💡 To use these feeds:")
         print(f"   Add to .env: RSS_FEEDS={','.join(feed_urls)}")
-        print(f"   Or test individually: python src/main.py fetch --urls {feed_urls[0]}")
+        print(f"   Or test individually: python src/main.py ingest --urls {feed_urls[0]}")
 
 def test_feed(feed_url: str):
     """Test a single RSS feed"""
@@ -218,7 +218,7 @@ def list_recent_posts(hours: int = 24, limit: int = None, source: str = None):
     if not posts:
         print("  No posts found. Try:")
         print("  - Increasing the time range with --hours")
-        print("  - Running 'python src/main.py fetch' to get new posts")
+        print("  - Running 'python src/main.py ingest' to get new posts")
         if not source:
             print("  - Adding more RSS feeds to your configuration")
             print("  - Setting up YouTube with: python src/main.py authenticate --source youtube")
@@ -267,7 +267,7 @@ def generate_digest(hours: int = None, output_file: str = None, source: str = No
     
     if not posts:
         print(f"❌ No posts found{source_filter} from the last {hours} hours")
-        print("   Try running 'python src/main.py fetch' first or increase --hours")
+        print("   Try running 'python src/main.py ingest' first or increase --hours")
         return
     
     print(f"🤖 Generating AI digest for {len(posts)} recent articles{source_filter}...")
@@ -411,7 +411,7 @@ def import_opml(opml_file: str):
             f.writelines(env_lines)
         
         print(f"✅ Updated {env_file} with {len(feeds)} RSS feeds")
-        print(f"🔄 You can now run: python src/main.py fetch")
+        print(f"🔄 You can now run: python src/main.py ingest")
         
     except Exception as e:
         print(f"❌ Error importing OPML file: {e}")
@@ -533,12 +533,12 @@ def main():
     
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     
-    # Fetch command
-    fetch_parser = subparsers.add_parser('fetch', help='Fetch from RSS feeds or other sources')
-    fetch_parser.add_argument('--source', choices=['rss', 'youtube'], default='rss', 
-                            help='Source to fetch from (default: rss)')
-    fetch_parser.add_argument('--urls', nargs='+', help='Specific RSS feed URLs to fetch from (RSS only)')
-    fetch_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
+    # Ingest command
+    ingest_parser = subparsers.add_parser('ingest', help='Ingest from RSS feeds or other sources')
+    ingest_parser.add_argument('--source', choices=['rss', 'youtube'], default='rss', 
+                            help='Source to ingest from (default: rss)')
+    ingest_parser.add_argument('--urls', nargs='+', help='Specific RSS feed URLs to ingest from (RSS only)')
+    ingest_parser.add_argument('--hours', type=int, help='Hours to look back (default: 24)')
     
     # List channels command
     channels_parser = subparsers.add_parser('channels', help='List subscribed channels (YouTube only)')
@@ -582,14 +582,14 @@ def main():
     if not args.command:
         parser.print_help()
         print(f"\n💡 Quick start:")
-        print(f"   RSS: Add feeds to config.yaml, then run: python src/main.py fetch")
+        print(f"   RSS: Add feeds to config.yaml, then run: python src/main.py ingest")
         print(f"   YouTube: Run: python src/main.py authenticate --source youtube")
-        print(f"   Then: python src/main.py fetch --source youtube")
+        print(f"   Then: python src/main.py ingest --source youtube")
         print(f"   View: python src/main.py list")
         return
     
     try:
-        if args.command == 'fetch':
+        if args.command == 'ingest':
             if args.source == 'rss' and args.urls:
                 fetch_posts('rss', args.urls, args.hours)
             else:
