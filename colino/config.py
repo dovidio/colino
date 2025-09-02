@@ -52,16 +52,6 @@ class Config:
         return "https://oqh6f9ear9.execute-api.us-east-1.amazonaws.com/Prod"
 
     @property
-    def YOUTUBE_MAX_RESULTS(self) -> int:
-        return cast(int, self._config.get("youtube", {}).get("max_results", 50))
-
-    @property
-    def YOUTUBE_EXTRACT_TRANSCRIPTS(self) -> bool:
-        return cast(
-            bool, self._config.get("youtube", {}).get("extract_transcripts", True)
-        )
-
-    @property
     def YOUTUBE_TRANSCRIPT_LANGUAGES(self) -> list[str]:
         return cast(
             list[str],
@@ -92,11 +82,7 @@ class Config:
 
     @property
     def LLM_MODEL(self) -> str:
-        return cast(str, self._config.get("ai", {}).get("model", "gpt-3.5-turbo"))
-
-    @property
-    def LLM_MAX_ARTICLES(self) -> int:
-        return cast(int, self._config.get("ai", {}).get("max_articles", 10))
+        return cast(str, self._config.get("ai", {}).get("model", "gpt-5-mini"))
 
     @property
     def AI_AUTO_SAVE(self) -> bool:

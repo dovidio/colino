@@ -35,7 +35,6 @@ ai:
   
   # Model settings
   model: "gpt-5-mini"
-  max_articles: 100
   extract_web_content: true
   
   # Digest auto-save

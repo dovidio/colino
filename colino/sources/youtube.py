@@ -211,9 +211,6 @@ class YouTubeSource(BaseSource):
     def get_video_transcript(self, video_id: str) -> str | None:
         """Get transcript for a YouTube video"""
 
-        if not config.YOUTUBE_EXTRACT_TRANSCRIPTS:
-            return None
-
         try:
             # Try to get transcript in preferred languages
             languages = config.YOUTUBE_TRANSCRIPT_LANGUAGES

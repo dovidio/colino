@@ -93,11 +93,12 @@ def generate_digest(
     output_file: str | None = None,
     source: str | None = None,
     auto_ingest: bool = True,
+    limit: int | None = None,
 ) -> bool:
     """Generate an AI-powered digest of recent articles"""
     digest_manager = DigestManager()
     return digest_manager.digest_recent_articles(
-        hours, output_file, source, auto_ingest
+        hours, output_file, source, auto_ingest, limit
     )
 
 
@@ -200,6 +201,12 @@ def main() -> None:
         action="store_true",
         help="Skip automatic ingestion of recent sources before digesting",
     )
+    digest_parser.add_argument(
+        "--limit",
+        type=int,
+        help="Maximum number of articles to include in digest",
+        default=100,
+    )
 
     args = parser.parse_args()
 
@@ -248,15 +255,19 @@ def main() -> None:
                 digest_url(args.url, args.output)
             elif args.rss:
                 # Digest recent RSS articles
-                generate_digest(args.hours, args.output, "rss", not args.skip_ingest)
+                generate_digest(
+                    args.hours, args.output, "rss", not args.skip_ingest, args.limit
+                )
             elif args.youtube:
                 # Digest recent YouTube videos
                 generate_digest(
-                    args.hours, args.output, "youtube", not args.skip_ingest
+                    args.hours, args.output, "youtube", not args.skip_ingest, args.limit
                 )
             else:
                 # Digest recent articles from all sources
-                generate_digest(args.hours, args.output, None, not args.skip_ingest)
+                generate_digest(
+                    args.hours, args.output, None, not args.skip_ingest, args.limit
+                )
 
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")
