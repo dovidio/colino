@@ -202,9 +202,10 @@ def main() -> None:
         help="Skip automatic ingestion of recent sources before digesting",
     )
     digest_parser.add_argument(
-        "--limit", type=int,
+        "--limit",
+        type=int,
         help="Maximum number of articles to include in digest",
-        default=100
+        default=100,
     )
 
     args = parser.parse_args()
