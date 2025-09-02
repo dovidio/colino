@@ -323,9 +323,9 @@ class DigestManager:
             return posts[:max_articles]
 
         # Group posts by source
-        posts_by_source = {}
+        posts_by_source: dict[str, list[dict[str, Any]]] = {}
         for post in posts:
-            post_source = post.get("source")
+            post_source = post.get("source") or "unknown"
             if post_source not in posts_by_source:
                 posts_by_source[post_source] = []
             posts_by_source[post_source].append(post)
