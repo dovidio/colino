@@ -252,7 +252,9 @@ def main() -> None:
                 digest_url(args.url, args.output)
             elif args.rss:
                 # Digest recent RSS articles
-                generate_digest(args.hours, args.output, "rss", not args.skip_ingest, args.limit)
+                generate_digest(
+                    args.hours, args.output, "rss", not args.skip_ingest, args.limit
+                )
             elif args.youtube:
                 # Digest recent YouTube videos
                 generate_digest(
@@ -260,7 +262,9 @@ def main() -> None:
                 )
             else:
                 # Digest recent articles from all sources
-                generate_digest(args.hours, args.output, None, not args.skip_ingest, args.limit)
+                generate_digest(
+                    args.hours, args.output, None, not args.skip_ingest, args.limit
+                )
 
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")

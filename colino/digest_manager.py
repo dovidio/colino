@@ -344,7 +344,9 @@ class DigestManager:
             source_limit = posts_per_source + (1 if i < remainder else 0)
             balanced_posts.extend(source_posts[:source_limit])
 
-        logger.info(f"Balanced {len(balanced_posts)} posts across {num_sources} sources (limit: {max_articles})")
+        logger.info(
+            f"Balanced {len(balanced_posts)} posts across {num_sources} sources (limit: {max_articles})"
+        )
 
         # Sort by creation time to maintain chronological order
         balanced_posts.sort(key=lambda x: x.get("created_at", ""), reverse=True)
