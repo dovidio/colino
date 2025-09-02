@@ -85,10 +85,6 @@ class Config:
         return cast(str, self._config.get("ai", {}).get("model", "gpt-5-mini"))
 
     @property
-    def LLM_MAX_ARTICLES(self) -> int:
-        return cast(int, self._config.get("ai", {}).get("max_articles", 10))
-
-    @property
     def AI_AUTO_SAVE(self) -> bool:
         return cast(bool, self._config.get("ai", {}).get("auto_save", True))
 

@@ -129,10 +129,11 @@ class DigestGenerator:
         template = Template(template_content)
         return template.render(article=template_article)
 
-    def summarize_articles(self, articles: list[dict[str, Any]]) -> str:
+    def summarize_articles(self, articles: list[dict[str, Any]], limit: int | None = None) -> str:
         """Generate a digest summary of multiple articles"""
-        # Limit number of articles to process
-        articles = articles[: config.LLM_MAX_ARTICLES]
+        # Apply limit if provided
+        if limit is not None:
+            articles = articles[:limit]
         logger.info(f"Generating digest for {len(articles)} articles")
 
         # Prepare article content for LLM

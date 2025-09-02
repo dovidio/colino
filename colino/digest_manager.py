@@ -64,6 +64,7 @@ class DigestManager:
         output_file: str | None = None,
         source: str | None = None,
         auto_ingest: bool = True,
+        limit: int | None = None,
     ) -> bool:
         """
         Generate digest of recent articles
@@ -73,6 +74,7 @@ class DigestManager:
             output_file: Optional path to save digest to file
             source: Filter by source ('rss' or 'youtube')
             auto_ingest: Whether to automatically ingest recent content before digesting
+            limit: Maximum number of articles to include in digest
 
         Returns:
             bool: True if successful, False otherwise
@@ -98,13 +100,16 @@ class DigestManager:
                 print("   Try running 'colino ingest' first or increase --hours")
                 return False
 
+            # Apply source balancing and limit
+            posts = self._balance_and_limit_posts(posts, limit, source)
+
             print(
                 f"🤖 Generating AI digest for {len(posts)} recent articles{source_filter}..."
             )
             print(f"   Using model: {config.LLM_MODEL}")
 
             # Generate digest
-            digest_content = self.digest_generator.summarize_articles(posts)
+            digest_content = self.digest_generator.summarize_articles(posts, limit)
 
             # Auto-save if enabled or output_file specified
             if config.AI_AUTO_SAVE:
@@ -282,3 +287,66 @@ class DigestManager:
             print(f"✅ Auto-ingested {len(ingested_posts)} recent posts")
         else:
             print("📋 No new posts to ingest")
+
+    def _balance_and_limit_posts(
+        self, posts: list[dict[str, Any]], limit: int | None, source: str | None
+    ) -> list[dict[str, Any]]:
+        """
+        Balance posts from different sources and apply limit.
+
+        When no specific source is requested and we have posts from multiple sources,
+        try to distribute them evenly. Half from one source, half from the other.
+
+        Args:
+            posts: List of posts to balance and limit
+            limit: Maximum number of posts to return (None means no limit)
+            source: Source filter ('rss', 'youtube', or None for all)
+
+        Returns:
+            List of balanced and limited posts
+        """
+        # If no limit provided, return all posts
+        if limit is None:
+            return posts
+
+        max_articles = limit
+
+        # If a specific source is requested or we don't need balancing, just limit
+        if source or len(posts) <= max_articles:
+            return posts[:max_articles]
+
+        # Check if we have multiple sources
+        sources_in_posts = set(post.get("source") for post in posts)
+
+        # If only one source present, just limit
+        if len(sources_in_posts) <= 1:
+            return posts[:max_articles]
+
+        # Group posts by source
+        posts_by_source = {}
+        for post in posts:
+            post_source = post.get("source")
+            if post_source not in posts_by_source:
+                posts_by_source[post_source] = []
+            posts_by_source[post_source].append(post)
+
+        # Calculate how many posts to take from each source
+        num_sources = len(posts_by_source)
+        posts_per_source = max_articles // num_sources
+        remainder = max_articles % num_sources
+
+        balanced_posts = []
+        source_names = sorted(posts_by_source.keys())  # Sort for consistent ordering
+
+        for i, source_name in enumerate(source_names):
+            source_posts = posts_by_source[source_name]
+            # Give remainder posts to first sources
+            source_limit = posts_per_source + (1 if i < remainder else 0)
+            balanced_posts.extend(source_posts[:source_limit])
+
+        logger.info(f"Balanced {len(balanced_posts)} posts across {num_sources} sources (limit: {max_articles})")
+
+        # Sort by creation time to maintain chronological order
+        balanced_posts.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+        return balanced_posts
