@@ -129,7 +129,9 @@ class DigestGenerator:
         template = Template(template_content)
         return template.render(article=template_article)
 
-    def summarize_articles(self, articles: list[dict[str, Any]], limit: int | None = None) -> str:
+    def summarize_articles(
+        self, articles: list[dict[str, Any]], limit: int | None = None
+    ) -> str:
         """Generate a digest summary of multiple articles"""
         # Apply limit if provided
         if limit is not None:
