@@ -202,10 +202,7 @@ def main() -> None:
         help="Skip automatic ingestion of recent sources before digesting",
     )
     digest_parser.add_argument(
-        "--limit",
-        type=int,
-        help="Maximum number of articles to include in digest",
-        default=100,
+        "--limit", type=int, help="Maximum number of articles to include in digest"
     )
 
     args = parser.parse_args()
@@ -255,9 +252,7 @@ def main() -> None:
                 digest_url(args.url, args.output)
             elif args.rss:
                 # Digest recent RSS articles
-                generate_digest(
-                    args.hours, args.output, "rss", not args.skip_ingest, args.limit
-                )
+                generate_digest(args.hours, args.output, "rss", not args.skip_ingest, args.limit)
             elif args.youtube:
                 # Digest recent YouTube videos
                 generate_digest(
@@ -265,9 +260,7 @@ def main() -> None:
                 )
             else:
                 # Digest recent articles from all sources
-                generate_digest(
-                    args.hours, args.output, None, not args.skip_ingest, args.limit
-                )
+                generate_digest(args.hours, args.output, None, not args.skip_ingest, args.limit)
 
     except KeyboardInterrupt:
         get_logger().info("Operation cancelled by user")
