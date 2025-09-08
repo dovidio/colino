@@ -11,6 +11,9 @@ rss:
   timeout: 30
   max_posts_per_feed: 100
 
+  # Parallel content scraping (speeds up article content extraction)
+  scraper_max_workers: 5  # Number of concurrent scraping threads
+
 # Content filtering
 filters:
   include_keywords: []  # Only show posts with these words

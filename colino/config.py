@@ -43,6 +43,11 @@ class Config:
         return cast(int, self._config.get("rss", {}).get("timeout", 30))
 
     @property
+    def RSS_SCRAPER_MAX_WORKERS(self) -> int:
+        """Maximum number of parallel workers for content scraping"""
+        return cast(int, self._config.get("rss", {}).get("scraper_max_workers", 5))
+
+    @property
     def MAX_POSTS_PER_FEED(self) -> int:
         return cast(int, self._config.get("rss", {}).get("max_posts_per_feed", 100))
 

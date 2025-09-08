@@ -1,8 +1,8 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-from bs4 import BeautifulSoup
-from readability import Document
+import trafilatura
 
 from .config import config
 
@@ -26,25 +26,18 @@ class ArticleScraper:
             response = self.session.get(url, timeout=config.RSS_TIMEOUT)
             response.raise_for_status()
 
-            # Use readability to extract main content
-            doc = Document(response.text)
+            # Use trafilatura to extract main content
+            content: str | None = trafilatura.extract(
+                response.text,
+                include_comments=False,
+                include_tables=True,
+                include_formatting=False,
+                output_format="txt",
+            )
 
-            # Parse with BeautifulSoup for cleaning
-            soup = BeautifulSoup(doc.content(), "html.parser")
-
-            # Remove unwanted elements
-            for element in soup(
-                ["script", "style", "nav", "footer", "header", "aside"]
-            ):
-                element.decompose()
-
-            # Get text content
-            content = str(soup.get_text(separator=" ", strip=True))
-
-            # Clean up whitespace
-            content = " ".join(content.split())
-
-            if len(content) > 100:  # Only use if we got substantial content
+            if content and len(content) > 100:  # Only use if we got substantial content
+                # Clean up whitespace
+                content = " ".join(content.split())
                 logger.info(f"Scraped {len(content)} characters from {url}")
                 return content
             else:
@@ -59,3 +52,53 @@ class ArticleScraper:
         except Exception as e:
             logger.warning(f"Could not scrape content from {url}: {e}")
             return None
+
+    def scrape_articles_parallel(
+        self, urls: list[str], max_workers: int = 5
+    ) -> dict[str, str | None]:
+        """Scrape multiple articles in parallel
+
+        Args:
+            urls: List of URLs to scrape
+            max_workers: Maximum number of concurrent scraping threads
+
+        Returns:
+            Dictionary mapping URLs to their scraped content (or None if failed)
+        """
+        if not urls:
+            return {}
+
+        results: dict[str, str | None] = {}
+
+        logger.info(
+            f"Starting parallel scraping of {len(urls)} articles with {max_workers} workers"
+        )
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all scraping tasks
+            future_to_url = {
+                executor.submit(self.scrape_article_content, url): url for url in urls
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    content = future.result()
+                    results[url] = content
+                    if content:
+                        logger.debug(f"Successfully scraped {url}")
+                    else:
+                        logger.debug(f"No content extracted from {url}")
+                except Exception as e:
+                    logger.warning(f"Error in parallel scraping of {url}: {e}")
+                    results[url] = None
+
+        successful_scrapes = sum(
+            1 for content in results.values() if content is not None
+        )
+        logger.info(
+            f"Parallel scraping completed: {successful_scrapes}/{len(urls)} successful"
+        )
+
+        return results

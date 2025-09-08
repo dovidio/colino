@@ -69,8 +69,12 @@ class RSSSource(BaseSource):
     def get_posts_from_feeds(
         self, feed_urls: list[str], since_time: datetime | None = None
     ) -> list[dict[str, Any]]:
-        """Get recent posts from multiple RSS feeds"""
+        """Get recent posts from multiple RSS feeds with parallel content scraping"""
         all_posts = []
+        urls_to_scrape = []
+        posts_pending_scraping = []
+
+        # First pass: collect all posts and URLs that need scraping
         for feed_url in feed_urls:
             try:
                 feed_data = self.parse_feed(feed_url)
@@ -78,15 +82,43 @@ class RSSSource(BaseSource):
                     continue
 
                 for entry in feed_data["entries"]:
-                    post_data = self._process_rss_entry(
+                    post_data = self._process_rss_entry_without_scraping(
                         entry, feed_data, feed_url, since_time
                     )
                     if post_data:
                         all_posts.append(post_data)
+                        article_url = post_data.get("url")
+                        if article_url:
+                            urls_to_scrape.append(article_url)
+                            posts_pending_scraping.append(post_data)
 
             except Exception as e:
                 logger.error(f"Error processing feed {feed_url}: {e}")
                 continue
+
+        # Second pass: scrape all URLs in parallel
+        if urls_to_scrape:
+            logger.info(f"Scraping {len(urls_to_scrape)} articles in parallel...")
+            max_workers = config.RSS_SCRAPER_MAX_WORKERS
+            scraped_content = self.scraper.scrape_articles_parallel(
+                urls_to_scrape, max_workers
+            )
+
+            # Third pass: enhance posts with scraped content
+            for post_data in posts_pending_scraping:
+                article_url = post_data.get("url")
+                if article_url and article_url in scraped_content:
+                    scraped_text = scraped_content[article_url]
+                    if scraped_text and len(scraped_text) > len(
+                        post_data.get("content", "")
+                    ):
+                        enhanced_content = (
+                            post_data["content"] + "\nFull Content:\n" + scraped_text
+                        )
+                        post_data["content"] = enhanced_content
+                        logger.debug(
+                            f"Enhanced content for: {post_data.get('title', 'Unknown')}"
+                        )
 
         # Sort by publication date (newest first)
         all_posts.sort(
@@ -96,6 +128,49 @@ class RSSSource(BaseSource):
 
         logger.info(f"Retrieved {len(all_posts)} RSS posts from {len(feed_urls)} feeds")
         return all_posts
+
+    def _process_rss_entry_without_scraping(
+        self,
+        entry: Any,
+        feed_data: dict[str, Any],
+        feed_url: str,
+        since_time: datetime | None = None,
+    ) -> dict[str, Any] | None:
+        """Process a single RSS entry without scraping full content (for parallel processing)"""
+        # Parse publication date
+        pub_date = self._parse_entry_date(entry)
+
+        # Create unique ID for the post
+        entry_id = entry.get("id", entry.get("link", ""))
+        if not entry_id:
+            return None
+
+        article_url = entry.get("link", "")
+
+        # Skip if should be filtered out
+        if self._should_skip_content(entry_id, article_url, since_time, pub_date):
+            return None
+
+        # Extract content without scraping enhancement
+        rss_content = self._extract_rss_content(entry)
+
+        # Clean up content for preview (remove HTML tags)
+        content_preview = re.sub("<[^<]+?>", "", rss_content)[:500]
+
+        # Create standardized post data
+        return self._create_post_data(
+            id=entry_id,
+            source="rss",
+            author_username=feed_data["title"],
+            author_display_name=feed_data["title"],
+            content=rss_content,  # Will be enhanced later with scraped content
+            url=article_url,
+            created_at=pub_date or datetime.now(UTC),
+            title=entry.get("title", ""),
+            description=content_preview,
+            feed_title=feed_data["title"],
+            feed_url=feed_url,
+        )
 
     def _process_rss_entry(
         self,
