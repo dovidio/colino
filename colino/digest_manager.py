@@ -109,7 +109,7 @@ class DigestManager:
             print(f"   Using model: {config.LLM_MODEL}")
 
             # Generate digest
-            digest_content = self.digest_generator.summarize_articles(posts, limit)
+            digest_content = self.digest_generator.summarize_articles(posts)
 
             # Auto-save if enabled or output_file specified
             if config.AI_AUTO_SAVE:
