@@ -5,8 +5,8 @@ from urllib.parse import parse_qs, urlparse
 
 import requests
 from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build  # type: ignore[import-untyped]
-from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
@@ -208,7 +208,7 @@ class YouTubeSource(BaseSource):
 
         return None
 
-    def get_video_transcript(self, video_id: str) -> str | None:
+    def get_video_transcript(self, video_id: str) -> Any:
         """Get transcript for a YouTube video"""
 
         try:

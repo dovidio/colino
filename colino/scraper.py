@@ -39,7 +39,7 @@ class ArticleScraper:
                 element.decompose()
 
             # Get text content
-            content = soup.get_text(separator=" ", strip=True)
+            content = str(soup.get_text(separator=" ", strip=True))
 
             # Clean up whitespace
             content = " ".join(content.split())

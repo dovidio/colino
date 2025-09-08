@@ -212,7 +212,7 @@ Thumbs.db
 
 # Editor files
 .vimrc
-.vim/ 
+.vim/
 
 .env.backup*
 
