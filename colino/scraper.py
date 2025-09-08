@@ -1,8 +1,7 @@
 import logging
 
 import requests
-from bs4 import BeautifulSoup
-from readability import Document
+import trafilatura
 
 from .config import config
 
@@ -26,25 +25,18 @@ class ArticleScraper:
             response = self.session.get(url, timeout=config.RSS_TIMEOUT)
             response.raise_for_status()
 
-            # Use readability to extract main content
-            doc = Document(response.text)
+            # Use trafilatura to extract main content
+            content: str | None = trafilatura.extract(
+                response.text,
+                include_comments=False,
+                include_tables=True,
+                include_formatting=False,
+                output_format="txt",
+            )
 
-            # Parse with BeautifulSoup for cleaning
-            soup = BeautifulSoup(doc.content(), "html.parser")
-
-            # Remove unwanted elements
-            for element in soup(
-                ["script", "style", "nav", "footer", "header", "aside"]
-            ):
-                element.decompose()
-
-            # Get text content
-            content = str(soup.get_text(separator=" ", strip=True))
-
-            # Clean up whitespace
-            content = " ".join(content.split())
-
-            if len(content) > 100:  # Only use if we got substantial content
+            if content and len(content) > 100:  # Only use if we got substantial content
+                # Clean up whitespace
+                content = " ".join(content.split())
                 logger.info(f"Scraped {len(content)} characters from {url}")
                 return content
             else:

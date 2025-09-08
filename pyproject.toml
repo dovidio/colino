@@ -16,10 +16,9 @@ google-auth-oauthlib = "^1.2.2"
 google-auth-httplib2 = "^0.2.0"
 google-api-python-client = "^2.179.0"
 youtube-transcript-api = "^1.2.2"
-beautifulsoup4 = "^4.12.0"  # Note: use beautifulsoup4, not bs4
 openai = "^1.102.0"
-readability-lxml = "^0.8.4.1"
 jinja2 = "^3.1.6"
+trafilatura = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.4"
@@ -75,7 +74,7 @@ strict_equality = true
 [[tool.mypy.overrides]]
 module = [
     "feedparser.*",
-    "readability.*",
+    "trafilatura.*",
     "youtube_transcript_api.*",
     "googleapiclient.*",
     "google.*",
