@@ -26,6 +26,7 @@ ruff = "^0.6.4"
 mypy = "^1.11.2"
 types-pyyaml = "^6.0.12.20240917"
 types-requests = "^2.32.0.20240914"
+pre-commit = "^3.8.0"
 
 [tool.poetry.scripts]
 colino = "colino.main:main"
@@ -76,5 +77,7 @@ module = [
     "feedparser.*",
     "readability.*",
     "youtube_transcript_api.*",
+    "googleapiclient.*",
+    "google.*",
 ]
 ignore_missing_imports = true

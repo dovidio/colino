@@ -5,7 +5,7 @@
 rss:
   feeds:
     - https://hnrss.org/frontpage
-  
+
   # RSS fetching settings
   user_agent: "Colino RSS Reader 1.0.0"
   timeout: 30
@@ -22,31 +22,31 @@ filters:
 youtube:
   # YouTube authentication is handled via OAuth proxy server
   # No configuration needed - authentication is automatic
-  
+
   transcript_languages:
     - en
     - it
 
-# AI/LLM Configuration  
+# AI/LLM Configuration
 ai:
   # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)
   # or uncomment and set here (not recommended for production)
   # openai_api_key: "your_key_here"
-  
+
   # Model settings
   model: "gpt-5-mini"
   extract_web_content: true
-  
+
   # Digest auto-save
   auto_save: true
   save_directory: "digests"
-  
+
   # Custom AI prompt for digest generation
   # Edit this to customize how the AI analyzes your articles
   prompt: |
     You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts. Focus on:
     1. Key insights and takeaways
-    2. Important facts and developments  
+    2. Important facts and developments
     3. Implications and context
     4. Clear, engaging writing
 
@@ -106,4 +106,4 @@ database:
 
 # General settings
 general:
-  default_lookback_hours: 24 
+  default_lookback_hours: 24

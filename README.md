@@ -40,7 +40,7 @@ Or you can choose to digest only content from a specific source:
    poetry run colino digest --youtube
    ```
 
-## Install colino as command line tool 
+## Install colino as command line tool
 
 ```bash
 poetry build

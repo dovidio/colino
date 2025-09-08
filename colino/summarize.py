@@ -86,7 +86,7 @@ class DigestGenerator:
             "AI_PROMPT_YOUTUBE", "youtube_digest_prompt.txt"
         )
         template = Template(template_content)
-        return template.render(transcript=transcript)
+        return str(template.render(transcript=transcript))
 
     def summarize_article(self, article: dict[str, Any]) -> str:
         """Generate a digest summary of a single article"""
@@ -127,7 +127,7 @@ class DigestGenerator:
         }
 
         template = Template(template_content)
-        return template.render(article=template_article)
+        return str(template.render(article=template_article))
 
     def summarize_articles(
         self, articles: list[dict[str, Any]], limit: int | None = None
@@ -181,7 +181,9 @@ class DigestGenerator:
             )
 
         template = Template(template_content)
-        return template.render(articles=template_articles, article_count=len(articles))
+        return str(
+            template.render(articles=template_articles, article_count=len(articles))
+        )
 
     def _fallback_digest(self, articles: list[dict[str, Any]]) -> str:
         """Generate a simple fallback digest if LLM fails"""

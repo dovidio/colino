@@ -8,27 +8,27 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
-    
+
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Install Poetry
       run: pip install poetry
-    
+
     - name: Install dependencies
       run: poetry install
-    
+
     - name: Run ruff linter
       run: poetry run ruff check .
-    
+
     - name: Run ruff formatter check
       run: poetry run ruff format --check .
-    
+
     - name: Run mypy type checker
       run: poetry run mypy colino/
-      
+
     - name: Check package builds
       run: poetry build
