@@ -1,4 +1,6 @@
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Any, ClassVar
 from urllib.parse import parse_qs, urlparse
@@ -9,7 +11,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
-from youtube_transcript_api._webshare_proxy_config import WebshareProxyConfig
+from youtube_transcript_api.proxies import WebshareProxyConfig
 
 from ..config import config
 from ..db import Database
@@ -35,6 +37,15 @@ class YouTubeSource(BaseSource):
         # Initialize OAuth proxy client (always used)
         self.oauth_client = OAuthProxyClient(config.YOUTUBE_OAUTH_PROXY_URL)
         self.token_manager = TokenManager(self.oauth_client, self.db, "youtube")
+
+    def _get_optimal_worker_count(self) -> int:
+        """Get optimal number of worker threads based on CPU cores"""
+        cpu_count = os.cpu_count() or 4  # Default to 4 if unable to detect
+        # Use min(cpu_count, 8) to balance performance vs resource usage
+        # Too many concurrent requests might still hit rate limits
+        optimal_count = min(cpu_count, 8)
+        logger.info(f"Using {optimal_count} worker threads for parallel transcript fetching (CPU cores: {cpu_count})")
+        return optimal_count
 
     @property
     def source_name(self) -> str:
@@ -69,7 +80,7 @@ class YouTubeSource(BaseSource):
             # Fetch posts from RSS feeds
             youtube_posts = rss_source.get_posts_from_feeds(rss_feeds, since_time)
 
-            # Process each post to add YouTube-specific metadata and transcripts
+            # Process each post to add YouTube-specific metadata
             processed_posts = []
             for post in youtube_posts:
                 # Set source to youtube instead of rss
@@ -86,10 +97,10 @@ class YouTubeSource(BaseSource):
                             post["metadata"]["channel_id"] = sub["channel_id"]
                             break
 
-                    # Enhance with transcript if available
-                    post = self.enhance_youtube_post(post)
-
                 processed_posts.append(post)
+
+            # Enhance all posts with transcripts in parallel
+            processed_posts = self.enhance_youtube_posts_parallel(processed_posts)
 
             logger.info(f"Successfully processed {len(processed_posts)} YouTube posts")
             return processed_posts
@@ -248,7 +259,7 @@ class YouTubeSource(BaseSource):
             logger.warning(f"Could not get transcript for video {video_id}: {e}")
             return None
 
-    def _get_proxy_config(self) -> Any | None:
+    def _get_proxy_config(self) -> WebshareProxyConfig | None:
         """Get proxy configuration for YouTube transcript API if enabled"""
         if not config.YOUTUBE_PROXY_ENABLED:
             return None
@@ -266,15 +277,11 @@ class YouTubeSource(BaseSource):
             
         endpoint = config.YOUTUBE_PROXY_WEBSHARE_ENDPOINT
         
-        try:
-            return WebshareProxyConfig(
-                username=username,
-                password=password,
-                endpoint=endpoint
-            )
-        except Exception as e:
-            logger.error(f"Failed to create proxy configuration: {e}")
-            return None
+        return WebshareProxyConfig(
+            username=username,
+            password=password,
+            endpoint=endpoint
+        )
 
     def enhance_youtube_post(self, post_data: dict[str, Any]) -> dict[str, Any]:
         """Enhance a YouTube RSS post with transcript if available"""
@@ -305,6 +312,96 @@ class YouTubeSource(BaseSource):
             )
 
         return post_data
+
+    def enhance_youtube_posts_parallel(self, posts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Enhance multiple YouTube posts with transcripts in parallel"""
+        if not posts:
+            return posts
+
+        # Filter posts that have video IDs
+        posts_with_video_ids = []
+        posts_without_video_ids = []
+        
+        for post in posts:
+            video_id = self.extract_video_id(post.get("url", ""))
+            if video_id:
+                post["metadata"]["video_id"] = video_id
+                posts_with_video_ids.append(post)
+            else:
+                posts_without_video_ids.append(post)
+
+        if not posts_with_video_ids:
+            logger.info("No YouTube posts with valid video IDs found for transcript enhancement")
+            return posts
+
+        # Get optimal worker count
+        max_workers = self._get_optimal_worker_count()
+        
+        logger.info(f"Enhancing {len(posts_with_video_ids)} YouTube posts with transcripts using {max_workers} workers")
+
+        # Create a mapping to preserve order
+        post_to_future = {}
+        enhanced_posts = {}
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all transcript fetching jobs
+            for post in posts_with_video_ids:
+                video_id = post["metadata"]["video_id"]
+                future = executor.submit(self._fetch_transcript_for_post, post, video_id)
+                post_to_future[future] = post
+            
+            # Collect results as they complete
+            for future in as_completed(post_to_future):
+                original_post = post_to_future[future]
+                try:
+                    enhanced_post = future.result()
+                    enhanced_posts[id(original_post)] = enhanced_post
+                except Exception as e:
+                    logger.error(f"Failed to enhance post {original_post.get('url', 'unknown')}: {e}")
+                    # Keep original post if enhancement fails
+                    enhanced_posts[id(original_post)] = original_post
+
+        # Reconstruct the original order
+        result_posts = []
+        for post in posts:
+            if id(post) in enhanced_posts:
+                result_posts.append(enhanced_posts[id(post)])
+            else:
+                result_posts.append(post)
+
+        successful_enhancements = sum(1 for post in result_posts if post.get("metadata", {}).get("youtube_video_id"))
+        logger.info(f"Successfully enhanced {successful_enhancements}/{len(posts_with_video_ids)} YouTube posts with transcripts")
+        
+        return result_posts
+
+    def _fetch_transcript_for_post(self, post_data: dict[str, Any], video_id: str) -> dict[str, Any]:
+        """Helper method to fetch transcript for a single post (used in parallel processing)"""
+        try:
+            transcript = self.get_video_transcript(video_id)
+            
+            if transcript:
+                # Create a copy to avoid modifying the original in place
+                enhanced_post = post_data.copy()
+                enhanced_post["metadata"] = post_data.get("metadata", {}).copy()
+                
+                # Add video ID to metadata for reference
+                enhanced_post["metadata"]["youtube_video_id"] = video_id
+
+                # Append full transcript to content
+                original_content = enhanced_post.get("content", "")
+                enhanced_post["content"] = (
+                    f"{original_content}\n\n--- YouTube Transcript ---\n{transcript}"
+                )
+
+                logger.debug(f"Enhanced post {video_id} with transcript ({len(transcript)} chars)")
+                return enhanced_post
+            else:
+                logger.debug(f"No transcript available for video {video_id}")
+                return post_data
+                
+        except Exception as e:
+            logger.warning(f"Failed to get transcript for video {video_id}: {e}")
+            return post_data
 
     def sync_subscriptions_to_db(
         self, subscriptions: list[dict[str, Any]], db: Database
