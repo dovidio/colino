@@ -30,6 +30,16 @@ youtube:
     - en
     - it
 
+  # Rotating proxy configuration for transcript fetching (optional)
+  # Helps avoid rate limiting when fetching many transcripts
+  proxy:
+    enabled: false
+    # Webshare.io rotating proxy configuration
+    # webshare:
+    #   username: "your_username"
+    #   password: "your_password"
+    #   endpoint: "rotating-residential.webshare.io:9000"
+
 # AI/LLM Configuration
 ai:
   # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)

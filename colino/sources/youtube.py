@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
+from youtube_transcript_api._webshare_proxy_config import WebshareProxyConfig
 
 from ..config import config
 from ..db import Database
@@ -214,7 +215,15 @@ class YouTubeSource(BaseSource):
         try:
             # Try to get transcript in preferred languages
             languages = config.YOUTUBE_TRANSCRIPT_LANGUAGES
-            api = YouTubeTranscriptApi()
+            
+            proxy_config = self._get_proxy_config()
+            
+            if proxy_config:
+                logger.info(f"Using rotating proxy for transcript fetching: {video_id}")
+                api = YouTubeTranscriptApi(proxy_config=proxy_config)
+            else:
+                api = YouTubeTranscriptApi()
+                
             transcript_list = api.fetch(video_id, languages=languages)
 
             if len(transcript_list) == 0:
@@ -237,6 +246,34 @@ class YouTubeSource(BaseSource):
 
         except Exception as e:
             logger.warning(f"Could not get transcript for video {video_id}: {e}")
+            return None
+
+    def _get_proxy_config(self) -> Any | None:
+        """Get proxy configuration for YouTube transcript API if enabled"""
+        if not config.YOUTUBE_PROXY_ENABLED:
+            return None
+            
+        # Check if Webshare credentials are configured
+        username = config.YOUTUBE_PROXY_WEBSHARE_USERNAME
+        password = config.YOUTUBE_PROXY_WEBSHARE_PASSWORD
+        
+        if not username or not password:
+            logger.warning(
+                "Proxy is enabled but Webshare credentials not configured. "
+                "Please set youtube.proxy.webshare.username and youtube.proxy.webshare.password in config.yaml"
+            )
+            return None
+            
+        endpoint = config.YOUTUBE_PROXY_WEBSHARE_ENDPOINT
+        
+        try:
+            return WebshareProxyConfig(
+                username=username,
+                password=password,
+                endpoint=endpoint
+            )
+        except Exception as e:
+            logger.error(f"Failed to create proxy configuration: {e}")
             return None
 
     def enhance_youtube_post(self, post_data: dict[str, Any]) -> dict[str, Any]:
