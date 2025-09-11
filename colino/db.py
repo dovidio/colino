@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sqlite3
 from datetime import UTC, datetime
 from typing import Any
@@ -10,8 +11,11 @@ logger = logging.getLogger(__name__)
 
 
 class Database:
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: str | None = None) -> None:
+        """Initialize the database connection."""
         self.db_path = db_path or config.DATABASE_PATH
+        # Expand user home directory (~) and environment variables ($HOME, etc.)
+        self.db_path = os.path.expandvars(os.path.expanduser(self.db_path))
         self.init_database()
 
     def init_database(self) -> None:
@@ -67,7 +71,6 @@ class Database:
             """)
 
     def save_content(self, content_data: dict[str, Any]) -> bool:
-        """Save content to the database"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
