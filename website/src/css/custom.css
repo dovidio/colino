@@ -1,0 +1,95 @@
+/* Robust dark theme for DocSearch dropdown and suggestions */
+html[data-theme='dark'] .DocSearch-Dropdown,
+html[data-theme='dark'] .DocSearch-Dropdown *,
+html[data-theme='dark'] .DocSearch-Hits,
+html[data-theme='dark'] .DocSearch-Hits *,
+html[data-theme='dark'] .DocSearch-Hit,
+html[data-theme='dark'] .DocSearch-Hit *,
+html[data-theme='dark'] .DocSearch-Hit-source,
+html[data-theme='dark'] .DocSearch-Hit-source * {
+  background: #15172a !important;
+  color: #e0e6f0 !important;
+}
+
+html[data-theme='dark'] .DocSearch-Hit[aria-selected='true'],
+html[data-theme='dark'] .DocSearch-Hit[aria-selected='true'] * {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+/* Force DocSearch suggestion dropdown (autocomplete box) to be dark */
+body > div[class*='DocSearch'] .DocSearch-Dropdown,
+body > div[class*='DocSearch'] .DocSearch-Dropdown *,
+body > div[class*='DocSearch'] .DocSearch-Hits,
+body > div[class*='DocSearch'] .DocSearch-Hits *,
+body > div[class*='DocSearch'] .DocSearch-Hit,
+body > div[class*='DocSearch'] .DocSearch-Hit *,
+body > div[class*='DocSearch'] .DocSearch-Hit-source {
+  background: #15172a !important;
+  color: #e0e6f0 !important;
+}
+/* Force DocSearch modal background even if rendered in a portal */
+body > div[class*='DocSearch'] .DocSearch-Modal,
+body > div[class*='DocSearch'] .DocSearch-Modal *,
+body > div[class*='DocSearch'] .DocSearch-Dropdown,
+body > div[class*='DocSearch'] .DocSearch-Dropdown *,
+body > div[class*='DocSearch'] .DocSearch-Footer,
+body > div[class*='DocSearch'] .DocSearch-Footer * {
+  background: #15172a !important;
+  color: #e0e6f0 !important;
+}
+/* Force DocSearch modal overlay and modal to be dark, even if shadow DOM or inline styles interfere */
+html[data-theme='dark'] .DocSearch-Container,
+html[data-theme='dark'] .DocSearch-Container *,
+html[data-theme='dark'] .DocSearch-Modal,
+html[data-theme='dark'] .DocSearch-Modal *,
+html[data-theme='dark'] .DocSearch-Dropdown,
+html[data-theme='dark'] .DocSearch-Dropdown *,
+html[data-theme='dark'] .DocSearch-Footer,
+html[data-theme='dark'] .DocSearch-Footer *,
+html[data-theme='dark'] .DocSearch-StartScreen,
+html[data-theme='dark'] .DocSearch-NoResults,
+html[data-theme='dark'] .DocSearch-ErrorScreen {
+  background: #15172a !important;
+  color: #e0e6f0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme='dark'] .DocSearch-Modal::backdrop {
+  background: #15172a !important;
+  opacity: 1 !important;
+}
+
+html[data-theme='dark'] .DocSearch-Modal {
+  box-shadow: 0 3px 8px 0 #000309 !important;
+}
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+
+:root {
+  --ifm-color-primary: #2563eb;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #3b82f6;
+  --ifm-color-primary-lighter: #60a5fa;
+  --ifm-color-primary-lightest: #93c5fd;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #60a5fa;
+  --ifm-color-primary-dark: #3b82f6;
+  --ifm-color-primary-darker: #2563eb;
+  --ifm-color-primary-darkest: #1d4ed8;
+  --ifm-color-primary-light: #93c5fd;
+  --ifm-color-primary-lighter: #bfdbfe;
+  --ifm-color-primary-lightest: #dbeafe;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

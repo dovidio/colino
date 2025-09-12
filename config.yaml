@@ -38,7 +38,6 @@ youtube:
     # webshare:
     #   username: "your_username"
     #   password: "your_password"
-    #   endpoint: "rotating-residential.webshare.io:9000"
 
 # AI/LLM Configuration
 ai:
