@@ -54,7 +54,7 @@ class Config:
     # YouTube Properties
     @property
     def YOUTUBE_OAUTH_PROXY_URL(self) -> str:
-        return "https://oqh6f9ear9.execute-api.us-east-1.amazonaws.com/Prod"
+        return "https://colino.umberto.xyz"
 
     @property
     def YOUTUBE_TRANSCRIPT_LANGUAGES(self) -> list[str]:
