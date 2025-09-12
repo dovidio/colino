@@ -90,16 +90,6 @@ class Config:
         )
 
     @property
-    def YOUTUBE_PROXY_WEBSHARE_ENDPOINT(self) -> str:
-        return cast(
-            str,
-            self._config.get("youtube", {})
-            .get("proxy", {})
-            .get("webshare", {})
-            .get("endpoint", "rotating-residential.webshare.io:9000"),
-        )
-
-    @property
     def FILTER_KEYWORDS(self) -> list[str]:
         return cast(
             list[str], self._config.get("filters", {}).get("include_keywords", [])
