@@ -1,6 +1,6 @@
 # Colino 📰
 
-Your own hackable aggregator and AI-powered digest generator.
+Your own hackable aggregator and AI-powered digest generator. https://colino.pages.dev
 
 ## What is Colino?
 
