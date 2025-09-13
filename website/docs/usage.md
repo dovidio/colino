@@ -31,6 +31,11 @@ You can also list all the feeds you have configured.
 ```bash
 colino list
 ```
+As with the digest command, you can filter only RSS or YouTube content if you wish to do so.
+```bash
+colino list --rss
+colino list --youtube
+```
 
 ## Summarizing single articles or videos
 

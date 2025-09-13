@@ -173,8 +173,9 @@ def main() -> None:
     list_parser.add_argument(
         "--limit", type=int, help="Maximum number of posts to show"
     )
+    list_parser.add_argument("--rss", action="store_true", help="Show only RSS posts")
     list_parser.add_argument(
-        "--source", choices=["rss", "youtube"], help="Filter by source"
+        "--youtube", action="store_true", help="Show only YouTube posts"
     )
 
     # Digest command
@@ -247,7 +248,18 @@ def main() -> None:
             ingest(sources, args.hours)
 
         elif args.command == "list":
-            list_recent_posts(args.hours, args.limit, args.source)
+            # Determine which sources to show
+            sources = []
+            if not args.rss and not args.youtube:
+                sources = ["rss", "youtube"]
+            else:
+                if args.rss:
+                    sources.append("rss")
+                if args.youtube:
+                    sources.append("youtube")
+
+            for source in sources:
+                list_recent_posts(args.hours, args.limit, source)
 
         elif args.command == "digest":
             if args.url:
