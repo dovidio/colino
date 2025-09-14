@@ -1,7 +1,17 @@
 [tool.poetry]
 name = "colino"
-version = "0.1.0"
-description = "Your personal news digest"
+version = "0.1.1"
+description = "Your personal news digest (macOS only)"
+classifiers = [
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: End Users/Desktop",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Topic :: Utilities",
+]
 authors = ["Umberto D'Ovidio <umbertod@fastmail.com>"]
 readme = "README.md"
 packages = [{include = "colino"}]
