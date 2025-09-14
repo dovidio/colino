@@ -55,6 +55,10 @@ By default the digest command is also scraping/ingesting content, but if you wan
 colino ingest
 ```
 
+## Streaming vs Non-Streaming Output
+
+By default, Colino will wait for the full AI response before displaying the digest. If you want to see the summary as it is generated (streaming), set `stream: true` in your `ai` config section. See the [configuration guide](./configuration.md#streaming-llm-output) for details and OpenAI requirements.
+
 ## Getting help
 For more options, run:
 ```bash

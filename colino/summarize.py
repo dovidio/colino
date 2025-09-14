@@ -191,15 +191,18 @@ class DigestGenerator:
         return self._generate_llm_digest(article_summaries)
 
     def _generate_llm_digest(self, articles: list[dict[str, Any]]) -> str:
-        """Use LLM to generate a comprehensive digest (always streamed)"""
+        """Use LLM to generate a comprehensive digest (always streamed). If LLM call fails, show error and return empty string."""
         prompt = self._create_multi_article_prompt(articles)
-        result = self._call_llm(prompt)
-
-        # If LLM call failed, use fallback
-        if not result:
-            return self._fallback_digest(articles)
-
-        return result
+        try:
+            result = self._call_llm(prompt)
+            if not result:
+                raise RuntimeError("No response from language model.")
+            return result
+        except Exception as e:
+            print(
+                f"\n❌ Error: Failed to generate digest from the language model. Exception: {e}\n"
+            )
+            return ""
 
     def _create_multi_article_prompt(self, articles: list[dict[str, Any]]) -> str:
         """Create the prompt for multi-article digest generation"""

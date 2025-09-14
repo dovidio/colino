@@ -111,26 +111,30 @@ class DigestManager:
             # Generate digest
             digest_content = self.digest_generator.summarize_articles(posts, limit)
 
-            # Auto-save if enabled or output_file specified
-            if config.AI_AUTO_SAVE:
-                if not output_file:
-                    # Auto-generate filename
-                    os.makedirs(config.AI_SAVE_DIRECTORY, exist_ok=True)
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    source_suffix = f"_{source}" if source else ""
-                    output_file = f"{config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
+            if digest_content:
+                # Auto-save if enabled or output_file specified
+                if config.AI_AUTO_SAVE:
+                    if not output_file:
+                        # Auto-generate filename
+                        os.makedirs(config.AI_SAVE_DIRECTORY, exist_ok=True)
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        source_suffix = f"_{source}" if source else ""
+                        output_file = f"{config.AI_SAVE_DIRECTORY}/digest{source_suffix}_{timestamp}.md"
 
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(digest_content)
-                print(f"✅ Digest saved to {output_file}")
+                    with open(output_file, "w", encoding="utf-8") as f:
+                        f.write(digest_content)
+                    print(f"✅ Digest saved to {output_file}")
 
-            # Always show digest in console unless explicitly saving to file
-            if not output_file or config.AI_AUTO_SAVE:
-                print("\n" + "=" * 60)
-                print(digest_content)
-                print("=" * 60)
+                # Always show digest in console unless explicitly saving to file
+                if not output_file or config.AI_AUTO_SAVE:
+                    print("\n" + "=" * 60)
+                    print(digest_content)
+                    print("=" * 60)
 
-            return True
+                return True
+            else:
+                # If no digest_content, do not save or print digest
+                return False
 
         except ValueError as e:
             self._handle_api_error(e)
