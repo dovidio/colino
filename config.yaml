@@ -41,6 +41,7 @@ youtube:
 
 # AI/LLM Configuration
 ai:
+  stream: false
   # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)
   # or uncomment and set here (not recommended for production)
   # openai_api_key: "your_key_here"

@@ -49,18 +49,58 @@ class DigestGenerator:
         return template_content
 
     def _call_llm(self, prompt: str) -> str:
-        """Make a call to the LLM with the given prompt"""
+        """Make a call to the LLM with the given prompt. Stream if config.AI_STREAM is True, else wait for full response."""
         try:
-            response = self.client.chat.completions.create(
-                model=config.LLM_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                max_completion_tokens=4096,
-            )
-
-            digest = response.choices[0].message.content
-            logger.info("Generated AI digest successfully")
-            return digest or ""
-
+            if config.AI_STREAM:
+                response = self.client.chat.completions.create(
+                    model=config.LLM_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_completion_tokens=4096,
+                    stream=True,
+                )
+                full_text = ""
+                print("\n", end="", flush=True)
+                for chunk in response:
+                    delta = chunk.choices[0].delta
+                    # Only process content, log/skip other fields
+                    if hasattr(delta, "content") and delta.content is not None:
+                        # Handle carriage returns for overwrite-style output
+                        content = delta.content
+                        if "\r" in content:
+                            # Overwrite the current line (simulate terminal behavior)
+                            lines = content.split("\r")
+                            for i, line in enumerate(lines):
+                                if i == 0:
+                                    print(line, end="", flush=True)
+                                    full_text += line
+                                else:
+                                    print("\r" + line, end="", flush=True)
+                                    # Overwrite last line in buffer
+                                    if "\n" in full_text:
+                                        # Only replace after last newline
+                                        last_nl = full_text.rfind("\n")
+                                        full_text = full_text[: last_nl + 1] + line
+                                    else:
+                                        full_text = line
+                        else:
+                            print(content, end="", flush=True)
+                            full_text += content
+                    else:
+                        # Log/skip non-content deltas (role, function_call, etc.)
+                        logger.debug(f"Skipping non-content delta: {delta}")
+                print("\n", flush=True)
+                logger.info("Generated AI digest successfully (streamed)")
+                return full_text
+            else:
+                response = self.client.chat.completions.create(
+                    model=config.LLM_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_completion_tokens=4096,
+                )
+                digest = response.choices[0].message.content
+                logger.info("Generated AI digest successfully (non-streamed)")
+                print("\n" + (digest or "") + "\n", flush=True)
+                return digest or ""
         except Exception as e:
             logger.error(f"Error generating LLM digest: {e}")
             return ""
@@ -151,7 +191,7 @@ class DigestGenerator:
         return self._generate_llm_digest(article_summaries)
 
     def _generate_llm_digest(self, articles: list[dict[str, Any]]) -> str:
-        """Use LLM to generate a comprehensive digest"""
+        """Use LLM to generate a comprehensive digest (always streamed)"""
         prompt = self._create_multi_article_prompt(articles)
         result = self._call_llm(prompt)
 

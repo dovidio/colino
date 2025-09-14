@@ -116,6 +116,10 @@ class Config:
         return cast(str, self._config.get("ai", {}).get("model", "gpt-5-mini"))
 
     @property
+    def AI_STREAM(self) -> bool:
+        return cast(bool, self._config.get("ai", {}).get("stream", False))
+
+    @property
     def AI_AUTO_SAVE(self) -> bool:
         return cast(bool, self._config.get("ai", {}).get("auto_save", True))
 
