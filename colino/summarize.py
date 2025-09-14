@@ -52,7 +52,7 @@ class DigestGenerator:
         """Make a call to the LLM with the given prompt. Stream if config.AI_STREAM is True, else wait for full response."""
         try:
             if config.AI_STREAM:
-                response = self.client.chat.completions.create(
+                stream_response = self.client.chat.completions.create(
                     model=config.LLM_MODEL,
                     messages=[{"role": "user", "content": prompt}],
                     max_completion_tokens=4096,
@@ -60,7 +60,7 @@ class DigestGenerator:
                 )
                 full_text = ""
                 print("\n", end="", flush=True)
-                for chunk in response:
+                for chunk in stream_response:
                     delta = chunk.choices[0].delta
                     # Only process content, log/skip other fields
                     if hasattr(delta, "content") and delta.content is not None:
@@ -92,12 +92,12 @@ class DigestGenerator:
                 logger.info("Generated AI digest successfully (streamed)")
                 return full_text
             else:
-                response = self.client.chat.completions.create(
+                nonstream_response = self.client.chat.completions.create(
                     model=config.LLM_MODEL,
                     messages=[{"role": "user", "content": prompt}],
                     max_completion_tokens=4096,
                 )
-                digest = response.choices[0].message.content
+                digest = nonstream_response.choices[0].message.content
                 logger.info("Generated AI digest successfully (non-streamed)")
                 print("\n" + (digest or "") + "\n", flush=True)
                 return digest or ""

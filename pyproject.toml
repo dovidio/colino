@@ -26,6 +26,7 @@ mypy = "^1.11.2"
 types-pyyaml = "^6.0.12.20240917"
 types-requests = "^2.32.0.20240914"
 pre-commit = "^3.8.0"
+types-jinja2 = "^2.11.9"
 
 [tool.poetry.scripts]
 colino = "colino.main:main"
