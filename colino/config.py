@@ -22,6 +22,14 @@ class Config:
                     return cast(dict[str, Any], yaml.safe_load(f))
 
         # If no config found, create default at ~/.config/colino/config.yaml
+        # Set default DB path for macOS
+        if os.name == "posix" and "darwin" in os.uname().sysname.lower():
+            db_default_path = str(
+                Path.home() / "Library" / "Application Support" / "Colino" / "colino.db"
+            )
+        else:
+            db_default_path = "colino.db"
+
         default_config = {
             "rss": {
                 "feeds": ["https://hnrss.org/frontpage"],
@@ -48,7 +56,7 @@ class Config:
                 "youtube_prompt": "",
             },
             "database": {
-                "path": "colino.db",
+                "path": db_default_path,
             },
             "general": {
                 "default_lookback_hours": 24,
