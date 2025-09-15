@@ -10,8 +10,7 @@ class Config:
         self._config = self._load_config()
 
     def _load_config(self) -> dict[str, Any]:
-        """Load configuration from YAML files"""
-        # Check config locations in order of preference
+        """Load configuration from YAML files, or create a default one if missing."""
         config_paths = [
             Path.home() / ".config" / "colino" / "config.yaml",
             Path("config.yaml"),
@@ -22,9 +21,47 @@ class Config:
                 with open(config_path) as f:
                     return cast(dict[str, Any], yaml.safe_load(f))
 
-        raise ValueError(
-            "No config file found. Please create a config.yaml file in the current directory or in ~/.config/colino/"
-        )
+        # If no config found, create default at ~/.config/colino/config.yaml
+        default_config = {
+            "rss": {
+                "feeds": ["https://hnrss.org/frontpage"],
+                "user_agent": "Colino RSS Reader 1.0.0",
+                "timeout": 30,
+                "max_posts_per_feed": 100,
+                "scraper_max_workers": 5,
+            },
+            "filters": {
+                "include_keywords": [],
+                "exclude_keywords": ["ads", "sponsored", "advertisement"],
+            },
+            "youtube": {
+                "transcript_languages": ["en", "it"],
+                "proxy": {"enabled": False},
+            },
+            "ai": {
+                "model": "gpt-5-mini",
+                "stream": False,
+                "auto_save": True,
+                "save_directory": "digests",
+                "prompt": "",
+                "article_prompt": "",
+                "youtube_prompt": "",
+            },
+            "database": {
+                "path": "colino.db",
+            },
+            "general": {
+                "default_lookback_hours": 24,
+            },
+        }
+
+        config_dir = Path.home() / ".config" / "colino"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        config_file = config_dir / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.safe_dump(default_config, f, sort_keys=False)
+        print(f"No config file found. Created default config at {config_file}")
+        return default_config
 
     # RSS Properties
     @property
