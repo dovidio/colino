@@ -16,6 +16,10 @@ class Database:
         self.db_path = db_path or config.DATABASE_PATH
         # Expand user home directory (~) and environment variables ($HOME, etc.)
         self.db_path = os.path.expandvars(os.path.expanduser(self.db_path))
+        # Ensure parent directory exists (especially for macOS default)
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
         self.init_database()
 
     def init_database(self) -> None:
