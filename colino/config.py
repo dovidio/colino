@@ -51,9 +51,51 @@ class Config:
                 "stream": False,
                 "auto_save": True,
                 "save_directory": "digests",
-                "prompt": "",
-                "article_prompt": "",
-                "youtube_prompt": "",
+                "prompt": (
+                    "You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts. Focus on:\n"
+                    "1. Key insights and takeaways\n"
+                    "2. Important facts and developments\n"
+                    "3. Implications and context\n"
+                    "4. Clear, engaging writing\n\n"
+                    "Format your response in clean markdown with headers and bullet points.\n\n"
+                    "Please create a comprehensive digest summary of these {{ article_count }} recent articles/posts:\n\n"
+                    "{% for article in articles %}\n"
+                    "## Article {{ loop.index }}: {{ article.title }}\n"
+                    "**Source:** {{ article.source }} | **Published:** {{ article.published }}\n"
+                    "**URL:** {{ article.url }}\n\n"
+                    "**Content:**\n"
+                    "{{ article.content[:1500] }}{% if article.content|length > 1500 %}...{% endif %}\n\n"
+                    "---\n"
+                    "{% endfor %}\n\n"
+                    "If any of the previous articles don't have any meat, and they feel very clickbaity, make a note. We'll share a list later.\n\n"
+                    "Please provide:\n"
+                    "1. **Executive Summary** - 2-3 sentences covering the main themes across all {{ article_count }} articles\n"
+                    "2. **Key Highlights** - Bullet points of the most important developments (include most articles)\n"
+                    "3. **Notable Insights** - Interesting patterns, trends, or implications you see\n"
+                    "4. **Article Breakdown** - Brief one-line summary for each of the {{ article_count }} article together with the link of the article and the source.\n"
+                    "5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why. Add the link to the article.\n"
+                    "6. **Purge candidates** - List the articles that are not very novel and that you suggest to remove, and the reason why.\n\n"
+                    "Keep it concise but comprehensive. Use clear markdown formatting. Do not offer any follow up help."
+                ),
+                "article_prompt": (
+                    "You are an expert news curator and summarizer.\n"
+                    "Create an insightful summary of the article content below.\n"
+                    "The content can come from news articles, youtube videos transcripts or blog posts.\n"
+                    "Format your response in clean markdown with headers and bullet points if required.\n\n"
+                    "## Article {{ article.title }}\n"
+                    "**Source:** {{ article.source }} | **Published:** {{ article.published }}\n"
+                    "**URL:** {{ article.url }}\n\n"
+                    "**Content:**\n"
+                    "{{ article.content[:10000] }}{% if article.content|length > 10000 %}...{% endif %}"
+                ),
+                "youtube_prompt": (
+                    "You are an expert video summarizer.\n"
+                    "I'm going to send you the transcript of a video and you'll summarize it for me.\n"
+                    "Format your response in clean markdown with headers and bullet points if required.\n\n"
+                    "Video transcript: {{ transcript }}\n\n"
+                    "If possible, find links to existing theories, philosophic positions, trends and suggest possible follow ups. If not, don't mention any of that.\n"
+                    "Do not offer any follow up help."
+                ),
             },
             "database": {
                 "path": db_default_path,
