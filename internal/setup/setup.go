@@ -241,6 +241,20 @@ func newWizardModel(hasCfg bool) *wizardModel {
 
 func (m *wizardModel) Init() tea.Cmd { return nil }
 
+// hasYouTubeFeeds reports whether the current RSS feeds include any
+// YouTube channel feed URLs (added manually or via the YouTube selector).
+func (m *wizardModel) hasYouTubeFeeds() bool {
+    if len(m.ytNameByURL) > 0 {
+        return true
+    }
+    for _, u := range m.rssFeeds {
+        if strings.Contains(strings.ToLower(u), "youtube.com/feeds/videos.xml") {
+            return true
+        }
+    }
+    return false
+}
+
 // Messages for async actions
 type initAuthMsg struct {
 	url, flowID string
@@ -361,7 +375,17 @@ func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, cmd
 				}
 				if m.override {
-					m.step = stepProxy
+					// Only ask for optional Webshare proxy if YouTube feeds are present.
+					if m.hasYouTubeFeeds() {
+						m.step = stepProxy
+					} else {
+						// Skip proxy step; go to MCP if available, else summary.
+						if m.mcpClaudeAvail || m.mcpCodexAvail {
+							m.step = stepMCP
+						} else {
+							m.step = stepSummary
+						}
+					}
 				} else {
 					m.step = stepSummary
 				}
@@ -475,7 +499,7 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, "Step 1 – RSS Feeds")
 		fmt.Fprintln(b, "Enter one or more RSS feed URLs, separated by commas.")
 		fmt.Fprintln(b, "You can add more later by editing ~/.config/colino/config.yaml.")
-			fmt.Fprintln(b, "Example YouTube channel feed: https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA")
+		fmt.Fprintln(b, "Example of a channel feed: https://feeds.bbci.co.uk/news/rss.xml")
 		fmt.Fprintln(b, m.rssInput.View())
 		fmt.Fprintln(b, "\nPress Enter to continue")
 	case stepYTAsk:
