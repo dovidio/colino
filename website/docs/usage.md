@@ -5,6 +5,13 @@ Colino now has two primary modes:
 - MCP server to expose your local content cache to an LLM.
 - Daemon for periodic ingestion of RSS feeds (and YouTube transcripts via RSS items).
 
+## Quick setup
+
+Run the interactive wizard to create your config, bootstrap the DB, and (on macOS) install the daemon:
+```bash
+./colino setup
+```
+
 ## Ingesting content
 
 Run a single ingestion cycle:
@@ -20,13 +27,12 @@ Run continuously on an interval (default 30 minutes, configurable):
 Install as a macOS launchd agent that runs `--once` on a schedule:
 ```bash
 ./colino daemon install \
-  --label com.colino.daemon \
   --interval-minutes 30 \
   --sources article \
   --log-file "$HOME/Library/Logs/Colino/daemon.launchd.log"
 
 # Uninstall
-./colino daemon uninstall --label com.colino.daemon
+./colino daemon uninstall
 ```
 
 ## MCP server

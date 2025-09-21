@@ -8,6 +8,7 @@ import (
     "os/exec"
     "path/filepath"
     "runtime"
+    "strconv"
     "strings"
 )
 
@@ -136,9 +137,17 @@ func Install(opt InstallOptions) (string, error) {
         return "", err
     }
 
-    // launchctl load -w
-    if err := exec.Command("launchctl", "load", "-w", plistPath).Run(); err != nil {
-        return plistPath, fmt.Errorf("launchctl load failed: %w", err)
+    // Prefer modern bootstrap/enable under user GUI domain
+    uid := os.Getuid()
+    domain := fmt.Sprintf("gui/%d", uid)
+    if err := exec.Command("launchctl", "bootstrap", domain, plistPath).Run(); err != nil {
+        // Fallback to legacy load -w
+        if err2 := exec.Command("launchctl", "load", "-w", plistPath).Run(); err2 != nil {
+            return plistPath, fmt.Errorf("launchctl bootstrap/load failed: %v / %v", err, err2)
+        }
+    } else {
+        // Enable the service explicitly
+        _ = exec.Command("launchctl", "enable", domain+"/"+opt.Label).Run()
     }
     return plistPath, nil
 }
@@ -155,8 +164,12 @@ func Uninstall(label string, plistPath string) error {
             return err
         }
     }
-    // launchctl unload -w
-    _ = exec.Command("launchctl", "unload", "-w", plistPath).Run()
+    // Prefer modern bootout, fallback to unload
+    uid := os.Getuid()
+    domain := fmt.Sprintf("gui/%d", uid)
+    if err := exec.Command("launchctl", "bootout", domain, plistPath).Run(); err != nil {
+        _ = exec.Command("launchctl", "unload", "-w", plistPath).Run()
+    }
     // remove file
     if err := os.Remove(plistPath); err != nil && !errors.Is(err, os.ErrNotExist) {
         return err
@@ -164,3 +177,51 @@ func Uninstall(label string, plistPath string) error {
     return nil
 }
 
+// Status returns whether the agent is loaded and a short human string.
+func Status(label string) (bool, string) {
+    if runtime.GOOS != "darwin" || strings.TrimSpace(label) == "" {
+        return false, "unsupported"
+    }
+    uid := os.Getuid()
+    domain := fmt.Sprintf("gui/%d", uid)
+    out, err := exec.Command("launchctl", "print", domain+"/"+label).CombinedOutput()
+    if err != nil {
+        return false, "not loaded"
+    }
+    // Try to find state line
+    lines := strings.Split(string(out), "\n")
+    state := "loaded"
+    for _, ln := range lines {
+        if strings.Contains(ln, "state = ") {
+            state = strings.TrimSpace(ln)
+            break
+        }
+    }
+    return true, state
+}
+
+// ExtractStartInterval best-effort parse of StartInterval seconds from a plist file.
+func ExtractStartInterval(plistPath string) (int, error) {
+    b, err := os.ReadFile(plistPath)
+    if err != nil {
+        return 0, err
+    }
+    s := string(b)
+    i := strings.Index(s, "<key>StartInterval</key>")
+    if i < 0 {
+        return 0, errors.New("StartInterval not found")
+    }
+    // Look for <integer>VALUE</integer> after the key
+    sub := s[i:]
+    open := strings.Index(sub, "<integer>")
+    close := strings.Index(sub, "</integer>")
+    if open < 0 || close < 0 || close <= open+9 {
+        return 0, errors.New("invalid integer tag")
+    }
+    val := strings.TrimSpace(sub[open+9 : close])
+    n, err := strconv.Atoi(val)
+    if err != nil {
+        return 0, err
+    }
+    return n, nil
+}

@@ -98,7 +98,7 @@ func LoadDaemonConfig() (DaemonConfig, error) {
     dc := DaemonConfig{
         Enabled:       false,
         IntervalMin:   30,
-        Sources:       []string{"article"},
+        Sources:       []string{"article", "youtube"},
         LogFile:       "",
     }
 
@@ -224,4 +224,3 @@ func LoadAppConfig() (AppConfig, error) {
     // filters, ai, and default_lookback are intentionally ignored now.
     return ac, nil
 }
-

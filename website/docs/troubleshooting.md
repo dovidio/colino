@@ -48,8 +48,8 @@ Your MCP client doesn’t discover `list_cache`/`get_content` when running `./co
 - Check the log file path you configured; default is `~/Library/Logs/Colino/daemon.launchd.log`.
 - Try unloading/reloading:
   ```bash
-  ./colino daemon uninstall --label com.colino.daemon
-  ./colino daemon install --label com.colino.daemon --interval-minutes 30
+  ./colino daemon uninstall
+  ./colino daemon install --interval-minutes 30
   ```
 
 ## 5. Still stuck?
