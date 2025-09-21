@@ -31,11 +31,6 @@ type GetContentParams struct {
     IncludeContent bool     `json:"include_content"`
 }
 
-type IngestParams struct {
-    Sources []string `json:"sources,omitempty"`
-    Hours   *int     `json:"hours,omitempty"`
-}
-
 func Run(ctx context.Context) error {
     server := mcp.NewServer(&mcp.Implementation{Name: "colino", Version: "v1.0.0"}, nil)
     // list_cache tool
