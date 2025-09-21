@@ -1,66 +1,53 @@
 # Usage
 
-Colino is designed to be simple and efficient. Once installed, you can run it from your terminal with the command:
+Colino now has two primary modes:
 
-## Get started
-
-```bash
-colino digest
-```
-
-This command fetches the latest articles from your configured RSS feeds and YouTube subscriptions, summarizes them using AI, and displays the summaries in your terminal. The first time you run this, you'll need to authenticate with Youtube to allow Colino to access your subscriptions. After that it's gonna be smooth sailing.
-
-## Filtering Options
-You can also digest only RSS feeds.
-```bash
-colino digest --rss
-```
-
-Or only videos from your YouTube subscriptions.
-```bash
-colino digest --youtube
-```
-
-By default Colino will look into articles and videos from the last 24 hours. You can change this with the `--hours` flag.
-```bash
-colino digest --hours 48
-```
-
-## Listing content
-You can also list all the feeds you have configured.
-```bash
-colino list
-```
-As with the digest command, you can filter only RSS or YouTube content if you wish to do so.
-```bash
-colino list --rss
-colino list --youtube
-```
-
-## Summarizing single articles or videos
-
-Want to summarize a single article? Just do the following
-```bash
-colino digest https://arxiv.org/html/1706.03762v7
-```
-
-This works also for a single YouTube video
-```bash
-colino digest https://www.youtube.com/watch?v=eMlx5fFNoYc
-```
+- MCP server to expose your local content cache to an LLM.
+- Daemon for periodic ingestion of RSS feeds (and YouTube transcripts via RSS items).
 
 ## Ingesting content
-By default the digest command is also scraping/ingesting content, but if you want to just ingest without summarizing, you can do
+
+Run a single ingestion cycle:
 ```bash
-colino ingest
+./colino daemon --once
 ```
 
-## Streaming vs Non-Streaming Output
-
-By default, Colino will wait for the full AI response before displaying the digest. If you want to see the summary as it is generated (streaming), set `stream: true` in your `ai` config section. See the [configuration guide](./configuration.md#streaming-llm-output) for details and OpenAI requirements.
-
-## Getting help
-For more options, run:
+Run continuously on an interval (default 30 minutes, configurable):
 ```bash
-colino --help
+./colino daemon --interval-minutes 30
+```
+
+Install as a macOS launchd agent that runs `--once` on a schedule:
+```bash
+./colino daemon install \
+  --label com.colino.daemon \
+  --interval-minutes 30 \
+  --sources article \
+  --log-file "$HOME/Library/Logs/Colino/daemon.launchd.log"
+
+# Uninstall
+./colino daemon uninstall --label com.colino.daemon
+```
+
+## MCP server
+
+Start the server on stdio (for clients like Codex):
+```bash
+./colino server
+```
+
+Then configure your client to launch `./colino server` as an MCP server. Tools available:
+- `list_cache(hours=24, source?, limit=50, include_content=false)`
+- `get_content(ids[] | url | hours, source?, limit?, include_content=true)`
+
+Example Codex snippet:
+```toml
+[mcp_servers.colino]
+command = "/absolute/path/to/colino"
+args = ["server"]
+```
+
+## Help
+```bash
+./colino --help
 ```

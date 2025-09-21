@@ -224,3 +224,4 @@ func LoadAppConfig() (AppConfig, error) {
     // filters, ai, and default_lookback are intentionally ignored now.
     return ac, nil
 }
+

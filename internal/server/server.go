@@ -51,7 +51,7 @@ func Run(ctx context.Context) error {
             return nil, map[string]any{
                 "ok":      false,
                 "message": fmt.Sprintf("Colino database not found at %s", dbPath),
-                "hint":    "Run './golino daemon --once' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.",
+                "hint":    "Run './colino daemon --once' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.",
                 "db_path": dbPath,
             }, nil
         }
@@ -81,7 +81,7 @@ func Run(ctx context.Context) error {
                 return nil, map[string]any{
                     "ok":      false,
                     "message": "Colino database is present but not initialized (missing tables)",
-                    "hint":    "Run './golino daemon --once' once to initialize the schema.",
+                    "hint":    "Run './colino daemon --once' once to initialize the schema.",
                     "db_path": dbPath,
                 }, nil
             }
@@ -147,7 +147,7 @@ func Run(ctx context.Context) error {
             return nil, map[string]any{
                 "ok":      false,
                 "message": fmt.Sprintf("Colino database not found at %s", dbPath),
-                "hint":    "Run './golino daemon --once' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.",
+                "hint":    "Run './colino daemon --once' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.",
                 "db_path": dbPath,
             }, nil
         }
@@ -212,7 +212,7 @@ func Run(ctx context.Context) error {
                 return nil, map[string]any{
                     "ok":      false,
                     "message": "Colino database is present but not initialized (missing tables)",
-                    "hint":    "Run './golino daemon --once' once to initialize the schema.",
+                    "hint":    "Run './colino daemon --once' once to initialize the schema.",
                     "db_path": dbPath,
                 }, nil
             }
@@ -290,3 +290,4 @@ func fileExists(p string) bool {
     }
     return false
 }
+

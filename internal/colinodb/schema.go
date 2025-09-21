@@ -52,3 +52,4 @@ func InitSchema(db *sql.DB) error {
     }
     return nil
 }
+

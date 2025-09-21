@@ -1,14 +1,16 @@
 # Installation
 
- To install Colino, follow these steps:
+Colino is now a Go project. You can build from source:
 
-1. **Install pipx** Install [pipx](https://pipx.pypa.io/latest/installation/)
-Alternatively, you can use `pip` or other package managers, but pipx is recommended for isolated installations.
-
-2. **Install colino**
+1. Ensure Go 1.23+ is installed: https://go.dev/dl/
+2. Clone the repo and build the CLI:
 
 ```bash
-pipx install colino
+git clone https://github.com/<you>/colino
+cd colino
+go build -o colino ./cmd/colino
 ```
 
-You are done! You can now run `colino` from your terminal.
+The resulting `./colino` binary provides both the ingestion daemon and the MCP server.
+
+Optional: add it to your PATH or install to a `bin/` directory of your choice.

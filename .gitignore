@@ -168,6 +168,19 @@ cython_debug/
 colino.db
 social_digest.db
 
+# Go build/cache outputs
+colino
+/bin/
+/build/
+.gocache/
+.gopath/
+**/.gocache/
+**/.gopath/
+*.exe
+*.dll
+*.so
+*.dylib
+
 # RSS feed exports
 *.opml
 colino_feeds_*.opml
