@@ -222,39 +222,39 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 		createdAt = it.UpdatedParsed.UTC()
 	}
 
-    // If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
-    didFetch := false
-    if isYouTubeURL(url) {
-        var ws *youtube.WebshareProxyConfig
-        if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
-            ws = &youtube.WebshareProxyConfig{
-                Username: ri.AppCfg.WebshareUsername,
-                Password: ri.AppCfg.WebsharePassword,
-            }
-        }
-        if vid := extractYouTubeID(url); vid != "" {
-            if snippets, err := youtube.FetchDefaultTranscript(ctx, nil, vid, ws); err == nil && len(snippets) > 0 {
-                didFetch = true
-                var sb strings.Builder
-                for _, sn := range snippets {
-                    line := strings.TrimSpace(sn.Text)
-                    if line == "" {
-                        continue
-                    }
-                    if sb.Len() > 0 {
-                        sb.WriteString("\n")
-                    }
-                    sb.WriteString(line)
-                }
-                tr := strings.TrimSpace(sb.String())
-                if tr != "" {
-                    content = "YouTube Transcript:\n" + tr
-                }
-            } else {
-                ri.debugf("yt transcript unavailable: url=%s err=%v", url, err)
-            }
-        }
-    }
+	// If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
+	didFetch := false
+	if isYouTubeURL(url) {
+		var ws *youtube.WebshareProxyConfig
+		if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
+			ws = &youtube.WebshareProxyConfig{
+				Username: ri.AppCfg.WebshareUsername,
+				Password: ri.AppCfg.WebsharePassword,
+			}
+		}
+		if vid := extractYouTubeID(url); vid != "" {
+			if snippets, err := youtube.FetchDefaultTranscript(ctx, nil, vid, ws); err == nil && len(snippets) > 0 {
+				didFetch = true
+				var sb strings.Builder
+				for _, sn := range snippets {
+					line := strings.TrimSpace(sn.Text)
+					if line == "" {
+						continue
+					}
+					if sb.Len() > 0 {
+						sb.WriteString("\n")
+					}
+					sb.WriteString(line)
+				}
+				tr := strings.TrimSpace(sb.String())
+				if tr != "" {
+					content = "YouTube Transcript:\n" + tr
+				}
+			} else {
+				ri.debugf("yt transcript unavailable: url=%s err=%v", url, err)
+			}
+		}
+	}
 	// scrape full text and enhance (fallback / non-YouTube)
 	if !isYouTubeURL(url) || strings.TrimSpace(content) == "" || !strings.Contains(content, "YouTube Transcript:") {
 		full := ri.extractMainText(ctx, url)
@@ -269,19 +269,19 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 		}
 	}
 
-    meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
-    src := "article"
-    if isYouTubeURL(url) {
-        src = "youtube"
-    }
-    rec := colinodb.ContentInsert{
-        ID:                id,
-        Source:            src,
-        AuthorUsername:    t.FeedTitle,
-        AuthorDisplayName: t.FeedTitle,
-        Content:           content,
-        URL:               url,
-        CreatedAt:         createdAt,
+	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
+	src := "article"
+	if isYouTubeURL(url) {
+		src = "youtube"
+	}
+	rec := colinodb.ContentInsert{
+		ID:                id,
+		Source:            src,
+		AuthorUsername:    t.FeedTitle,
+		AuthorDisplayName: t.FeedTitle,
+		Content:           content,
+		URL:               url,
+		CreatedAt:         createdAt,
 		MetadataJSON:      meta,
 		LikeCount:         0,
 		ReplyCount:        0,
@@ -396,4 +396,3 @@ func extractYouTubeID(u string) string {
 	}
 	return ""
 }
-

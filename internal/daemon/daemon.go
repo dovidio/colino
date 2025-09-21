@@ -16,10 +16,10 @@ import (
 
 // Options allow overriding config values from CLI flags.
 type Options struct {
-    Once          bool
-    IntervalMin   int
-    SourcesCSV    string
-    LogFile       string
+	Once        bool
+	IntervalMin int
+	SourcesCSV  string
+	LogFile     string
 }
 
 // Run starts the ingestion daemon. It respects ~/.config/colino/config.yaml
@@ -32,15 +32,15 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	if strings.TrimSpace(opts.SourcesCSV) != "" {
 		var ss []string
-        for _, s := range strings.Split(opts.SourcesCSV, ",") {
-            s = strings.ToLower(strings.TrimSpace(s))
-            if s == "" {
-                continue
-            }
-            if s == "article" || s == "youtube" {
-                ss = append(ss, s)
-            }
-        }
+		for _, s := range strings.Split(opts.SourcesCSV, ",") {
+			s = strings.ToLower(strings.TrimSpace(s))
+			if s == "" {
+				continue
+			}
+			if s == "article" || s == "youtube" {
+				ss = append(ss, s)
+			}
+		}
 		if len(ss) > 0 {
 			dc.Sources = ss
 		}
@@ -69,10 +69,10 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	defer closeLog()
 
-    // one run and exit
-    if opts.Once {
-        return runGoIngest(ctx, logger, dc.Sources)
-    }
+	// one run and exit
+	if opts.Once {
+		return runGoIngest(ctx, logger, dc.Sources)
+	}
 
 	// periodic loop
 	logger.Printf("daemon starting (interval=%d min, sources=%v)\n", dc.IntervalMin, dc.Sources)
@@ -98,7 +98,7 @@ func Run(ctx context.Context, opts Options) error {
 }
 
 func runGoIngest(ctx context.Context, logger *log.Logger, sources []string) error {
-    // Load app config for feeds
+	// Load app config for feeds
 	appCfg, _ := config.LoadAppConfig()
 	dbPath, err := config.LoadDBPath()
 	if err != nil {
@@ -111,16 +111,16 @@ func runGoIngest(ctx context.Context, logger *log.Logger, sources []string) erro
 	}
 	defer db.Close()
 
-    // Always run ingestion of RSS feeds; entries are saved as source="article" or "youtube" based on URL.
-    ri := ingest.NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, logger)
-    n, err := ri.Ingest(ctx, db, appCfg.RSSFeeds)
-    if err != nil {
-        logger.Printf("ingest error: %v", err)
-    } else {
-        logger.Printf("ingest saved: %d", n)
-    }
-    logger.Printf("ingest completed: sources=%v", sources)
-    return nil
+	// Always run ingestion of RSS feeds; entries are saved as source="article" or "youtube" based on URL.
+	ri := ingest.NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, logger)
+	n, err := ri.Ingest(ctx, db, appCfg.RSSFeeds)
+	if err != nil {
+		logger.Printf("ingest error: %v", err)
+	} else {
+		logger.Printf("ingest saved: %d", n)
+	}
+	logger.Printf("ingest completed: sources=%v", sources)
+	return nil
 }
 
 func contains(ss []string, s string) bool {
@@ -139,4 +139,3 @@ func dirOf(p string) string {
 	}
 	return p[:i]
 }
-

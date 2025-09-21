@@ -1,22 +1,22 @@
 package launchd
 
 import (
-    "bytes"
-    "encoding/xml"
-    "errors"
-    "fmt"
-    "os"
-    "os/exec"
-    "path/filepath"
-    "runtime"
-    "strconv"
-    "strings"
+	"bytes"
+	"encoding/xml"
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
 )
 
 // Minimal typed wrapper kept only to reuse xml.Header constant
 type Plist struct {
-    XMLName xml.Name `xml:"plist"`
-    Version string   `xml:"version,attr"`
+	XMLName xml.Name `xml:"plist"`
+	Version string   `xml:"version,attr"`
 }
 
 // InstallOptions config for creating/loading a launchd agent.
@@ -40,72 +40,72 @@ func DefaultAgentPath(label string) (string, error) {
 
 // BuildPlist constructs a minimal plist for StartInterval execution.
 func BuildPlist(opt InstallOptions) ([]byte, error) {
-    if opt.Label == "" {
-        return nil, errors.New("label required")
-    }
-    if opt.ProgramPath == "" {
-        return nil, errors.New("program path required")
-    }
-    if opt.IntervalMinutes <= 0 {
-        opt.IntervalMinutes = 30
-    }
-    if opt.StdOutPath == "" || opt.StdErrPath == "" {
-        // default to user logs if not set
-        if home, err := os.UserHomeDir(); err == nil {
-            def := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
-            if opt.StdOutPath == "" {
-                opt.StdOutPath = def
-            }
-            if opt.StdErrPath == "" {
-                opt.StdErrPath = def
-            }
-        }
-    }
+	if opt.Label == "" {
+		return nil, errors.New("label required")
+	}
+	if opt.ProgramPath == "" {
+		return nil, errors.New("program path required")
+	}
+	if opt.IntervalMinutes <= 0 {
+		opt.IntervalMinutes = 30
+	}
+	if opt.StdOutPath == "" || opt.StdErrPath == "" {
+		// default to user logs if not set
+		if home, err := os.UserHomeDir(); err == nil {
+			def := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
+			if opt.StdOutPath == "" {
+				opt.StdOutPath = def
+			}
+			if opt.StdErrPath == "" {
+				opt.StdErrPath = def
+			}
+		}
+	}
 
-    // Ensure log directory exists
-    _ = os.MkdirAll(filepath.Dir(opt.StdOutPath), 0o755)
-    _ = os.MkdirAll(filepath.Dir(opt.StdErrPath), 0o755)
+	// Ensure log directory exists
+	_ = os.MkdirAll(filepath.Dir(opt.StdOutPath), 0o755)
+	_ = os.MkdirAll(filepath.Dir(opt.StdErrPath), 0o755)
 
-    // Manually render a valid launchd plist with proper key/value tags
-    escape := func(s string) string {
-        var b bytes.Buffer
-        xml.EscapeText(&b, []byte(s))
-        return b.String()
-    }
-    args := []string{opt.ProgramPath}
-    args = append(args, opt.ProgramArgs...)
-    var buf bytes.Buffer
-    buf.WriteString(xml.Header)
-    buf.WriteString("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
-    buf.WriteString("<plist version=\"1.0\">\n  <dict>\n")
-    // Label
-    buf.WriteString("    <key>Label</key>\n    <string>")
-    buf.WriteString(escape(opt.Label))
-    buf.WriteString("</string>\n")
-    // ProgramArguments
-    buf.WriteString("    <key>ProgramArguments</key>\n    <array>\n")
-    for _, a := range args {
-        buf.WriteString("      <string>")
-        buf.WriteString(escape(a))
-        buf.WriteString("</string>\n")
-    }
-    buf.WriteString("    </array>\n")
-    // StartInterval (seconds)
-    buf.WriteString("    <key>StartInterval</key>\n    <integer>")
-    buf.WriteString(strconv.Itoa(opt.IntervalMinutes * 60))
-    buf.WriteString("</integer>\n")
-    // RunAtLoad and KeepAlive (keep process running; launchd will restart on crash)
-    buf.WriteString("    <key>RunAtLoad</key>\n    <true/>\n")
-    buf.WriteString("    <key>KeepAlive</key>\n    <true/>\n")
-    // Logs
-    buf.WriteString("    <key>StandardOutPath</key>\n    <string>")
-    buf.WriteString(escape(opt.StdOutPath))
-    buf.WriteString("</string>\n")
-    buf.WriteString("    <key>StandardErrorPath</key>\n    <string>")
-    buf.WriteString(escape(opt.StdErrPath))
-    buf.WriteString("</string>\n")
-    buf.WriteString("  </dict>\n</plist>\n")
-    return buf.Bytes(), nil
+	// Manually render a valid launchd plist with proper key/value tags
+	escape := func(s string) string {
+		var b bytes.Buffer
+		xml.EscapeText(&b, []byte(s))
+		return b.String()
+	}
+	args := []string{opt.ProgramPath}
+	args = append(args, opt.ProgramArgs...)
+	var buf bytes.Buffer
+	buf.WriteString(xml.Header)
+	buf.WriteString("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
+	buf.WriteString("<plist version=\"1.0\">\n  <dict>\n")
+	// Label
+	buf.WriteString("    <key>Label</key>\n    <string>")
+	buf.WriteString(escape(opt.Label))
+	buf.WriteString("</string>\n")
+	// ProgramArguments
+	buf.WriteString("    <key>ProgramArguments</key>\n    <array>\n")
+	for _, a := range args {
+		buf.WriteString("      <string>")
+		buf.WriteString(escape(a))
+		buf.WriteString("</string>\n")
+	}
+	buf.WriteString("    </array>\n")
+	// StartInterval (seconds)
+	buf.WriteString("    <key>StartInterval</key>\n    <integer>")
+	buf.WriteString(strconv.Itoa(opt.IntervalMinutes * 60))
+	buf.WriteString("</integer>\n")
+	// RunAtLoad and KeepAlive (keep process running; launchd will restart on crash)
+	buf.WriteString("    <key>RunAtLoad</key>\n    <true/>\n")
+	buf.WriteString("    <key>KeepAlive</key>\n    <true/>\n")
+	// Logs
+	buf.WriteString("    <key>StandardOutPath</key>\n    <string>")
+	buf.WriteString(escape(opt.StdOutPath))
+	buf.WriteString("</string>\n")
+	buf.WriteString("    <key>StandardErrorPath</key>\n    <string>")
+	buf.WriteString(escape(opt.StdErrPath))
+	buf.WriteString("</string>\n")
+	buf.WriteString("  </dict>\n</plist>\n")
+	return buf.Bytes(), nil
 }
 
 // Install writes the plist and loads it via launchctl.

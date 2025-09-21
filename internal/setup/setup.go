@@ -91,22 +91,22 @@ func Run(ctx context.Context) error {
 		}
 	}
 
-    if runtime.GOOS == "darwin" {
-        fmt.Println("\nInstalling launchd agent to run on a schedule…")
-        // Install as a long-running daemon (no --once), run all sources
-        args := []string{"daemon", "--interval-minutes", fmt.Sprint(interval), "--sources", "article,youtube"}
-        home, _ := os.UserHomeDir()
-        logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
-        // Keep daemon's internal logger and launchd stdout/err in sync
-        args = append(args, "--log-file", logPath)
-        opt := launchd.InstallOptions{
-            Label:           "com.colino.daemon",
-            IntervalMinutes: interval,
-            ProgramPath:     exe,
-            ProgramArgs:     args,
-            StdOutPath:      logPath,
-            StdErrPath:      logPath,
-        }
+	if runtime.GOOS == "darwin" {
+		fmt.Println("\nInstalling launchd agent to run on a schedule…")
+		// Install as a long-running daemon (no --once), run all sources
+		args := []string{"daemon", "--interval-minutes", fmt.Sprint(interval), "--sources", "article,youtube"}
+		home, _ := os.UserHomeDir()
+		logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
+		// Keep daemon's internal logger and launchd stdout/err in sync
+		args = append(args, "--log-file", logPath)
+		opt := launchd.InstallOptions{
+			Label:           "com.colino.daemon",
+			IntervalMinutes: interval,
+			ProgramPath:     exe,
+			ProgramArgs:     args,
+			StdOutPath:      logPath,
+			StdErrPath:      logPath,
+		}
 		if _, err := launchd.Install(opt); err != nil {
 			fmt.Printf("launchd install failed: %v\n", err)
 			fmt.Println("Tips: make sure you're running on macOS with launchctl available (usually at /bin/launchctl). If you're inside a container or a non-login shell, launchctl may be unavailable.")
@@ -126,23 +126,23 @@ func Run(ctx context.Context) error {
 			fmt.Sprintf("*/%d * * * * %s daemon --once >> $HOME/.local/share/colino/daemon.cron.log 2>&1\n", interval, exe))
 	}
 
-    // Apply MCP integration based on wizard choices
-    exe, _ = os.Executable()
-    if wm.mcpClaudeChoice && wm.mcpClaudeAvail {
-        if err := runClaudeCLIAdd(exe); err != nil {
-            fmt.Printf("Failed to add MCP via Claude CLI: %v\n", err)
-        } else {
-            fmt.Println("Added MCP server to Claude via CLI.")
-        }
-    }
-    if wm.mcpCodexChoice && wm.mcpCodexAvail && strings.TrimSpace(wm.codexPath) != "" {
-        _ = backupFile(wm.codexPath)
-        if err := appendTomlMCP(wm.codexPath, exe); err != nil {
-            fmt.Printf("Failed to add MCP to %s: %v\n", wm.codexPath, err)
-        } else {
-            fmt.Printf("Added MCP server to %s\n", wm.codexPath)
-        }
-    }
+	// Apply MCP integration based on wizard choices
+	exe, _ = os.Executable()
+	if wm.mcpClaudeChoice && wm.mcpClaudeAvail {
+		if err := runClaudeCLIAdd(exe); err != nil {
+			fmt.Printf("Failed to add MCP via Claude CLI: %v\n", err)
+		} else {
+			fmt.Println("Added MCP server to Claude via CLI.")
+		}
+	}
+	if wm.mcpCodexChoice && wm.mcpCodexAvail && strings.TrimSpace(wm.codexPath) != "" {
+		_ = backupFile(wm.codexPath)
+		if err := appendTomlMCP(wm.codexPath, exe); err != nil {
+			fmt.Printf("Failed to add MCP to %s: %v\n", wm.codexPath, err)
+		} else {
+			fmt.Printf("Added MCP server to %s\n", wm.codexPath)
+		}
+	}
 	return nil
 }
 
@@ -150,17 +150,17 @@ func Run(ctx context.Context) error {
 type wizardStep int
 
 const (
-    stepIntro wizardStep = iota
-    stepConfigChoice
-    stepRSS
-    stepYTAsk
-    stepYTAuth
-    stepYTSelect
-    stepInterval
-    stepProxy
-    stepMCP
-    stepSummary
-    stepDone
+	stepIntro wizardStep = iota
+	stepConfigChoice
+	stepRSS
+	stepYTAsk
+	stepYTAuth
+	stepYTSelect
+	stepInterval
+	stepProxy
+	stepMCP
+	stepSummary
+	stepDone
 )
 
 type wizardModel struct {
@@ -191,17 +191,17 @@ type wizardModel struct {
 	wsUserInput textinput.Model
 	wsPassInput textinput.Model
 	wsUser      string
-    wsPass      string
+	wsPass      string
 
-    // Status/error
-    errMsg string
+	// Status/error
+	errMsg string
 
-    // MCP integration
-    mcpClaudeAvail  bool
-    mcpClaudeChoice bool
-    mcpCodexAvail   bool
-    mcpCodexChoice  bool
-    codexPath       string
+	// MCP integration
+	mcpClaudeAvail  bool
+	mcpClaudeChoice bool
+	mcpCodexAvail   bool
+	mcpCodexChoice  bool
+	codexPath       string
 }
 
 func newWizardModel(hasCfg bool) *wizardModel {
@@ -220,23 +220,23 @@ func newWizardModel(hasCfg bool) *wizardModel {
 	wsPass.EchoMode = textinput.EchoPassword
 	wsPass.EchoCharacter = '•'
 
-    // detect MCP options
-    _, claudeErr := exec.LookPath("claude")
-    codex := pathIfExists(filepath.Join(userHome(), ".codex", "config.toml"))
+	// detect MCP options
+	_, claudeErr := exec.LookPath("claude")
+	codex := pathIfExists(filepath.Join(userHome(), ".codex", "config.toml"))
 
-    return &wizardModel{
-        step:          stepIntro,
-        hasCfg:        hasCfg,
-        rssInput:      rss,
-        intervalInput: interval,
-        wsUserInput:   wsUser,
-        wsPassInput:   wsPass,
-        interval:      30,
-        ytNameByURL:   map[string]string{},
-        mcpClaudeAvail: claudeErr == nil,
-        mcpCodexAvail:  codex != "",
-        codexPath:      codex,
-    }
+	return &wizardModel{
+		step:           stepIntro,
+		hasCfg:         hasCfg,
+		rssInput:       rss,
+		intervalInput:  interval,
+		wsUserInput:    wsUser,
+		wsPassInput:    wsPass,
+		interval:       30,
+		ytNameByURL:    map[string]string{},
+		mcpClaudeAvail: claudeErr == nil,
+		mcpCodexAvail:  codex != "",
+		codexPath:      codex,
+	}
 }
 
 func (m *wizardModel) Init() tea.Cmd { return nil }
@@ -369,57 +369,61 @@ func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			return m, cmd
-        case stepProxy:
-            var cmd tea.Cmd
-            // ensure we start on username field with password blurred
-            if !m.wsUserInput.Focused() && !m.wsPassInput.Focused() {
-                m.wsPassInput.Blur()
-                return m, m.wsUserInput.Focus()
-            }
-            // route input focus: user → pass
-            if m.wsUserInput.Focused() {
-                m.wsUserInput, cmd = m.wsUserInput.Update(msg)
-                if msg.Type == tea.KeyEnter {
-                    m.wsUser = strings.TrimSpace(m.wsUserInput.Value())
-                    m.wsUserInput.Blur()
-                    return m, m.wsPassInput.Focus()
-                }
-                return m, cmd
-            }
-            // password field focused
-            m.wsPassInput, cmd = m.wsPassInput.Update(msg)
-            if msg.Type == tea.KeyEnter {
-                m.wsUser = strings.TrimSpace(m.wsUserInput.Value())
-                m.wsPass = strings.TrimSpace(m.wsPassInput.Value())
-                // If any MCP options are available, go to MCP step; else summary
-                if m.mcpClaudeAvail || m.mcpCodexAvail {
-                    m.step = stepMCP
-                } else {
-                    m.step = stepSummary
-                }
-                return m, nil
-            }
-            return m, cmd
-        case stepMCP:
-            // Toggle choices; Enter to continue
-            if msg.Type == tea.KeyRunes {
-                s := strings.ToLower(string(msg.Runes))
-                switch s {
-                case "c":
-                    if m.mcpClaudeAvail { m.mcpClaudeChoice = !m.mcpClaudeChoice }
-                case "o":
-                    if m.mcpCodexAvail { m.mcpCodexChoice = !m.mcpCodexChoice }
-                }
-            }
-            if msg.Type == tea.KeyEnter {
-                m.step = stepSummary
-            }
-            return m, nil
-        case stepSummary:
-            if msg.Type == tea.KeyEnter {
-                m.step = stepDone
-                return m, tea.Quit
-            }
+		case stepProxy:
+			var cmd tea.Cmd
+			// ensure we start on username field with password blurred
+			if !m.wsUserInput.Focused() && !m.wsPassInput.Focused() {
+				m.wsPassInput.Blur()
+				return m, m.wsUserInput.Focus()
+			}
+			// route input focus: user → pass
+			if m.wsUserInput.Focused() {
+				m.wsUserInput, cmd = m.wsUserInput.Update(msg)
+				if msg.Type == tea.KeyEnter {
+					m.wsUser = strings.TrimSpace(m.wsUserInput.Value())
+					m.wsUserInput.Blur()
+					return m, m.wsPassInput.Focus()
+				}
+				return m, cmd
+			}
+			// password field focused
+			m.wsPassInput, cmd = m.wsPassInput.Update(msg)
+			if msg.Type == tea.KeyEnter {
+				m.wsUser = strings.TrimSpace(m.wsUserInput.Value())
+				m.wsPass = strings.TrimSpace(m.wsPassInput.Value())
+				// If any MCP options are available, go to MCP step; else summary
+				if m.mcpClaudeAvail || m.mcpCodexAvail {
+					m.step = stepMCP
+				} else {
+					m.step = stepSummary
+				}
+				return m, nil
+			}
+			return m, cmd
+		case stepMCP:
+			// Toggle choices; Enter to continue
+			if msg.Type == tea.KeyRunes {
+				s := strings.ToLower(string(msg.Runes))
+				switch s {
+				case "c":
+					if m.mcpClaudeAvail {
+						m.mcpClaudeChoice = !m.mcpClaudeChoice
+					}
+				case "o":
+					if m.mcpCodexAvail {
+						m.mcpCodexChoice = !m.mcpCodexChoice
+					}
+				}
+			}
+			if msg.Type == tea.KeyEnter {
+				m.step = stepSummary
+			}
+			return m, nil
+		case stepSummary:
+			if msg.Type == tea.KeyEnter {
+				m.step = stepDone
+				return m, tea.Quit
+			}
 		}
 	case initAuthMsg:
 		if msg.err != nil {
@@ -503,39 +507,45 @@ func (m *wizardModel) View() string {
 			fmt.Fprintf(b, "\n%s\n", m.errMsg)
 		}
 		fmt.Fprintln(b, "\nPress Enter to continue")
-    case stepProxy:
-        fmt.Fprintln(b, "Step 4 – Optional Webshare Proxy")
-        fmt.Fprintln(b, "If you ingest many YouTube transcripts, enabling a rotating proxy helps avoid IP blocking.")
-        fmt.Fprintln(b, "Leave either field empty to skip.")
-        fmt.Fprintln(b, "\nUsername (press Enter to move to password):")
-        fmt.Fprintln(b, m.wsUserInput.View())
-        fmt.Fprintln(b, "\nPassword:")
-        fmt.Fprintln(b, m.wsPassInput.View())
-        fmt.Fprintln(b, "\nPress Enter on password to continue")
-    case stepMCP:
-        fmt.Fprintln(b, "Step 5 – MCP Integration (optional)")
-        fmt.Fprintln(b, "Configure Colino MCP client integration.")
-        if !m.mcpClaudeAvail && !m.mcpCodexAvail {
-            fmt.Fprintln(b, "No supported MCP clients detected.")
-        }
-        if m.mcpClaudeAvail {
-            mark := "[ ]"; if m.mcpClaudeChoice { mark = "[x]" }
-            fmt.Fprintf(b, "%s Add MCP to Claude (press 'c' to toggle)\n", mark)
-        } else {
-            fmt.Fprintln(b, "[ ] Add MCP to Claude (not detected)")
-        }
-        if m.mcpCodexAvail {
-            mark := "[ ]"; if m.mcpCodexChoice { mark = "[x]" }
-            fmt.Fprintf(b, "%s Add MCP to ~/.codex/config.toml (press 'o' to toggle)\n", mark)
-        } else {
-            fmt.Fprintln(b, "[ ] Add MCP to ~/.codex/config.toml (not found)")
-        }
-        fmt.Fprintln(b, "\nPress Enter to continue")
-    case stepSummary:
-        fmt.Fprintln(b, "Summary")
-        fmt.Fprintf(b, "Interval: %d minutes\n", m.interval)
-        if len(m.rssFeeds) > 0 {
-            fmt.Fprintln(b, "RSS Feeds:")
+	case stepProxy:
+		fmt.Fprintln(b, "Step 4 – Optional Webshare Proxy")
+		fmt.Fprintln(b, "If you ingest many YouTube transcripts, enabling a rotating proxy helps avoid IP blocking.")
+		fmt.Fprintln(b, "Leave either field empty to skip.")
+		fmt.Fprintln(b, "\nUsername (press Enter to move to password):")
+		fmt.Fprintln(b, m.wsUserInput.View())
+		fmt.Fprintln(b, "\nPassword:")
+		fmt.Fprintln(b, m.wsPassInput.View())
+		fmt.Fprintln(b, "\nPress Enter on password to continue")
+	case stepMCP:
+		fmt.Fprintln(b, "Step 5 – MCP Integration (optional)")
+		fmt.Fprintln(b, "Configure Colino MCP client integration.")
+		if !m.mcpClaudeAvail && !m.mcpCodexAvail {
+			fmt.Fprintln(b, "No supported MCP clients detected.")
+		}
+		if m.mcpClaudeAvail {
+			mark := "[ ]"
+			if m.mcpClaudeChoice {
+				mark = "[x]"
+			}
+			fmt.Fprintf(b, "%s Add MCP to Claude (press 'c' to toggle)\n", mark)
+		} else {
+			fmt.Fprintln(b, "[ ] Add MCP to Claude (not detected)")
+		}
+		if m.mcpCodexAvail {
+			mark := "[ ]"
+			if m.mcpCodexChoice {
+				mark = "[x]"
+			}
+			fmt.Fprintf(b, "%s Add MCP to ~/.codex/config.toml (press 'o' to toggle)\n", mark)
+		} else {
+			fmt.Fprintln(b, "[ ] Add MCP to ~/.codex/config.toml (not found)")
+		}
+		fmt.Fprintln(b, "\nPress Enter to continue")
+	case stepSummary:
+		fmt.Fprintln(b, "Summary")
+		fmt.Fprintf(b, "Interval: %d minutes\n", m.interval)
+		if len(m.rssFeeds) > 0 {
+			fmt.Fprintln(b, "RSS Feeds:")
 			for _, u := range m.rssFeeds {
 				if n := m.ytNameByURL[u]; n != "" {
 					fmt.Fprintf(b, "  - %s  # YouTube: %s\n", u, n)
@@ -544,19 +554,23 @@ func (m *wizardModel) View() string {
 				}
 			}
 		}
-        if strings.TrimSpace(m.wsUser) != "" {
-            fmt.Fprintln(b, "YouTube proxy: enabled (Webshare)")
-        }
-        if m.mcpClaudeChoice || m.mcpCodexChoice {
-            fmt.Fprintln(b, "MCP integration:")
-            if m.mcpClaudeChoice { fmt.Fprintln(b, "  - Add to Claude") }
-            if m.mcpCodexChoice { fmt.Fprintln(b, "  - Add to ~/.codex/config.toml") }
-        }
-        if m.override {
-            fmt.Fprintln(b, "\nThe configuration file will be written to ~/.config/colino/config.yaml.")
-        } else {
-            fmt.Fprintln(b, "\nKeeping existing config. Only the launchd schedule will be installed/updated.")
-        }
+		if strings.TrimSpace(m.wsUser) != "" {
+			fmt.Fprintln(b, "YouTube proxy: enabled (Webshare)")
+		}
+		if m.mcpClaudeChoice || m.mcpCodexChoice {
+			fmt.Fprintln(b, "MCP integration:")
+			if m.mcpClaudeChoice {
+				fmt.Fprintln(b, "  - Add to Claude")
+			}
+			if m.mcpCodexChoice {
+				fmt.Fprintln(b, "  - Add to ~/.codex/config.toml")
+			}
+		}
+		if m.override {
+			fmt.Fprintln(b, "\nThe configuration file will be written to ~/.config/colino/config.yaml.")
+		} else {
+			fmt.Fprintln(b, "\nKeeping existing config. Only the launchd schedule will be installed/updated.")
+		}
 		fmt.Fprintln(b, "\nPress Enter to finish · q to cancel")
 	case stepDone:
 		fmt.Fprintln(b, "Finishing…")
