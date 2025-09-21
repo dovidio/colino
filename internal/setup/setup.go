@@ -91,19 +91,22 @@ func Run(ctx context.Context) error {
 		}
 	}
 
-	if runtime.GOOS == "darwin" {
-		fmt.Println("\nInstalling launchd agent to run on a schedule…")
-		args := []string{"daemon", "--once"}
-		home, _ := os.UserHomeDir()
-		logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
-		opt := launchd.InstallOptions{
-			Label:           "com.colino.daemon",
-			IntervalMinutes: interval,
-			ProgramPath:     exe,
-			ProgramArgs:     args,
-			StdOutPath:      logPath,
-			StdErrPath:      logPath,
-		}
+    if runtime.GOOS == "darwin" {
+        fmt.Println("\nInstalling launchd agent to run on a schedule…")
+        // Install as a long-running daemon (no --once), run all sources
+        args := []string{"daemon", "--interval-minutes", fmt.Sprint(interval), "--sources", "article,youtube"}
+        home, _ := os.UserHomeDir()
+        logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
+        // Keep daemon's internal logger and launchd stdout/err in sync
+        args = append(args, "--log-file", logPath)
+        opt := launchd.InstallOptions{
+            Label:           "com.colino.daemon",
+            IntervalMinutes: interval,
+            ProgramPath:     exe,
+            ProgramArgs:     args,
+            StdOutPath:      logPath,
+            StdErrPath:      logPath,
+        }
 		if _, err := launchd.Install(opt); err != nil {
 			fmt.Printf("launchd install failed: %v\n", err)
 			fmt.Println("Tips: make sure you're running on macOS with launchctl available (usually at /bin/launchctl). If you're inside a container or a non-login shell, launchctl may be unavailable.")
