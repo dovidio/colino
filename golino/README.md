@@ -13,7 +13,6 @@ Tools
 
 Build
 ```bash
-cd mcp
 go build -o golino ./cmd/golino
 ```
 
@@ -73,4 +72,4 @@ Notes
  - If the database is missing, the daemon will initialize the schema on first run.
  - RSS ingestion is implemented in Go using `gofeed` (parsing) and `go-readability`/`goquery` (content extraction). Filters from your YAML config are applied.
  - YouTube ingestion is not yet implemented in Go. If you include `youtube` in `--sources`, it will be skipped with a log message; you can keep using the Python CLI for YouTube.
- - The `daemon install` subcommand generates and loads a `launchd` agent that runs `colino-mcp daemon --once` on a schedule via `StartInterval`.
+ - The `daemon install` subcommand generates and loads a `launchd` agent that runs `golino daemon --once` on a schedule via `StartInterval`.

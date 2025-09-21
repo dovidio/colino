@@ -1,126 +1,113 @@
 package main
 
 import (
-	"context"
-	"flag"
-	"fmt"
-	"log"
-	"os"
-	"strings"
+    "fmt"
+    "log"
+    "os"
+    "strings"
 
-	"colino-mcp/internal/daemon"
-	"colino-mcp/internal/launchd"
-	"colino-mcp/internal/server"
+    "github.com/urfave/cli/v2"
+
+    "golino/internal/daemon"
+    "golino/internal/launchd"
+    "golino/internal/server"
 )
 
 func main() {
-	if len(os.Args) == 1 {
-		// default to server (stdio MCP)
-		if err := server.Run(context.Background()); err != nil {
-			log.Fatalf("mcp server: %v", err)
-		}
-		return
-	}
+    app := &cli.App{
+        Name:  "golino",
+        Usage: "Colino MCP server and ingestion daemon",
+        // Default action: run server when no subcommand is provided
+        Action: func(c *cli.Context) error {
+            return server.Run(c.Context)
+        },
+        Commands: []*cli.Command{
+            {
+                Name:  "server",
+                Usage: "Run MCP server on stdio",
+                Action: func(c *cli.Context) error {
+                    return server.Run(c.Context)
+                },
+            },
+            {
+                Name:  "daemon",
+                Usage: "Run ingestion daemon",
+                Flags: []cli.Flag{
+                    &cli.BoolFlag{Name: "once", Usage: "Run single ingest cycle and exit"},
+                    &cli.IntFlag{Name: "interval-minutes", Usage: "Override interval minutes (default from config: 30)"},
+                    &cli.StringFlag{Name: "sources", Usage: "Comma-separated sources (rss,youtube)"},
+                    &cli.StringFlag{Name: "log-file", Usage: "Path to daemon log file"},
+                },
+                Subcommands: []*cli.Command{
+                    {
+                        Name:  "install",
+                        Usage: "Install launchd agent (macOS)",
+                        Flags: []cli.Flag{
+                            &cli.StringFlag{Name: "label", Value: "com.colino.daemon", Usage: "launchd label"},
+                            &cli.IntFlag{Name: "interval-minutes", Value: 30, Usage: "interval minutes"},
+                            &cli.StringFlag{Name: "sources", Value: "rss,youtube", Usage: "sources list"},
+                            &cli.StringFlag{Name: "log-file", Usage: "daemon log file path"},
+                            &cli.StringFlag{Name: "plist", Usage: "custom plist path (default ~/Library/LaunchAgents/<label>.plist)"},
+                        },
+                        Action: func(c *cli.Context) error {
+                            exe, _ := os.Executable()
+                            if strings.TrimSpace(exe) == "" {
+                                return fmt.Errorf("cannot discover program path")
+                            }
+                            args := []string{"daemon", "--once"}
+                            if v := c.String("sources"); strings.TrimSpace(v) != "" {
+                                args = append(args, "--sources", v)
+                            }
+                            if v := c.String("log-file"); strings.TrimSpace(v) != "" {
+                                args = append(args, "--log-file", v)
+                            }
+                            opt := launchd.InstallOptions{
+                                Label:           c.String("label"),
+                                IntervalMinutes: c.Int("interval-minutes"),
+                                ProgramPath:     exe,
+                                ProgramArgs:     args,
+                                StdOutPath:      c.String("log-file"),
+                                StdErrPath:      c.String("log-file"),
+                                PlistPath:       c.String("plist"),
+                            }
+                            path, err := launchd.Install(opt)
+                            if err != nil {
+                                return err
+                            }
+                            fmt.Printf("launchd agent installed and loaded: %s\n", path)
+                            return nil
+                        },
+                    },
+                    {
+                        Name:  "uninstall",
+                        Usage: "Uninstall launchd agent (macOS)",
+                        Flags: []cli.Flag{
+                            &cli.StringFlag{Name: "label", Value: "com.colino.daemon", Usage: "launchd label"},
+                            &cli.StringFlag{Name: "plist", Usage: "path to plist (default ~/Library/LaunchAgents/<label>.plist)"},
+                        },
+                        Action: func(c *cli.Context) error {
+                            if err := launchd.Uninstall(c.String("label"), c.String("plist")); err != nil {
+                                return err
+                            }
+                            fmt.Println("launchd agent unloaded and removed")
+                            return nil
+                        },
+                    },
+                },
+                Action: func(c *cli.Context) error {
+                    opts := daemon.Options{
+                        Once:        c.Bool("once"),
+                        IntervalMin: c.Int("interval-minutes"),
+                        SourcesCSV:  c.String("sources"),
+                        LogFile:     c.String("log-file"),
+                    }
+                    return daemon.Run(c.Context, opts)
+                },
+            },
+        },
+    }
 
-	cmd := os.Args[1]
-	switch cmd {
-	case "server":
-		if err := server.Run(context.Background()); err != nil {
-			log.Fatalf("mcp server: %v", err)
-		}
-	case "daemon":
-		if len(os.Args) >= 3 && (os.Args[2] == "install" || os.Args[2] == "uninstall") {
-			sub := os.Args[2]
-			switch sub {
-			case "install":
-				fs := flag.NewFlagSet("daemon install", flag.ExitOnError)
-				label := fs.String("label", "com.colino.daemon", "launchd label")
-				interval := fs.Int("interval-minutes", 30, "interval minutes")
-				sources := fs.String("sources", "rss,youtube", "sources list")
-				logFile := fs.String("log-file", "", "daemon log file path")
-				plistOut := fs.String("plist", "", "custom plist path (defaults to ~/Library/LaunchAgents/<label>.plist)")
-				_ = fs.Parse(os.Args[3:])
-
-				// discover program path
-				exe, _ := os.Executable()
-				if exe == "" {
-					log.Fatalf("cannot discover program path")
-				}
-				// build ProgramArguments: binary daemon --once ...
-				args := []string{"daemon", "--once"}
-				if v := *sources; strings.TrimSpace(v) != "" {
-					args = append(args, "--sources", v)
-				}
-				if v := *logFile; strings.TrimSpace(v) != "" {
-					args = append(args, "--log-file", v)
-				}
-				opt := launchd.InstallOptions{
-					Label:           *label,
-					IntervalMinutes: *interval,
-					ProgramPath:     exe,
-					ProgramArgs:     args,
-					StdOutPath:      *logFile,
-					StdErrPath:      *logFile,
-					PlistPath:       *plistOut,
-				}
-				path, err := launchd.Install(opt)
-				if err != nil {
-					log.Fatalf("install failed: %v", err)
-				}
-				fmt.Printf("launchd agent installed and loaded: %s\n", path)
-			case "uninstall":
-				fs := flag.NewFlagSet("daemon uninstall", flag.ExitOnError)
-				label := fs.String("label", "com.colino.daemon", "launchd label")
-				plistPath := fs.String("plist", "", "path to plist (defaults to ~/Library/LaunchAgents/<label>.plist)")
-				_ = fs.Parse(os.Args[3:])
-				if err := launchd.Uninstall(*label, *plistPath); err != nil {
-					log.Fatalf("uninstall failed: %v", err)
-				}
-				fmt.Println("launchd agent unloaded and removed")
-			}
-		} else {
-			fs := flag.NewFlagSet("daemon", flag.ExitOnError)
-			once := fs.Bool("once", false, "run a single ingest cycle and exit")
-			interval := fs.Int("interval-minutes", 0, "override interval minutes (default from config: 30)")
-			sources := fs.String("sources", "", "comma-separated sources (rss,youtube)")
-			logFile := fs.String("log-file", "", "path to daemon log file")
-			_ = fs.Parse(os.Args[2:])
-
-			opts := daemon.Options{
-				Once:        *once,
-				IntervalMin: *interval,
-				SourcesCSV:  *sources,
-				LogFile:     *logFile,
-			}
-			if err := daemon.Run(context.Background(), opts); err != nil {
-				log.Fatalf("daemon: %v", err)
-			}
-		}
-	case "help", "-h", "--help":
-		fmt.Println("Usage:")
-		fmt.Println("  colino-mcp server                      # run MCP server on stdio")
-		fmt.Println("  colino-mcp daemon [flags]              # run ingestion daemon")
-		fmt.Println("  colino-mcp daemon install [flags]      # install launchd agent (macOS)")
-		fmt.Println("  colino-mcp daemon uninstall [flags]    # uninstall launchd agent (macOS)")
-		fmt.Println()
-		fmt.Println("Daemon flags:")
-		fmt.Println("  --once                 Run a single ingest cycle and exit")
-		fmt.Println("  --interval-minutes N   Override interval minutes (default 30)")
-		fmt.Println("  --sources LIST         Comma-separated sources (rss,youtube)")
-		// no external command: daemon performs ingestion in Go
-		fmt.Println("  --log-file PATH        Path to daemon log file")
-		fmt.Println()
-		fmt.Println("Daemon install flags (macOS launchd):")
-		fmt.Println("  --label NAME           Launch agent label (default com.colino.daemon)")
-		fmt.Println("  --interval-minutes N   Run every N minutes")
-		fmt.Println("  --sources LIST         Sources for each run")
-		// ingest command not needed; daemon uses internal ingestion
-		fmt.Println("  --log-file PATH        Redirect stdout/err to this file")
-		fmt.Println("  --plist PATH           Custom plist path (defaults to ~/Library/LaunchAgents/<label>.plist)")
-	default:
-		if strings.TrimSpace(cmd) == "" {
-			cmd = "(empty)"
-		}
-		log.Fatalf("unknown command: %s", cmd)
-	}
+    if err := app.Run(os.Args); err != nil {
+        log.Fatal(err)
+    }
 }

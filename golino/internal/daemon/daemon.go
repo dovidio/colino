@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"colino-mcp/internal/colinodb"
-	"colino-mcp/internal/config"
-	"colino-mcp/internal/ingest"
+	"golino/internal/colinodb"
+	"golino/internal/config"
+	"golino/internal/ingest"
 )
 
 // Options allow overriding config values from CLI flags.

@@ -18,9 +18,9 @@ import (
 	"github.com/go-shiori/go-readability"
 	"github.com/mmcdole/gofeed"
 
-	"colino-mcp/internal/colinodb"
-	"colino-mcp/internal/config"
-	"colino-mcp/internal/youtube"
+	"golino/internal/colinodb"
+	"golino/internal/config"
+	"golino/internal/youtube"
 )
 
 // RSSIngestor fetches RSS/Atom feeds and persists full content into the Colino DB.

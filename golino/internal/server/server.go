@@ -11,8 +11,8 @@ import (
 
     mcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-    "colino-mcp/internal/colinodb"
-    "colino-mcp/internal/config"
+    "golino/internal/colinodb"
+    "golino/internal/config"
 )
 
 type ListCacheParams struct {
