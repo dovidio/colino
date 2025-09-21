@@ -99,7 +99,7 @@ func FetchDefaultTranscript(ctx context.Context, client *http.Client, videoID st
         return nil, err
     }
     // Post to innertube player
-    data, status, err := postPlayer(ctx, client, apiKey, videoID, cookieHeader)
+    data, _, err := postPlayer(ctx, client, apiKey, videoID, cookieHeader)
     if err != nil {
         return nil, err
     }
