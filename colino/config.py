@@ -38,6 +38,18 @@ class Config:
                 "max_posts_per_feed": 100,
                 "scraper_max_workers": 5,
             },
+            "daemon": {
+                "enabled": False,
+                "interval_minutes": 30,
+                "sources": ["rss", "youtube"],
+                "since_hours": 24,
+                # Prefer a stable CLI if installed via pipx/brew
+                # Set to "colino" to use the installed entrypoint; leave empty to auto-detect.
+                "ingest_command": "",
+                "log_file": str(
+                    Path.home() / "Library" / "Logs" / "Colino" / "daemon.log"
+                ),
+            },
             "filters": {
                 "include_keywords": [],
                 "exclude_keywords": ["ads", "sponsored", "advertisement"],

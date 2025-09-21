@@ -220,7 +220,7 @@ Thumbs.db
 client_secrets.json
 youtube.token
 
-mcp/.gocache
-mcp/.gopath
+golino/.gocache
+golino/.gopath
 .gocache
-mcp/colino-mcp
+golino/golino
