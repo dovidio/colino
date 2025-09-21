@@ -336,6 +336,8 @@ func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 					m.step = stepInterval
+					// Swallow inner tea.Quit from the child selector to keep the wizard running
+					return m, nil
 				}
 				return m, cmd
 			}
