@@ -2,17 +2,13 @@
 
  To install Colino, follow these steps:
 
-1. **Clone the project** from [here](https://github.com/dovidio/colino)
+1. **Install pipx** Install [pipx](https://pipx.pypa.io/latest/installation/)
+Alternatively, you can use `pip` or other package managers, but pipx is recommended for isolated installations.
 
-2. **Follow the setup instructions** in the README to install dependencies and build Colino using poetry.
+2. **Install colino**
 
 ```bash
-poetry build
-```
-
-3. **Install colino using pipx** so that it is available system-wide:
-```bash
-pipx install dist/colino*.whl
+pipx install colino
 ```
 
 You are done! You can now run `colino` from your terminal.

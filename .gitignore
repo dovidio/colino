@@ -219,3 +219,8 @@ Thumbs.db
 # YouTube credentials
 client_secrets.json
 youtube.token
+
+mcp/.gocache
+mcp/.gopath
+.gocache
+mcp/colino-mcp
