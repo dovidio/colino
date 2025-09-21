@@ -16,11 +16,10 @@ import (
 
 // Options allow overriding config values from CLI flags.
 type Options struct {
-	Once          bool
-	IntervalMin   int
-	SourcesCSV    string
-	IngestCommand string
-	LogFile       string
+    Once          bool
+    IntervalMin   int
+    SourcesCSV    string
+    LogFile       string
 }
 
 // Run starts the ingestion daemon. It respects ~/.config/colino/config.yaml
@@ -49,9 +48,6 @@ func Run(ctx context.Context, opts Options) error {
 	if strings.TrimSpace(opts.LogFile) != "" {
 		dc.LogFile = config.ExpandPath(opts.LogFile)
 	}
-	if strings.TrimSpace(opts.IngestCommand) != "" {
-		dc.IngestCommand = strings.TrimSpace(opts.IngestCommand)
-	}
 
 	logger := log.New(os.Stdout, "[colino-daemon] ", log.LstdFlags)
 	var closeLog func() error = func() error { return nil }
@@ -73,10 +69,10 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	defer closeLog()
 
-	// one run and exit
-	if opts.Once {
-		return runGoIngest(ctx, logger, dc.Sources)
-	}
+    // one run and exit
+    if opts.Once {
+        return runGoIngest(ctx, logger, dc.Sources)
+    }
 
 	// periodic loop
 	logger.Printf("daemon starting (interval=%d min, sources=%v)\n", dc.IntervalMin, dc.Sources)
@@ -102,7 +98,7 @@ func Run(ctx context.Context, opts Options) error {
 }
 
 func runGoIngest(ctx context.Context, logger *log.Logger, sources []string) error {
-	// Load app config for feeds and filters
+    // Load app config for feeds
 	appCfg, _ := config.LoadAppConfig()
 	dbPath, err := config.LoadDBPath()
 	if err != nil {
@@ -115,22 +111,16 @@ func runGoIngest(ctx context.Context, logger *log.Logger, sources []string) erro
 	}
 	defer db.Close()
 
-	// currently support rss;
-	doRSS := len(sources) == 0 || contains(sources, "rss") || (contains(sources, "youtube") && contains(sources, "rss"))
-	if doRSS {
-		ri := ingest.NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, logger)
-		n, err := ri.Ingest(ctx, db, appCfg.RSSFeeds)
-		if err != nil {
-			logger.Printf("rss ingest error: %v", err)
-		} else {
-			logger.Printf("rss ingest saved: %d", n)
-		}
-	}
-	if contains(sources, "youtube") {
-		logger.Printf("youtube ingest not yet implemented in Go daemon; skipping")
-	}
-	logger.Printf("ingest completed: sources=%v", sources)
-	return nil
+    // Always run RSS ingestion; YouTube is treated as RSS via transcripts when URLs are from YouTube.
+    ri := ingest.NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, logger)
+    n, err := ri.Ingest(ctx, db, appCfg.RSSFeeds)
+    if err != nil {
+        logger.Printf("rss ingest error: %v", err)
+    } else {
+        logger.Printf("rss ingest saved: %d", n)
+    }
+    logger.Printf("ingest completed: sources=%v", sources)
+    return nil
 }
 
 func contains(ss []string, s string) bool {

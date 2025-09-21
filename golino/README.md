@@ -27,10 +27,9 @@ Run daemon (periodic ingestion)
 ```bash
 ./golino daemon \
   --interval-minutes 30 \
-  --sources rss,youtube \
 
 # Single run (useful for testing):
-./golino daemon --once --sources rss
+./golino daemon --once
 ```
 
 Install as a launchd agent (macOS)
@@ -39,7 +38,7 @@ Install as a launchd agent (macOS)
 ./golino daemon install \
   --label com.colino.daemon \
   --interval-minutes 30 \
-  --sources rss,youtube \
+  --sources rss \
   --log-file "$HOME/Library/Logs/Colino/daemon.launchd.log"
 
 # Uninstall (unloads and removes the plist)
@@ -51,7 +50,7 @@ Daemon config (optional) in `~/.config/colino/config.yaml`:
 daemon:
   enabled: true            # not required by the binary, useful for future installers
   interval_minutes: 30
-  sources: [rss, youtube]
+  sources: [rss]
   # Optional log file
   log_file: "~/Library/Logs/Colino/daemon.log"
 ```
@@ -70,6 +69,14 @@ env = {}
 Notes
 - The server discovers the SQLite DB path from `~/.config/colino/config.yaml` (Python config: `database.path`; Golino config: `database_path`). It falls back to the default platform path.
  - If the database is missing, the daemon will initialize the schema on first run.
- - RSS ingestion is implemented in Go using `gofeed` (parsing) and `go-readability`/`goquery` (content extraction). Filters from your YAML config are applied.
- - YouTube ingestion is not yet implemented in Go. If you include `youtube` in `--sources`, it will be skipped with a log message; you can keep using the Python CLI for YouTube.
+ - RSS ingestion is implemented in Go using `gofeed` (parsing) and `go-readability`/`goquery` (content extraction). No server-side filters are applied; ingest everything and filter in your LLM or client.
+ - YouTube entries are treated like RSS items. When a feed item links to YouTube, the daemon attempts to fetch the default transcript and stores it as content. To improve reliability, you can enable a Webshare proxy in your config:
+
+   yaml
+   youtube:
+     proxy:
+       enabled: true
+       webshare:
+         username: "YOUR_WS_USER"
+         password: "YOUR_WS_PASS"
  - The `daemon install` subcommand generates and loads a `launchd` agent that runs `golino daemon --once` on a schedule via `StartInterval`.

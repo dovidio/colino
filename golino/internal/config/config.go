@@ -88,8 +88,6 @@ type DaemonConfig struct {
     Enabled        bool
     IntervalMin    int
     Sources        []string
-    SinceHours     int
-    IngestCommand  string // e.g., "colino" or "poetry run colino"
     LogFile        string
 }
 
@@ -100,9 +98,7 @@ func LoadDaemonConfig() (DaemonConfig, error) {
     dc := DaemonConfig{
         Enabled:       false,
         IntervalMin:   30,
-        Sources:       []string{"rss", "youtube"},
-        SinceHours:    24,
-        IngestCommand: "", // resolved later
+        Sources:       []string{"rss"},
         LogFile:       "",
     }
 
@@ -121,14 +117,6 @@ func LoadDaemonConfig() (DaemonConfig, error) {
     var raw map[string]any
     if err := yaml.Unmarshal(b, &raw); err != nil {
         return dc, nil
-    }
-    // general.default_lookback_hours
-    if g, ok := raw["general"].(map[string]any); ok {
-        if v, ok := g["default_lookback_hours"].(int); ok && v > 0 {
-            dc.SinceHours = v
-        } else if vf, ok := g["default_lookback_hours"].(float64); ok && int(vf) > 0 {
-            dc.SinceHours = int(vf)
-        }
     }
     // daemon section
     if d, ok := raw["daemon"].(map[string]any); ok {
@@ -151,14 +139,6 @@ func LoadDaemonConfig() (DaemonConfig, error) {
                 dc.Sources = out
             }
         }
-        if v, ok := d["since_hours"].(int); ok && v > 0 {
-            dc.SinceHours = v
-        } else if vf, ok := d["since_hours"].(float64); ok && int(vf) > 0 {
-            dc.SinceHours = int(vf)
-        }
-        if v, ok := d["ingest_command"].(string); ok && strings.TrimSpace(v) != "" {
-            dc.IngestCommand = strings.TrimSpace(v)
-        }
         if v, ok := d["log_file"].(string); ok && strings.TrimSpace(v) != "" {
             dc.LogFile = ExpandPath(strings.TrimSpace(v))
         }
@@ -172,15 +152,10 @@ type AppConfig struct {
     RSSTimeoutSec     int
     RSSMaxPostsPerFeed int
     ScraperMaxWorkers int
-    IncludeKeywords   []string
-    ExcludeKeywords   []string
-    DefaultLookbackHours int
-    // YouTube transcript/proxy settings (minimal)
+    // Optional YouTube transcript/proxy settings
     YouTubeProxyEnabled bool
     WebshareUsername    string
     WebsharePassword    string
-    WebshareRetries     int
-    WebshareFilterLocations []string
 }
 
 // LoadAppConfig parses relevant ingestion config from ~/.config/colino/config.yaml.
@@ -189,15 +164,9 @@ func LoadAppConfig() (AppConfig, error) {
         RSSTimeoutSec:        30,
         RSSMaxPostsPerFeed:   100,
         ScraperMaxWorkers:    5,
-        IncludeKeywords:      nil,
-        // Avoid overly broad tokens like "ads" to reduce false positives
-        ExcludeKeywords:      []string{"sponsored", "advertisement"},
-        DefaultLookbackHours: 24,
         YouTubeProxyEnabled:  false,
         WebshareUsername:     "",
         WebsharePassword:     "",
-        WebshareRetries:      0,
-        WebshareFilterLocations: nil,
     }
     cfgPath, err := defaultConfigPath()
     if err != nil {
@@ -235,6 +204,7 @@ func LoadAppConfig() (AppConfig, error) {
             ac.ScraperMaxWorkers = int(vf)
         }
     }
+    // Optional: youtube proxy settings (used when fetching transcripts for YouTube links found in RSS)
     if yt, ok := raw["youtube"].(map[string]any); ok {
         if proxy, ok := yt["proxy"].(map[string]any); ok {
             if v, ok := proxy["enabled"].(bool); ok {
@@ -247,44 +217,10 @@ func LoadAppConfig() (AppConfig, error) {
                 if p, ok := ws["password"].(string); ok {
                     ac.WebsharePassword = strings.TrimSpace(p)
                 }
-                if locs, ok := ws["filter_ip_locations"].([]any); ok {
-                    for _, it := range locs {
-                        if s, ok := it.(string); ok && strings.TrimSpace(s) != "" {
-                            ac.WebshareFilterLocations = append(ac.WebshareFilterLocations, strings.TrimSpace(s))
-                        }
-                    }
-                }
-                if r, ok := ws["retries_when_blocked"].(int); ok && r >= 0 {
-                    ac.WebshareRetries = r
-                } else if rf, ok := ws["retries_when_blocked"].(float64); ok && int(rf) >= 0 {
-                    ac.WebshareRetries = int(rf)
-                }
+                // filter_ip_locations and retries_when_blocked are no longer supported
             }
         }
     }
-    if filt, ok := raw["filters"].(map[string]any); ok {
-        if inc, ok := filt["include_keywords"].([]any); ok {
-            for _, it := range inc {
-                if s, ok := it.(string); ok && strings.TrimSpace(s) != "" {
-                    ac.IncludeKeywords = append(ac.IncludeKeywords, s)
-                }
-            }
-        }
-        if exc, ok := filt["exclude_keywords"].([]any); ok {
-            ac.ExcludeKeywords = nil
-            for _, it := range exc {
-                if s, ok := it.(string); ok && strings.TrimSpace(s) != "" {
-                    ac.ExcludeKeywords = append(ac.ExcludeKeywords, s)
-                }
-            }
-        }
-    }
-    if gen, ok := raw["general"].(map[string]any); ok {
-        if v, ok := gen["default_lookback_hours"].(int); ok && v > 0 {
-            ac.DefaultLookbackHours = v
-        } else if vf, ok := gen["default_lookback_hours"].(float64); ok && int(vf) > 0 {
-            ac.DefaultLookbackHours = int(vf)
-        }
-    }
+    // filters, ai, and default_lookback are intentionally ignored now.
     return ac, nil
 }

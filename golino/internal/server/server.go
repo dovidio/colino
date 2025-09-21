@@ -51,7 +51,7 @@ func Run(ctx context.Context) error {
             return nil, map[string]any{
                 "ok":      false,
                 "message": fmt.Sprintf("Colino database not found at %s", dbPath),
-                "hint":    "Run 'poetry run colino ingest --all' to create/populate the DB, or set database.path in ~/.config/colino/config.yaml.",
+                "hint":    "Run './golino daemon --once' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.",
                 "db_path": dbPath,
             }, nil
         }
@@ -70,7 +70,7 @@ func Run(ctx context.Context) error {
         src := ""
         if p.Source != nil {
             s := strings.ToLower(strings.TrimSpace(*p.Source))
-            if s == "rss" || s == "youtube" {
+            if s == "rss" {
                 src = s
             }
         }
@@ -81,7 +81,7 @@ func Run(ctx context.Context) error {
                 return nil, map[string]any{
                     "ok":      false,
                     "message": "Colino database is present but not initialized (missing tables)",
-                    "hint":    "Run 'poetry run colino ingest --all' once to initialize the schema via the Python app.",
+                    "hint":    "Run './golino daemon --once' once to initialize the schema.",
                     "db_path": dbPath,
                 }, nil
             }
@@ -147,7 +147,7 @@ func Run(ctx context.Context) error {
             return nil, map[string]any{
                 "ok":      false,
                 "message": fmt.Sprintf("Colino database not found at %s", dbPath),
-                "hint":    "Run 'poetry run colino ingest --all' to create/populate the DB, or set database.path in ~/.config/colino/config.yaml.",
+                "hint":    "Run './golino daemon --once' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.",
                 "db_path": dbPath,
             }, nil
         }
@@ -202,7 +202,7 @@ func Run(ctx context.Context) error {
         src := ""
         if p.Source != nil {
             s := strings.ToLower(strings.TrimSpace(*p.Source))
-            if s == "rss" || s == "youtube" {
+            if s == "rss" {
                 src = s
             }
         }
@@ -212,7 +212,7 @@ func Run(ctx context.Context) error {
                 return nil, map[string]any{
                     "ok":      false,
                     "message": "Colino database is present but not initialized (missing tables)",
-                    "hint":    "Run 'poetry run colino ingest --all' once to initialize the schema via the Python app.",
+                    "hint":    "Run './golino daemon --once' once to initialize the schema.",
                     "db_path": dbPath,
                 }, nil
             }

@@ -37,8 +37,6 @@ var innertubeContext = map[string]any{
 type WebshareProxyConfig struct {
     Username           string
     Password           string
-    FilterIPLocations  []string // optional, e.g., ["DE","US"]
-    RetriesWhenBlocked int      // e.g., 10; if 0, no retries
     Domain             string   // defaults to p.webshare.io
     Port               int      // defaults to 80
 }
@@ -55,18 +53,7 @@ func (w *WebshareProxyConfig) url() string {
     if port == 0 {
         port = 80
     }
-    loc := ""
-    if len(w.FilterIPLocations) > 0 {
-        var sb strings.Builder
-        for _, c := range w.FilterIPLocations {
-            if t := strings.TrimSpace(c); t != "" {
-                sb.WriteString("-")
-                sb.WriteString(strings.ToUpper(t))
-            }
-        }
-        loc = sb.String()
-    }
-    return fmt.Sprintf("http://%s%s-rotate:%s@%s:%d/", w.Username, loc, w.Password, domain, port)
+    return fmt.Sprintf("http://%s-rotate:%s@%s:%d/", w.Username, w.Password, domain, port)
 }
 
 // NewHTTPClient returns an http.Client with optional Webshare proxy and sane defaults.
@@ -114,25 +101,7 @@ func FetchDefaultTranscript(ctx context.Context, client *http.Client, videoID st
     // Post to innertube player
     data, status, err := postPlayer(ctx, client, apiKey, videoID, cookieHeader)
     if err != nil {
-        // Optionally retry on 429 when using Webshare
-        if status == 429 && ws != nil && ws.RetriesWhenBlocked > 0 {
-            tries := ws.RetriesWhenBlocked
-            for i := 0; i < tries; i++ {
-                time.Sleep(500 * time.Millisecond)
-                data, status, err = postPlayer(ctx, client, apiKey, videoID, cookieHeader)
-                if err == nil {
-                    break
-                }
-                if status != 429 {
-                    break
-                }
-            }
-            if err != nil {
-                return nil, fmt.Errorf("request blocked or failed: %w", err)
-            }
-        } else {
-            return nil, err
-        }
+        return nil, err
     }
 
     // Validate playability and get captionTracks
