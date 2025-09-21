@@ -35,7 +35,7 @@ func main() {
                 Flags: []cli.Flag{
                     &cli.BoolFlag{Name: "once", Usage: "Run single ingest cycle and exit"},
                     &cli.IntFlag{Name: "interval-minutes", Usage: "Override interval minutes (default from config: 30)"},
-                    &cli.StringFlag{Name: "sources", Usage: "Comma-separated sources (rss)", Value: "rss"},
+                    &cli.StringFlag{Name: "sources", Usage: "Comma-separated sources (article,youtube)", Value: "article"},
                     &cli.StringFlag{Name: "log-file", Usage: "Path to daemon log file"},
                 },
                 Subcommands: []*cli.Command{
@@ -45,7 +45,7 @@ func main() {
                         Flags: []cli.Flag{
                             &cli.StringFlag{Name: "label", Value: "com.colino.daemon", Usage: "launchd label"},
                             &cli.IntFlag{Name: "interval-minutes", Value: 30, Usage: "interval minutes"},
-                            &cli.StringFlag{Name: "sources", Value: "rss", Usage: "sources list"},
+                            &cli.StringFlag{Name: "sources", Value: "article", Usage: "sources list"},
                             &cli.StringFlag{Name: "log-file", Usage: "daemon log file path"},
                             &cli.StringFlag{Name: "plist", Usage: "custom plist path (default ~/Library/LaunchAgents/<label>.plist)"},
                         },

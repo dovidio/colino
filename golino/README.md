@@ -9,7 +9,7 @@ Tools
 - list_cache(hours=24, source?, limit=50, include_content=false)
   - Reads recent items from the `content_cache` table, returning metadata and either a content preview or full content.
 - get_content(ids[] | url | hours, source?, limit?, include_content=true)
-  - Fetches specific items by ID/URL or a time-window slice.
+  - Fetches specific items by ID/URL or a time-window slice. For `source`, use `article` or `youtube`.
 
 Build
 ```bash
@@ -38,7 +38,7 @@ Install as a launchd agent (macOS)
 ./golino daemon install \
   --label com.colino.daemon \
   --interval-minutes 30 \
-  --sources rss \
+  --sources article \
   --log-file "$HOME/Library/Logs/Colino/daemon.launchd.log"
 
 # Uninstall (unloads and removes the plist)
@@ -50,7 +50,7 @@ Daemon config (optional) in `~/.config/colino/config.yaml`:
 daemon:
   enabled: true            # not required by the binary, useful for future installers
   interval_minutes: 30
-  sources: [rss]
+  sources: [article]
   # Optional log file
   log_file: "~/Library/Logs/Colino/daemon.log"
 ```

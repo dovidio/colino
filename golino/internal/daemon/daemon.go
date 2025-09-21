@@ -32,15 +32,15 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	if strings.TrimSpace(opts.SourcesCSV) != "" {
 		var ss []string
-		for _, s := range strings.Split(opts.SourcesCSV, ",") {
-			s = strings.ToLower(strings.TrimSpace(s))
-			if s == "" {
-				continue
-			}
-			if s == "rss" || s == "youtube" {
-				ss = append(ss, s)
-			}
-		}
+        for _, s := range strings.Split(opts.SourcesCSV, ",") {
+            s = strings.ToLower(strings.TrimSpace(s))
+            if s == "" {
+                continue
+            }
+            if s == "article" || s == "youtube" {
+                ss = append(ss, s)
+            }
+        }
 		if len(ss) > 0 {
 			dc.Sources = ss
 		}
@@ -111,13 +111,13 @@ func runGoIngest(ctx context.Context, logger *log.Logger, sources []string) erro
 	}
 	defer db.Close()
 
-    // Always run RSS ingestion; YouTube is treated as RSS via transcripts when URLs are from YouTube.
+    // Always run ingestion of RSS feeds; entries are saved as source="article" or "youtube" based on URL.
     ri := ingest.NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, logger)
     n, err := ri.Ingest(ctx, db, appCfg.RSSFeeds)
     if err != nil {
-        logger.Printf("rss ingest error: %v", err)
+        logger.Printf("ingest error: %v", err)
     } else {
-        logger.Printf("rss ingest saved: %d", n)
+        logger.Printf("ingest saved: %d", n)
     }
     logger.Printf("ingest completed: sources=%v", sources)
     return nil

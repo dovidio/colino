@@ -70,7 +70,7 @@ func Run(ctx context.Context) error {
         src := ""
         if p.Source != nil {
             s := strings.ToLower(strings.TrimSpace(*p.Source))
-            if s == "rss" {
+            if s == "article" || s == "youtube" {
                 src = s
             }
         }
@@ -202,7 +202,7 @@ func Run(ctx context.Context) error {
         src := ""
         if p.Source != nil {
             s := strings.ToLower(strings.TrimSpace(*p.Source))
-            if s == "rss" {
+            if s == "article" || s == "youtube" {
                 src = s
             }
         }

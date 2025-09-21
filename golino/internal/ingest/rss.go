@@ -269,15 +269,19 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 		}
 	}
 
-	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
-	rec := colinodb.ContentInsert{
-		ID:                id,
-		Source:            "rss",
-		AuthorUsername:    t.FeedTitle,
-		AuthorDisplayName: t.FeedTitle,
-		Content:           content,
-		URL:               url,
-		CreatedAt:         createdAt,
+    meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
+    src := "article"
+    if isYouTubeURL(url) {
+        src = "youtube"
+    }
+    rec := colinodb.ContentInsert{
+        ID:                id,
+        Source:            src,
+        AuthorUsername:    t.FeedTitle,
+        AuthorDisplayName: t.FeedTitle,
+        Content:           content,
+        URL:               url,
+        CreatedAt:         createdAt,
 		MetadataJSON:      meta,
 		LikeCount:         0,
 		ReplyCount:        0,

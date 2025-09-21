@@ -98,7 +98,7 @@ func LoadDaemonConfig() (DaemonConfig, error) {
     dc := DaemonConfig{
         Enabled:       false,
         IntervalMin:   30,
-        Sources:       []string{"rss"},
+        Sources:       []string{"article"},
         LogFile:       "",
     }
 
