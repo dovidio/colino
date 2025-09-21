@@ -18,6 +18,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	textinput "github.com/charmbracelet/bubbles/textinput"
 	"gopkg.in/yaml.v3"
 
 	"golino/internal/config"
@@ -40,153 +41,443 @@ type userConfig struct {
 // 5) mention YouTube channel feed URLs
 // 6) write config, bootstrap DB, and install daemon (macOS)
 func Run(ctx context.Context) error {
-	println("\nWelcome to Colino setup! 🚀")
-	println("This wizard will set up your feeds, config, MCP integration, and background ingestion.")
+    // Launch Bubble Tea wizard to collect inputs
+    cfgPath := configPath()
+    cfgExists := fileExists(cfgPath)
 
-	uc := userConfig{IntervalMin: 30}
-	rdr := bufio.NewReader(os.Stdin)
+    wiz := newWizardModel(cfgExists)
+    p := tea.NewProgram(wiz)
+    res, err := p.StartReturningModel()
+    if err != nil {
+        return err
+    }
+    wm, ok := res.(*wizardModel)
+    if !ok || wm.cancelled {
+        return errors.New("setup cancelled")
+    }
 
-	cfgPath := configPath()
-	cfgExists := fileExists(cfgPath)
-	override := true
-	if cfgExists {
-		fmt.Printf("\nFound an existing config at %s\n", cfgPath)
-		fmt.Print("Do you want to [o]verride it (will create a .bak) or [k]eep it? [o/k]: ")
-		ans, _ := rdr.ReadString('\n')
-		ans = strings.ToLower(strings.TrimSpace(ans))
-		if ans == "k" || ans == "keep" {
-			override = false
-		}
-	}
+    // Build userConfig from wizard result
+    uc := userConfig{
+        RSSFeeds:     wm.rssFeeds,
+        IntervalMin:  wm.interval,
+        WebshareUser: wm.wsUser,
+        WebsharePass: wm.wsPass,
+        YTNameByURL:  wm.ytNameByURL,
+    }
 
-	// If a launchd agent is running, offer to stop it now (macOS)
-	if runtime.GOOS == "darwin" && isLaunchdLoaded("com.colino.daemon") {
-		if askYesNo("\nDetected a running Colino launchd agent. Stop it now? [y/N]: ") {
-			if err := stopLaunchd("com.colino.daemon"); err != nil {
-				fmt.Printf("Warning: failed to stop launchd agent: %v\n", err)
-			} else {
-				fmt.Println("launchd agent stopped.")
-			}
-		}
-	}
+    // Write config if overriding or creating new
+    if wm.override {
+        if cfgExists {
+            _ = backupFile(cfgPath)
+        }
+        if err := writeConfig(uc); err != nil {
+            return err
+        }
+        fmt.Println("\nConfig written to ~/.config/colino/config.yaml")
+    }
 
-	if override {
-		// 2) RSS feeds
-		fmt.Println("\nStep 1 – RSS Feeds")
-		fmt.Println("Enter one or more RSS feed URLs, separated by commas.")
-		fmt.Println("You can add more later by editing ~/.config/colino/config.yaml.")
-		fmt.Println("Example YouTube channel feed (Theo): https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA")
-		fmt.Print("Feeds: ")
-		feedsLine, _ := rdr.ReadString('\n')
-		feeds := splitCSV(feedsLine)
-		uc.RSSFeeds = feeds
+    // Install daemon (macOS), skip long bootstrap ingest
+    if runtime.GOOS == "darwin" {
+        fmt.Println("\nInstalling launchd agent to run on a schedule…")
+        exe, _ := os.Executable()
+        args := []string{"daemon", "--once"}
+        interval := wm.interval
+        if interval <= 0 {
+            // Default or use existing when keeping config
+            if !wm.override {
+                if dc, err := config.LoadDaemonConfig(); err == nil && dc.IntervalMin > 0 {
+                    interval = dc.IntervalMin
+                } else {
+                    interval = 30
+                }
+            } else {
+                interval = 30
+            }
+        }
+        home, _ := os.UserHomeDir()
+        logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
+        opt := launchd.InstallOptions{
+            Label:           "com.colino.daemon",
+            IntervalMinutes: interval,
+            ProgramPath:     exe,
+            ProgramArgs:     args,
+            StdOutPath:      logPath,
+            StdErrPath:      logPath,
+        }
+        if _, err := launchd.Install(opt); err != nil {
+            fmt.Printf("launchd install failed: %v\n", err)
+        } else {
+            fmt.Println("launchd agent installed and loaded.")
+        }
+    } else {
+        fmt.Println("\nNote: Automatic scheduling is only implemented for macOS (launchd).\nYou can use cron/systemd on your platform to run './colino daemon --once' periodically.")
+    }
 
-		// 3) YouTube channels (optional)
-		fmt.Println("\nStep 2 – YouTube Channels (optional)")
-		fmt.Println("Connect your YouTube account to import channel feeds from your subscriptions.")
-		if askYesNo("Add YouTube channels from your subscriptions now? [y/N]: ") {
-			feeds, names := runYouTubeSubscriptionsFlow(rdr)
-			if len(feeds) > 0 {
-				uc.RSSFeeds = append(uc.RSSFeeds, feeds...)
-				if uc.YTNameByURL == nil {
-					uc.YTNameByURL = map[string]string{}
-				}
-				for u, n := range names {
-					uc.YTNameByURL[u] = n
-				}
-				fmt.Printf("Added %d YouTube channel feeds.\n", len(feeds))
-			}
-		}
+    // Offer MCP client integration
+    maybeConfigureMCP()
 
-		// 4) interval
-		fmt.Println("\nStep 3 – Ingestion Interval")
-		fmt.Print("How often should ingestion run? Minutes [30]: ")
-		intervalLine, _ := rdr.ReadString('\n')
-		intervalLine = strings.TrimSpace(intervalLine)
-		if v, err := parsePositiveInt(intervalLine); err == nil && v > 0 {
-			uc.IntervalMin = v
-		}
+    fmt.Println("\nSetup complete! 🎉")
+    fmt.Println("- Edit your config at ~/.config/colino/config.yaml to refine settings")
+    fmt.Println("- Run './colino server' to expose tools to your LLM via MCP")
+    return nil
+}
 
-		// 5) webshare (optional)
-		fmt.Println("\nStep 4 – Optional Webshare Proxy")
-		fmt.Println("If you ingest many YouTube transcripts, enabling a rotating proxy helps avoid IP blocking.")
-		fmt.Println("You can skip this for now (press Enter).")
-		fmt.Print("Webshare username: ")
-		wsUser, _ := rdr.ReadString('\n')
-		uc.WebshareUser = strings.TrimSpace(wsUser)
-		if uc.WebshareUser != "" {
-			fmt.Print("Webshare password: ")
-			wsPass, _ := rdr.ReadString('\n')
-			uc.WebsharePass = strings.TrimSpace(wsPass)
-		}
+// -------------- Bubble Tea Wizard --------------
+type wizardStep int
 
-		// 6) mention YouTube feed format
-		fmt.Println("\nTip – Adding YouTube sources manually")
-		fmt.Println("You can subscribe to YouTube channels via RSS feeds like:")
-		fmt.Println("  https://www.youtube.com/feeds/videos.xml?channel_id=<CHANNEL_ID>")
-		fmt.Println("We’ll add UX for discovery/import later.")
+const (
+    stepIntro wizardStep = iota
+    stepConfigChoice
+    stepRSS
+    stepYTAsk
+    stepYTAuth
+    stepYTSelect
+    stepInterval
+    stepProxy
+    stepSummary
+    stepDone
+)
 
-		// backup existing config if overriding
-		if cfgExists {
-			_ = backupFile(cfgPath)
-		}
-		// 7) write config file
-		if err := writeConfig(uc); err != nil {
-			return err
-		}
-		fmt.Println("\nConfig written to ~/.config/colino/config.yaml")
-	} else {
-		// Keeping existing config: use its interval as default
-		dc, _ := config.LoadDaemonConfig()
-		if dc.IntervalMin > 0 {
-			uc.IntervalMin = dc.IntervalMin
-		}
-		fmt.Printf("\nUsing existing config. Ingestion interval minutes [%d]: ", uc.IntervalMin)
-		intervalLine, _ := rdr.ReadString('\n')
-		intervalLine = strings.TrimSpace(intervalLine)
-		if v, err := parsePositiveInt(intervalLine); err == nil && v > 0 {
-			uc.IntervalMin = v
-		}
-	}
+type wizardModel struct {
+    step      wizardStep
+    hasCfg    bool
+    override  bool
+    cancelled bool
 
-	// Skip bootstrapping ingest on setup to avoid long-running step.
-	// The launchd agent will handle ingestion in the background.
+    // RSS
+    rssInput textinput.Model
+    rssFeeds []string
 
-	// Install daemon (macOS)
-	if runtime.GOOS == "darwin" {
-		fmt.Println("\nInstalling launchd agent to run on a schedule…")
-		exe, _ := os.Executable()
-		args := []string{"daemon", "--once"}
-		if uc.IntervalMin <= 0 {
-			uc.IntervalMin = 30
-		}
-		// prepare log path
-		home, _ := os.UserHomeDir()
-		logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
-		opt := launchd.InstallOptions{
-			Label:           "com.colino.daemon",
-			IntervalMinutes: uc.IntervalMin,
-			ProgramPath:     exe,
-			ProgramArgs:     args,
-			StdOutPath:      logPath,
-			StdErrPath:      logPath,
-		}
-		if _, err := launchd.Install(opt); err != nil {
-			fmt.Printf("launchd install failed: %v\n", err)
-		} else {
-			fmt.Println("launchd agent installed and loaded.")
-		}
-	} else {
-		fmt.Println("\nNote: Automatic scheduling is only implemented for macOS (launchd).\nYou can use cron/systemd on your platform to run './colino daemon --once' periodically.")
-	}
+    // YouTube
+    ytWanted bool
+    authURL  string
+    flowID   string
+    polling  bool
+    pollErr  string
+    channels []ytChannel
+    ytSel    *ytSelectModel
+    ytNameByURL map[string]string
 
-	// Offer MCP client integration
-	maybeConfigureMCP()
+    // Interval
+    intervalInput textinput.Model
+    interval      int
 
-	fmt.Println("\nSetup complete! 🎉")
-	fmt.Println("- Edit your config at ~/.config/colino/config.yaml to refine settings")
-	fmt.Println("- Run './colino server' to expose tools to your LLM via MCP")
-	return nil
+    // Proxy
+    wsUserInput textinput.Model
+    wsPassInput textinput.Model
+    wsUser      string
+    wsPass      string
+
+    // Status/error
+    errMsg string
+}
+
+func newWizardModel(hasCfg bool) *wizardModel {
+    rss := textinput.New()
+    rss.Placeholder = "https://example.com/feed.xml, https://..."
+    rss.Focus()
+
+    interval := textinput.New()
+    interval.Placeholder = "30"
+
+    wsUser := textinput.New()
+    wsUser.Placeholder = "webshare username (optional)"
+
+    wsPass := textinput.New()
+    wsPass.Placeholder = "webshare password (optional)"
+    wsPass.EchoMode = textinput.EchoPassword
+    wsPass.EchoCharacter = '•'
+
+    return &wizardModel{
+        step:          stepIntro,
+        hasCfg:        hasCfg,
+        rssInput:      rss,
+        intervalInput: interval,
+        wsUserInput:   wsUser,
+        wsPassInput:   wsPass,
+        interval:      30,
+        ytNameByURL:   map[string]string{},
+    }
+}
+
+func (m *wizardModel) Init() tea.Cmd { return nil }
+
+// Messages for async actions
+type initAuthMsg struct{ url, flowID string; err error }
+type pollDoneMsg struct{ tok oauthPollResp; err error }
+type chansMsg struct{ list []ytChannel; err error }
+
+func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    switch msg := msg.(type) {
+    case tea.KeyMsg:
+        // Global cancels
+        if msg.Type == tea.KeyCtrlC || (msg.Type == tea.KeyRunes && strings.ToLower(string(msg.Runes)) == "q") {
+            m.cancelled = true
+            return m, tea.Quit
+        }
+        switch m.step {
+        case stepIntro:
+            if msg.Type == tea.KeyEnter {
+                if m.hasCfg {
+                    m.step = stepConfigChoice
+                } else {
+                    m.override = true
+                    m.step = stepRSS
+                }
+            }
+        case stepConfigChoice:
+            // o = override, k = keep
+            if msg.Type == tea.KeyRunes {
+                s := strings.ToLower(string(msg.Runes))
+                if s == "o" {
+                    m.override = true
+                    m.step = stepRSS
+                } else if s == "k" {
+                    m.override = false
+                    // Only ask interval when keeping
+                    m.step = stepInterval
+                }
+            }
+        case stepRSS:
+            var cmd tea.Cmd
+            m.rssInput, cmd = m.rssInput.Update(msg)
+            if msg.Type == tea.KeyEnter {
+                m.rssFeeds = splitCSV(m.rssInput.Value())
+                m.step = stepYTAsk
+                return m, nil
+            }
+            return m, cmd
+        case stepYTAsk:
+            if msg.Type == tea.KeyRunes {
+                s := strings.ToLower(string(msg.Runes))
+                if s == "y" {
+                    m.ytWanted = true
+                    m.step = stepYTAuth
+                    return m, m.startInitiate()
+                } else if s == "n" {
+                    m.ytWanted = false
+                    m.step = stepInterval
+                }
+            }
+        case stepYTAuth:
+            // allow 'o' to open URL again
+            if msg.Type == tea.KeyRunes && strings.ToLower(string(msg.Runes)) == "o" {
+                if strings.TrimSpace(m.authURL) != "" {
+                    _ = openBrowser(m.authURL)
+                }
+            }
+            // Nothing else, we wait for pollDoneMsg → chansMsg
+        case stepYTSelect:
+            if m.ytSel != nil {
+                var cmd tea.Cmd
+                mm, cmd := m.ytSel.Update(msg)
+                if sel, ok := mm.(*ytSelectModel); ok {
+                    m.ytSel = sel
+                }
+                if msg.Type == tea.KeyEnter {
+                    // collect selection and continue
+                    var feeds []string
+                    names := map[string]string{}
+                    for idx := range m.ytSel.selected {
+                        ch := m.channels[idx]
+                        url := fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", ch.ID)
+                        feeds = append(feeds, url)
+                        names[url] = ch.Title
+                    }
+                    if len(feeds) > 0 {
+                        m.rssFeeds = append(m.rssFeeds, feeds...)
+                        for u, n := range names {
+                            m.ytNameByURL[u] = n
+                        }
+                    }
+                    m.step = stepInterval
+                }
+                return m, cmd
+            }
+        case stepInterval:
+            var cmd tea.Cmd
+            m.intervalInput, cmd = m.intervalInput.Update(msg)
+            if msg.Type == tea.KeyEnter {
+                v := strings.TrimSpace(m.intervalInput.Value())
+                if v == "" {
+                    m.interval = 30
+                } else if n, err := parsePositiveInt(v); err == nil && n > 0 {
+                    m.interval = n
+                } else {
+                    m.errMsg = "Please enter a positive integer (minutes)."
+                    return m, cmd
+                }
+                if m.override {
+                    m.step = stepProxy
+                } else {
+                    m.step = stepSummary
+                }
+                m.errMsg = ""
+                return m, nil
+            }
+            return m, cmd
+        case stepProxy:
+            var cmd tea.Cmd
+            // route input focus: user → pass
+            if m.wsUserInput.Focused() {
+                m.wsUserInput, cmd = m.wsUserInput.Update(msg)
+                if msg.Type == tea.KeyEnter {
+                    m.wsUser = strings.TrimSpace(m.wsUserInput.Value())
+                    m.wsPassInput.Focus()
+                }
+                return m, cmd
+            }
+            m.wsPassInput, cmd = m.wsPassInput.Update(msg)
+            if msg.Type == tea.KeyEnter {
+                m.wsUser = strings.TrimSpace(m.wsUserInput.Value())
+                m.wsPass = strings.TrimSpace(m.wsPassInput.Value())
+                m.step = stepSummary
+                return m, nil
+            }
+            return m, cmd
+        case stepSummary:
+            if msg.Type == tea.KeyEnter {
+                m.step = stepDone
+                return m, tea.Quit
+            }
+        }
+    case initAuthMsg:
+        if msg.err != nil {
+            m.pollErr = msg.err.Error()
+            return m, nil
+        }
+        m.authURL = msg.url
+        m.flowID = msg.flowID
+        _ = openBrowser(m.authURL)
+        m.polling = true
+        return m, m.startPolling()
+    case pollDoneMsg:
+        m.polling = false
+        if msg.err != nil || strings.TrimSpace(msg.tok.AccessToken) == "" {
+            if msg.err != nil { m.pollErr = msg.err.Error() } else { m.pollErr = "authorization failed" }
+            return m, nil
+        }
+        // Fetch channels
+        return m, m.startFetchChannels(msg.tok.AccessToken)
+    case chansMsg:
+        if msg.err != nil {
+            m.pollErr = msg.err.Error()
+            return m, nil
+        }
+        m.channels = msg.list
+        m.ytSel = newYTSelectModel(m.channels)
+        m.step = stepYTSelect
+        return m, nil
+    }
+    return m, nil
+}
+
+func (m *wizardModel) View() string {
+    b := &strings.Builder{}
+    switch m.step {
+    case stepIntro:
+        fmt.Fprintln(b, "Welcome to Colino setup! 🚀")
+        fmt.Fprintln(b, "This wizard will set up your feeds, config, and background ingestion.")
+        fmt.Fprintln(b, "\nPress Enter to begin · q to quit")
+    case stepConfigChoice:
+        fmt.Fprintf(b, "Found an existing config at %s\n", configPath())
+        fmt.Fprintln(b, "Override it (will create a .bak) or keep it?")
+        fmt.Fprintln(b, "[o] Override    [k] Keep existing")
+    case stepRSS:
+        fmt.Fprintln(b, "Step 1 – RSS Feeds")
+        fmt.Fprintln(b, "Enter one or more RSS feed URLs, separated by commas.")
+        fmt.Fprintln(b, "You can add more later by editing ~/.config/colino/config.yaml.")
+        fmt.Fprintln(b, "Example YouTube channel feed: https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA\n")
+        fmt.Fprintln(b, m.rssInput.View())
+        fmt.Fprintln(b, "\nPress Enter to continue")
+    case stepYTAsk:
+        fmt.Fprintln(b, "Step 2 – YouTube Channels (optional)")
+        fmt.Fprintln(b, "Connect your YouTube account to import channel feeds from your subscriptions.")
+        fmt.Fprintln(b, "[y] Yes    [n] No")
+    case stepYTAuth:
+        fmt.Fprintln(b, "Authenticate with Google in your browser…")
+        if strings.TrimSpace(m.authURL) != "" {
+            fmt.Fprintf(b, "Auth URL: %s\n", m.authURL)
+            fmt.Fprintln(b, "(Press 'o' to open again)")
+        } else {
+            fmt.Fprintln(b, "Requesting authorization URL…")
+        }
+        if m.polling {
+            fmt.Fprintln(b, "Polling for completion…")
+        }
+        if strings.TrimSpace(m.pollErr) != "" {
+            fmt.Fprintf(b, "Error: %s\n", m.pollErr)
+        }
+    case stepYTSelect:
+        fmt.Fprintln(b, m.ytSel.View())
+        fmt.Fprintln(b, "Enter to confirm selection · q to quit")
+    case stepInterval:
+        fmt.Fprintln(b, "Step 3 – Ingestion Interval")
+        fmt.Fprintln(b, "How often should ingestion run? Minutes [30]:")
+        fmt.Fprintln(b, m.intervalInput.View())
+        if m.errMsg != "" { fmt.Fprintf(b, "\n%s\n", m.errMsg) }
+        fmt.Fprintln(b, "\nPress Enter to continue")
+    case stepProxy:
+        fmt.Fprintln(b, "Step 4 – Optional Webshare Proxy")
+        fmt.Fprintln(b, "If you ingest many YouTube transcripts, enabling a rotating proxy helps avoid IP blocking.")
+        fmt.Fprintln(b, "Leave empty to skip.")
+        fmt.Fprintln(b, "\nUsername:")
+        if !m.wsUserInput.Focused() { m.wsUserInput.Focus() }
+        fmt.Fprintln(b, m.wsUserInput.View())
+        fmt.Fprintln(b, "\nPassword:")
+        fmt.Fprintln(b, m.wsPassInput.View())
+        fmt.Fprintln(b, "\nPress Enter to continue")
+    case stepSummary:
+        fmt.Fprintln(b, "Summary")
+        fmt.Fprintf(b, "Interval: %d minutes\n", m.interval)
+        if len(m.rssFeeds) > 0 {
+            fmt.Fprintln(b, "RSS Feeds:")
+            for _, u := range m.rssFeeds {
+                if n := m.ytNameByURL[u]; n != "" {
+                    fmt.Fprintf(b, "  - %s  # YouTube: %s\n", u, n)
+                } else {
+                    fmt.Fprintf(b, "  - %s\n", u)
+                }
+            }
+        }
+        if strings.TrimSpace(m.wsUser) != "" {
+            fmt.Fprintln(b, "YouTube proxy: enabled (Webshare)")
+        }
+        if m.override {
+            fmt.Fprintln(b, "\nThe configuration file will be written to ~/.config/colino/config.yaml.")
+        } else {
+            fmt.Fprintln(b, "\nKeeping existing config. Only the launchd schedule will be installed/updated.")
+        }
+        fmt.Fprintln(b, "\nPress Enter to finish · q to cancel")
+    case stepDone:
+        fmt.Fprintln(b, "Finishing…")
+    }
+    return b.String()
+}
+
+func (m *wizardModel) startInitiate() tea.Cmd {
+    return func() tea.Msg {
+        flow, err := initiateOAuth()
+        if err != nil {
+            return initAuthMsg{"", "", err}
+        }
+        return initAuthMsg{flow.AuthURL, flow.FlowID, nil}
+    }
+}
+
+func (m *wizardModel) startPolling() tea.Cmd {
+    fid := m.flowID
+    return func() tea.Msg {
+        tok, err := pollOAuth(fid, 180*time.Second)
+        return pollDoneMsg{tok, err}
+    }
+}
+
+func (m *wizardModel) startFetchChannels(accessToken string) tea.Cmd {
+    return func() tea.Msg {
+        chans, err := fetchYouTubeSubscriptions(accessToken)
+        return chansMsg{chans, err}
+    }
 }
 
 func writeConfig(uc userConfig) error {
@@ -456,48 +747,7 @@ type ytChannel struct {
 	Title string
 }
 
-func runYouTubeSubscriptionsFlow(rdr *bufio.Reader) ([]string, map[string]string) {
-	flow, err := initiateOAuth()
-	if err != nil || strings.TrimSpace(flow.FlowID) == "" || strings.TrimSpace(flow.AuthURL) == "" {
-		msg := "unknown error"
-		if err != nil {
-			msg = err.Error()
-		}
-		fmt.Printf("YouTube auth initiation failed: %s\n", msg)
-		return nil, nil
-	}
-	// Open browser for consent and also print the URL for manual copy
-	fmt.Printf("Open the following URL to authorize Colino with Google (opening browser):\n%s\n", flow.AuthURL)
-	_ = openBrowser(flow.AuthURL)
-	fmt.Println("Waiting for authorization… (Ctrl+C to cancel)")
-	tok, err := pollOAuth(flow.FlowID, 120*time.Second)
-	if err != nil || strings.TrimSpace(tok.AccessToken) == "" {
-		fmt.Printf("OAuth flow failed: %v\n", err)
-		return nil, nil
-	}
-	// Fetch subscriptions from YouTube API
-	chans, err := fetchYouTubeSubscriptions(tok.AccessToken)
-	if err != nil || len(chans) == 0 {
-		fmt.Printf("Could not fetch YouTube subscriptions: %v\n", err)
-		return nil, nil
-	}
-	sort.Slice(chans, func(i, j int) bool { return strings.ToLower(chans[i].Title) < strings.ToLower(chans[j].Title) })
-
-	// Interactive selection
-	selected := selectYouTubeChannels(rdr, chans)
-	if len(selected) == 0 {
-		return nil, nil
-	}
-	// Build feed URLs with names
-	feeds := make([]string, 0, len(selected))
-	names := make(map[string]string)
-	for _, ch := range selected {
-		url := fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", ch.ID)
-		feeds = append(feeds, url)
-		names[url] = ch.Title
-	}
-	return feeds, names
-}
+// (legacy YouTube flow removed; handled inside Bubble Tea wizard)
 
 func initiateOAuth() (oauthInitiateResp, error) {
 	base := oauthBaseURL()
@@ -665,15 +915,7 @@ func fetchYouTubeSubscriptions(accessToken string) ([]ytChannel, error) {
 	return out, nil
 }
 
-func selectYouTubeChannels(rdr *bufio.Reader, list []ytChannel) []ytChannel {
-	if len(list) == 0 {
-		return nil
-	}
-	if sel := selectYouTubeChannelsBubbleTea(list); len(sel) > 0 {
-		return sel
-	}
-	return selectYouTubeChannelsLegacy(rdr, list)
-}
+// (legacy selector removed; Bubble Tea selector is used within the wizard)
 
 // Bubble Tea model and TUI for multi-selecting channels with basic filtering.
 type ytSelectModel struct {
@@ -703,6 +945,13 @@ func newYTSelectModel(list []ytChannel) *ytSelectModel {
 }
 
 func (m *ytSelectModel) Init() tea.Cmd { return nil }
+
+func (m *ytSelectModel) pageSize() int {
+    if m.height > 6 {
+        return m.height - 6
+    }
+    return 15
+}
 
 func (m *ytSelectModel) applyFilter() {
 	q := strings.ToLower(strings.TrimSpace(m.filter))
@@ -763,92 +1012,122 @@ func (m *ytSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			m.confirmed = true
 			return m, tea.Quit
-		case tea.KeyUp:
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		case tea.KeyDown:
-			if m.cursor < len(m.filtered)-1 {
-				m.cursor++
-			}
-		case tea.KeySpace:
-			if len(m.filtered) > 0 {
-				orig := m.filtered[m.cursor]
-				if m.selected[orig] {
-					delete(m.selected, orig)
+        case tea.KeyUp:
+            if m.cursor > 0 {
+                m.cursor--
+            }
+        case tea.KeyDown:
+            if m.cursor < len(m.filtered)-1 {
+                m.cursor++
+            }
+        case tea.KeyPgDown:
+            if n := m.pageSize(); n > 0 {
+                m.cursor += n
+                if m.cursor > len(m.filtered)-1 {
+                    m.cursor = len(m.filtered) - 1
+                }
+            }
+        case tea.KeyPgUp:
+            if n := m.pageSize(); n > 0 {
+                if m.cursor >= n {
+                    m.cursor -= n
+                } else {
+                    m.cursor = 0
+                }
+            }
+        case tea.KeySpace:
+            if len(m.filtered) > 0 {
+                orig := m.filtered[m.cursor]
+                if m.selected[orig] {
+                    delete(m.selected, orig)
 				} else {
 					m.selected[orig] = true
 				}
 			}
-		case tea.KeyRunes:
-			s := strings.ToLower(string(msg.Runes))
-			switch s {
-			case "/":
-				m.filtering = true
-			case "a":
-				for _, orig := range m.filtered {
-					m.selected[orig] = true
-				}
-			case "n":
-				m.selected = make(map[int]bool)
-			case "j":
-				if m.cursor < len(m.filtered)-1 {
-					m.cursor++
-				}
-			case "k":
-				if m.cursor > 0 {
-					m.cursor--
-				}
-			case "q":
-				m.cancelled = true
-				return m, tea.Quit
-			}
-		}
-		return m, nil
+        case tea.KeyRunes:
+            s := strings.ToLower(string(msg.Runes))
+            switch s {
+            case "/":
+                m.filtering = true
+            case "g":
+                m.cursor = 0
+            case "G":
+                if c := len(m.filtered); c > 0 {
+                    m.cursor = c - 1
+                }
+            case "a":
+                for _, orig := range m.filtered {
+                    m.selected[orig] = true
+                }
+            case "n":
+                m.selected = make(map[int]bool)
+            case "j":
+                if m.cursor < len(m.filtered)-1 {
+                    m.cursor++
+                }
+            case "k":
+                if m.cursor > 0 {
+                    m.cursor--
+                }
+            case "q":
+                m.cancelled = true
+                return m, tea.Quit
+            }
+        }
+        return m, nil
 	}
 	return m, nil
 }
 
 func (m *ytSelectModel) View() string {
-	b := &strings.Builder{}
-	fmt.Fprintln(b, "Select YouTube channels (↑/↓ or j/k, space=toggle, a=all, n=none, /=filter, Enter=confirm, q=quit)")
-	if m.filtering {
-		fmt.Fprintf(b, "Filter: %s\n", m.filter)
-	} else if strings.TrimSpace(m.filter) != "" {
-		fmt.Fprintf(b, "Filter: %s (press / to edit)\n", m.filter)
-	}
-	maxRows := len(m.filtered)
-	if m.height > 5 {
-		if r := m.height - 5; r < maxRows {
-			maxRows = r
-		}
-	}
-	start := 0
-	if m.cursor >= maxRows {
-		start = m.cursor - maxRows + 1
-	}
-	end := start + maxRows
-	if end > len(m.filtered) {
-		end = len(m.filtered)
-	}
-	for i := start; i < end; i++ {
-		orig := m.filtered[i]
-		ch := m.items[orig]
-		cursor := " "
-		if i == m.cursor {
-			cursor = ">"
-		}
-		mark := "[ ]"
-		if m.selected[orig] {
-			mark = "[x]"
-		}
-		title := ch.Title
-		if m.width > 10 && len(title) > m.width-10 {
-			title = title[:m.width-10]
-		}
-		fmt.Fprintf(b, "%s %s %s (%s)\n", cursor, mark, title, ch.ID)
-	}
-	return b.String()
+    b := &strings.Builder{}
+    fmt.Fprintln(b, "Select YouTube channels — ↑/↓ or j/k move • Space toggle • /=filter • a=all • n=none • PgUp/PgDn page • g/G top/end • Enter confirm • q quit")
+    if m.filtering {
+        fmt.Fprintf(b, "Filter: %s\n", m.filter)
+    } else if strings.TrimSpace(m.filter) != "" {
+        fmt.Fprintf(b, "Filter: %s (press / to edit)\n", m.filter)
+    }
+    maxRows := m.pageSize()
+    if maxRows > len(m.filtered) {
+        maxRows = len(m.filtered)
+    }
+    start := 0
+    if m.cursor >= maxRows {
+        start = m.cursor - maxRows + 1
+    }
+    end := start + maxRows
+    if end > len(m.filtered) {
+        end = len(m.filtered)
+    }
+    for i := start; i < end; i++ {
+        orig := m.filtered[i]
+        ch := m.items[orig]
+        cursor := " "
+        if i == m.cursor {
+            cursor = ">"
+        }
+        mark := "[ ]"
+        if m.selected[orig] {
+            mark = "[x]"
+        }
+        title := ch.Title
+        if m.width > 10 && len(title) > m.width-10 {
+            title = title[:m.width-10]
+        }
+        fmt.Fprintf(b, "%s %s %s (%s)\n", cursor, mark, title, ch.ID)
+    }
+    // Footer with progress and guidance
+    selCount := len(m.selected)
+    total := len(m.filtered)
+    var a, z int
+    if total == 0 {
+        a, z = 0, 0
+    } else {
+        a = start + 1
+        z = end
+    }
+    fmt.Fprintf(b, "\nSelected: %d • Showing %d–%d of %d • Enter to confirm, q to cancel\n", selCount, a, z, total)
+    return b.String()
 }
 
 func selectYouTubeChannelsBubbleTea(list []ytChannel) []ytChannel {
@@ -875,96 +1154,7 @@ func selectYouTubeChannelsBubbleTea(list []ytChannel) []ytChannel {
 	return out
 }
 
-func selectYouTubeChannelsLegacy(rdr *bufio.Reader, list []ytChannel) []ytChannel {
-	filtered := list
-	for {
-		fmt.Printf("\nYou have %d subscriptions.\n", len(list))
-		// Show first 20
-		max := 20
-		if len(filtered) < max {
-			max = len(filtered)
-		}
-		fmt.Println("Showing first", max, "matches:")
-		for i := 0; i < max; i++ {
-			fmt.Printf("%2d) %s\n", i+1, filtered[i].Title)
-		}
-		fmt.Println("\nOptions: type 'all' to add all shown, '/term' to search, 'skip' to cancel, or select by numbers (e.g., 1,3,5-7). Press Enter to show all again.")
-		fmt.Print("> ")
-		line, _ := rdr.ReadString('\n')
-		line = strings.TrimSpace(line)
-		if line == "" {
-			filtered = list
-			continue
-		}
-		if strings.EqualFold(line, "skip") {
-			return nil
-		}
-		if strings.EqualFold(line, "all") {
-			return filtered
-		}
-		if strings.HasPrefix(line, "/") {
-			q := strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "/")))
-			if q == "" {
-				filtered = list
-			} else {
-				tmp := make([]ytChannel, 0, len(list))
-				for _, ch := range list {
-					if strings.Contains(strings.ToLower(ch.Title), q) {
-						tmp = append(tmp, ch)
-					}
-				}
-				filtered = tmp
-			}
-			continue
-		}
-		// parse index selection
-		picks := parseIndexList(line)
-		if len(picks) == 0 {
-			fmt.Println("No valid selections.")
-			continue
-		}
-		var sel []ytChannel
-		for _, idx := range picks {
-			if idx >= 1 && idx <= len(filtered) {
-				sel = append(sel, filtered[idx-1])
-			}
-		}
-		if len(sel) > 0 {
-			return sel
-		}
-		fmt.Println("No valid selections.")
-	}
-}
-
-func parseIndexList(s string) []int {
-	var out []int
-	parts := strings.Split(s, ",")
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p == "" {
-			continue
-		}
-		if strings.Contains(p, "-") {
-			ab := strings.SplitN(p, "-", 2)
-			if len(ab) != 2 {
-				continue
-			}
-			a, _ := parsePositiveInt(ab[0])
-			b, _ := parsePositiveInt(ab[1])
-			if a > 0 && b >= a {
-				for i := a; i <= b; i++ {
-					out = append(out, i)
-				}
-			}
-		} else {
-			n, err := parsePositiveInt(p)
-			if err == nil && n > 0 {
-				out = append(out, n)
-			}
-		}
-	}
-	return out
-}
+// (legacy selection removed)
 
 func openBrowser(url string) error {
 	switch runtime.GOOS {
