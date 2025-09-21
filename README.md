@@ -17,3 +17,18 @@ go build -o colino ./cmd/colino
 Docs: [https://colino.pages.dev](https://colino.pages.dev)
 
 Note: macOS is the primary target (launchd integration is available).
+
+## Git hooks (auto-format + vet)
+
+This repo includes a versioned pre-commit hook that formats staged Go files with `gofmt` and runs `go vet`.
+
+Enable it once per repo:
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-commit
+```
+
+On commit, it will:
+- Format any staged `*.go` files and re-stage them
+- Run `go vet ./...` and block the commit if issues are found

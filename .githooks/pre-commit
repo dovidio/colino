@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-commit] Checking Go formatting and vetting..."
+
+# Find staged Go files
+staged_go_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.go$' || true)
+
+if [ -n "${staged_go_files}" ]; then
+  # Format staged files in place
+  unformatted=$(echo "$staged_go_files" | xargs -I{} sh -c 'gofmt -l "{}"' | tr -d '\n')
+  if [ -n "$unformatted" ]; then
+    echo "[pre-commit] Formatting Go files..."
+    # Apply formatting and re-stage changed files
+    echo "$staged_go_files" | xargs -I{} sh -c 'gofmt -w "{}" && git add "{}"'
+  fi
+
+  # Run vet on the module if Go files are staged
+  echo "[pre-commit] Running go vet..."
+  if ! go vet ./...; then
+    echo "[pre-commit] go vet failed. Please fix issues above."
+    exit 1
+  fi
+else
+  echo "[pre-commit] No staged Go files. Skipping format/vet."
+fi
+
+echo "[pre-commit] OK"
+
