@@ -475,7 +475,7 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, "Step 1 – RSS Feeds")
 		fmt.Fprintln(b, "Enter one or more RSS feed URLs, separated by commas.")
 		fmt.Fprintln(b, "You can add more later by editing ~/.config/colino/config.yaml.")
-		fmt.Fprintln(b, "Example YouTube channel feed: https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA\n")
+			fmt.Fprintln(b, "Example YouTube channel feed: https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA")
 		fmt.Fprintln(b, m.rssInput.View())
 		fmt.Fprintln(b, "\nPress Enter to continue")
 	case stepYTAsk:
