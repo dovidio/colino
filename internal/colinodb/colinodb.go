@@ -38,14 +38,19 @@ func Open(dbPath string) (*sql.DB, error) {
 }
 
 func GetSince(ctx context.Context, db *sql.DB, since time.Time, source string, limit int) ([]Content, error) {
+	// created_at is stored as a Go time string like "YYYY-MM-DD HH:MM:SS +0000 UTC"
+	// or potentially RFC3339 in future. Normalize by comparing only the first
+	// 19 chars (YYYY-MM-DD[ T]HH:MM:SS) which SQLite's datetime() can parse.
 	q := `SELECT id, source, author_username, author_display_name, content, url, created_at, fetched_at, metadata, like_count, reply_count
-FROM content_cache WHERE datetime(created_at) >= datetime(?)`
-	args := []any{since.UTC().Format(time.RFC3339)}
+FROM content_cache WHERE datetime(substr(created_at,1,19)) >= datetime(?)`
+	// Use a format SQLite understands without timezone suffix.
+	sinceStr := since.UTC().Format("2006-01-02 15:04:05")
+	args := []any{sinceStr}
 	if source != "" {
 		q += " AND source = ?"
 		args = append(args, source)
 	}
-	q += " ORDER BY datetime(created_at) DESC"
+	q += " ORDER BY datetime(substr(created_at,1,19)) DESC"
 	if limit > 0 {
 		q += fmt.Sprintf(" LIMIT %d", limit)
 	}

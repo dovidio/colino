@@ -244,15 +244,15 @@ func (m *wizardModel) Init() tea.Cmd { return nil }
 // hasYouTubeFeeds reports whether the current RSS feeds include any
 // YouTube channel feed URLs (added manually or via the YouTube selector).
 func (m *wizardModel) hasYouTubeFeeds() bool {
-    if len(m.ytNameByURL) > 0 {
-        return true
-    }
-    for _, u := range m.rssFeeds {
-        if strings.Contains(strings.ToLower(u), "youtube.com/feeds/videos.xml") {
-            return true
-        }
-    }
-    return false
+	if len(m.ytNameByURL) > 0 {
+		return true
+	}
+	for _, u := range m.rssFeeds {
+		if strings.Contains(strings.ToLower(u), "youtube.com/feeds/videos.xml") {
+			return true
+		}
+	}
+	return false
 }
 
 // Messages for async actions

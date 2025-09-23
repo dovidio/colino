@@ -272,15 +272,6 @@ func nullSQLString(ns sql.NullString) string {
 	return ""
 }
 
-func contains(ss []string, s string) bool {
-	for _, v := range ss {
-		if strings.EqualFold(v, s) {
-			return true
-		}
-	}
-	return false
-}
-
 func fileExists(p string) bool {
 	if p == "" {
 		return false
