@@ -5,7 +5,7 @@ Colino 0.2.0-alpha is a complete rewrite as a Go binary that bundles a backgroun
 ## Highlights
 - Single Go binary providing both the ingestion daemon and MCP server.
 - Local SQLite database by default: `~/Library/Application Support/Colino/colino.db` on macOS, `./colino.db` elsewhere.
-- RSS ingestion with readability extraction for articles.
+- RSS ingestion with Trafilatura-based extraction for articles.
 - YouTube transcripts when RSS items link to YouTube (optional proxy support).
 - MCP tools for LLM clients: `list_cache` and `get_content` over stdio.
 
@@ -46,4 +46,3 @@ Colino 0.2.0-alpha is a complete rewrite as a Go binary that bundles a backgroun
 
 ## Contributors
 Thanks for trying the alpha and filing issues. Feedback on configuration, ingestion speed, and MCP client compatibility is especially helpful.
-

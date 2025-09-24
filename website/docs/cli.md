@@ -41,7 +41,7 @@ Uninstall the agent:
 ```
 
 Notes
-- Sources are currently consolidated via RSS: `article` performs full-text readability; `youtube` attempts transcript retrieval for YouTube links.
+- Sources are currently consolidated via RSS: `article` performs full-text extraction with Trafilatura; `youtube` attempts transcript retrieval for YouTube links. The stored `content` field is plain text, not HTML.
 - Logs default to `~/Library/Logs/Colino/colino.log` unless overridden.
 
 ## MCP Server
@@ -72,4 +72,3 @@ go build -o colino ./cmd/colino
 ## Install as a User Tool
 - Move the binary into a directory on your PATH (e.g., `~/bin`), or call it via an absolute path from your MCP client.
 - macOS users can rely on `daemon install` for scheduled runs; non-macOS users can use systemd/cron with `./colino daemon --once` on a schedule.
-

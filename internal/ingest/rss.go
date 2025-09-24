@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
-	"github.com/go-shiori/go-readability"
+	trafilatura "github.com/markusmobius/go-trafilatura"
 	"github.com/mmcdole/gofeed"
+	"golang.org/x/net/html"
 
 	"golino/internal/colinodb"
 	"golino/internal/config"
@@ -213,7 +213,9 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 			return false, nil
 		}
 	}
-	content := firstNonEmpty(it.Content, it.Description)
+	// We'll store only extracted plain text (no HTML). If extraction fails,
+	// we fall back to a stripped-text version of the RSS description/content.
+	content := ""
 	title := it.Title
 	createdAt := time.Now().UTC()
 	if it.PublishedParsed != nil {
@@ -255,17 +257,19 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 			}
 		}
 	}
-	// scrape full text and enhance (fallback / non-YouTube)
+	// Extract main article text for non-YouTube or when transcript missing
 	if !isYouTubeURL(url) || strings.TrimSpace(content) == "" || !strings.Contains(content, "YouTube Transcript:") {
-		full := ri.extractMainText(ctx, url)
-		if full != "" {
+		extracted := ri.extractMainText(ctx, url)
+		if strings.TrimSpace(extracted) != "" {
+			content = extracted
 			didFetch = true
-		}
-		if len(full) != len(content) || full != content {
-			content = content + "\nFull Content:\n" + full
-		}
-		if full == "" {
-			ri.debugf("content fetch empty: url=%s", url)
+		} else {
+			// Fallback to RSS-provided content/description (strip HTML to text)
+			fallbackHTML := firstNonEmpty(it.Content, it.Description)
+			content = strings.TrimSpace(htmlToText(fallbackHTML))
+			if content == "" {
+				ri.debugf("content fetch empty: url=%s", url)
+			}
 		}
 	}
 
@@ -312,32 +316,24 @@ func (ri *RSSIngestor) extractMainText(ctx context.Context, url string) string {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return ""
 	}
-	// read once, reuse for readability and goquery to avoid double fetching
+	// read body once; we'll feed it to trafilatura
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil || len(bodyBytes) == 0 {
 		return ""
 	}
-	// readability
-	base, _ := neturl.Parse(url)
-	art, err := readability.FromReader(bytes.NewReader(bodyBytes), base)
-	if err == nil && len(strings.TrimSpace(art.TextContent)) > 100 {
-		return strings.TrimSpace(art.TextContent)
-	}
-	// fallback: goquery
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(bodyBytes))
-	if err != nil {
-		return ""
-	}
-	selectors := []string{"article", "main", "#content", ".post", ".article"}
-	for _, sel := range selectors {
-		if s := strings.TrimSpace(doc.Find(sel).Text()); len(s) > 100 {
-			return s
+	// extract with Trafilatura
+	// Prefer text content; ignore very short outputs which are likely boilerplate
+	// Note: go-trafilatura expects raw HTML and a base URL for resolving links/metadata.
+	res, err := trafilatura.Extract(bytes.NewReader(bodyBytes), trafilatura.Options{
+		OriginalURL: func() *neturl.URL { u, _ := neturl.Parse(url); return u }(),
+		// Favor balanced extraction; include fallback for robustness.
+		EnableFallback: true,
+		Focus:          trafilatura.Balanced,
+	})
+	if err == nil && res != nil {
+		if txt := strings.TrimSpace(res.ContentText); len(txt) > 100 {
+			return txt
 		}
-	}
-	// last resort: entire text
-	body := strings.TrimSpace(doc.Text())
-	if len(body) > 200 {
-		return body
 	}
 	return ""
 }
@@ -357,6 +353,41 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// htmlToText converts a small HTML fragment into plain text by walking the node tree
+// and concatenating text nodes with minimal whitespace normalization.
+func htmlToText(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return ""
+	}
+	n, err := html.Parse(strings.NewReader(s))
+	if err != nil || n == nil {
+		// If parsing fails, fall back to a naive strip of angle-bracket tags.
+		out := s
+		// best-effort: remove tags
+		out = regexp.MustCompile(`<[^>]+>`).ReplaceAllString(out, " ")
+		return strings.Join(strings.Fields(out), " ")
+	}
+	var b strings.Builder
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			t := strings.TrimSpace(n.Data)
+			if t != "" {
+				if b.Len() > 0 {
+					b.WriteString(" ")
+				}
+				b.WriteString(t)
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(n)
+	return b.String()
 }
 
 var ytHostRe = regexp.MustCompile(`(?i)(^|\.)youtube\.com$`)

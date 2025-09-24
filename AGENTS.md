@@ -4,7 +4,7 @@
 - Go module at repo root (`go.mod`). CLI entrypoint in `cmd/colino`.
 - Internal packages in `internal/`:
   - `server/` (MCP server exposing tools `list_cache`, `get_content`).
-  - `daemon/` (scheduler/ingestion loop), `ingest/rss.go` (RSS + readability + YouTube transcripts).
+  - `daemon/` (scheduler/ingestion loop), `ingest/rss.go` (RSS + Trafilatura extraction + YouTube transcripts).
   - `colinodb/` (SQLite schema and queries), `config/` (YAML config + paths), `launchd/` (macOS agent).
 - Runtime config: `~/.config/colino/config.yaml` (created by setup). `config.yaml` at repo root is for local dev.
 - SQLite DB: `~/Library/Application Support/Colino/colino.db` on macOS; `colino.db` elsewhere.
