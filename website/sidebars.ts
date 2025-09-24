@@ -16,8 +16,11 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'introduction',
+    'architecture',
+    'release-notes-0-2-0-alpha',
     'installation',
     'usage',
+    'cli',
     'configuration',
     'troubleshooting',
   ],
