@@ -11,7 +11,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Content mirrors the Python content_cache schema (subset of columns we expose).
 type Content struct {
 	ID                string
 	Source            string

@@ -16,23 +16,20 @@ Run the interactive wizard to create your config, bootstrap the DB, and (on macO
 
 Run a single ingestion cycle:
 ```bash
-./colino daemon --once
+./colino ingest
 ```
 
-Run continuously on an interval (default 30 minutes, configurable):
-```bash
-./colino daemon --interval-minutes 30
-```
+To run on a schedule, use launchd/systemd/cron to invoke `./colino ingest`.
 
-Install as a macOS launchd agent that runs `--once` on a schedule:
+Install as a macOS launchd schedule:
 ```bash
-./colino daemon install \
-  --interval-minutes 30 \
-  --sources article \
+./colino ingest schedule \
+  # interval is configured in launchd \
+  # sources flag removed; daemon ingests all sources \
   --log-file "$HOME/Library/Logs/Colino/daemon.launchd.log"
 
 # Uninstall
-./colino daemon uninstall
+./colino ingest unschedule
 ```
 
 ## MCP server

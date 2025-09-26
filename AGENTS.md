@@ -13,8 +13,8 @@
 ## Build, Test, and Development Commands
 - Build CLI: `go build -o colino ./cmd/colino`
 - Run MCP server: `./colino server` (stdio MCP)
-- One‑shot ingest: `./colino daemon --once`
-- Install macOS daemon: `./colino daemon install --interval-minutes 30 --sources article,youtube`
+- One‑shot ingest: `./colino ingest`
+- Install macOS schedule: `./colino ingest schedule --interval-minutes 30`
 - Lint/format: `gofmt -w .` and `go vet ./...` (keep code idiomatic)
 - Website: `cd website && npm ci && npm run start` | build: `npm run build`
 
@@ -31,7 +31,7 @@
 ## Commit & Pull Request Guidelines
 - Use Conventional Commits (e.g., `feat:`, `fix:`, `chore:`). Keep subjects concise and imperative; reference issues (e.g., `#123`).
 - PRs must describe scope, validation steps (commands/logs), and include screenshots for `website/`.
-- Pre-merge: `gofmt`, `go vet`, build `./cmd/colino`, and ensure the app runs (`./colino daemon --once`).
+- Pre-merge: `gofmt`, `go vet`, build `./cmd/colino`, and ensure the app runs (`./colino ingest`).
 
 ## Security & Configuration Tips
 - Do not commit local databases or secrets. User config lives in `~/.config/colino/config.yaml`.

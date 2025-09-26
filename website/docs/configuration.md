@@ -39,7 +39,7 @@ youtube:
 ```yaml
 daemon:
   enabled: true             # informational; CLI flags control runtime
-  interval_minutes: 30
+  # daemon settings are not read; scheduling is handled by launchd/systemd/cron
   sources: [article]        # placeholders for future source controls
   log_file: "~/Library/Logs/Colino/colino.log"
 ```
@@ -47,4 +47,3 @@ daemon:
 Notes
 - Filtering and AI summarization settings from the previous Python CLI are no longer used here.
 - The MCP server exposes data via tools; any summarization happens in your LLM client.
-

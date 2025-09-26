@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"gopkg.in/yaml.v3"
 
-	"golino/internal/config"
 	"golino/internal/launchd"
 )
 
@@ -33,13 +31,7 @@ type userConfig struct {
 	YTNameByURL  map[string]string
 }
 
-// Run executes the interactive setup flow:
-// 1) greet
-// 2) ask for RSS feeds
-// 3) ask for ingestion interval
-// 4) ask for optional Webshare proxy
-// 5) mention YouTube channel feed URLs
-// 6) write config, bootstrap DB, and install daemon (macOS)
+// Run executes the interactive setup flow
 func Run(ctx context.Context) error {
 	// Launch Bubble Tea wizard to collect inputs
 	cfgPath := configPath()
@@ -80,21 +72,13 @@ func Run(ctx context.Context) error {
 	exe, _ := os.Executable()
 	interval := wm.interval
 	if interval <= 0 {
-		if !wm.override {
-			if dc, err := config.LoadDaemonConfig(); err == nil && dc.IntervalMin > 0 {
-				interval = dc.IntervalMin
-			} else {
-				interval = 30
-			}
-		} else {
-			interval = 30
-		}
+		interval = 30
 	}
 
 	if runtime.GOOS == "darwin" {
 		fmt.Println("\nInstalling launchd agent to run on a schedule…")
-		// Install as a long-running daemon (no --once), run all sources
-		args := []string{"daemon", "--interval-minutes", fmt.Sprint(interval), "--sources", "article,youtube"}
+		// Install as a scheduled oneshot ingest; launchd handles periodicity
+		args := []string{"ingest"}
 		home, _ := os.UserHomeDir()
 		logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
 		// Keep daemon's internal logger and launchd stdout/err in sync
@@ -116,14 +100,6 @@ func Run(ctx context.Context) error {
 		}
 	} else {
 		fmt.Println("\nNote: Automatic scheduling is only implemented for macOS (launchd).")
-		fmt.Println("On Linux, you can use systemd (user) timers or cron. Examples:")
-		fmt.Println("\nSystemd (user): create ~/.config/systemd/user/colino.service with:\n" +
-			"[Unit]\nDescription=Colino ingest\n\n[Service]\nType=oneshot\nExecStart=\"" + exe + "\" daemon --once\n")
-		fmt.Println("And ~/.config/systemd/user/colino.timer with:\n" +
-			"[Unit]\nDescription=Run Colino every " + fmt.Sprint(interval) + " minutes\n\n[Timer]\nOnUnitActiveSec=" + fmt.Sprint(interval) + "min\nUnit=colino.service\n\n[Install]\nWantedBy=timers.target\n")
-		fmt.Println("Then run: systemctl --user daemon-reload && systemctl --user enable --now colino.timer")
-		fmt.Println("\nCron: run 'crontab -e' and add:\n" +
-			fmt.Sprintf("*/%d * * * * %s daemon --once >> $HOME/.local/share/colino/daemon.cron.log 2>&1\n", interval, exe))
 	}
 
 	// Apply MCP integration based on wizard choices
@@ -667,18 +643,7 @@ func writeConfig(uc userConfig) error {
 			sb.WriteString("\n")
 		}
 	}
-	// daemon
-	if uc.IntervalMin <= 0 {
-		uc.IntervalMin = 30
-	}
-	sb.WriteString("daemon:\n")
-	sb.WriteString("  enabled: true\n")
-	sb.WriteString(fmt.Sprintf("  interval_minutes: %d\n", uc.IntervalMin))
-	sb.WriteString("  sources:\n")
-	sb.WriteString("    - article\n")
-	sb.WriteString("    - youtube\n")
 
-	// youtube proxy
 	if strings.TrimSpace(uc.WebshareUser) != "" && strings.TrimSpace(uc.WebsharePass) != "" {
 		sb.WriteString("youtube:\n")
 		sb.WriteString("  proxy:\n")
@@ -839,8 +804,6 @@ type ytChannel struct {
 	ID    string
 	Title string
 }
-
-// (legacy YouTube flow removed; handled inside Bubble Tea wizard)
 
 func initiateOAuth() (oauthInitiateResp, error) {
 	base := oauthBaseURL()
@@ -1222,32 +1185,6 @@ func (m *ytSelectModel) View() string {
 	fmt.Fprintf(b, "\nSelected: %d • Showing %d–%d of %d • Enter to confirm, q to cancel\n", selCount, a, z, total)
 	return b.String()
 }
-
-func selectYouTubeChannelsBubbleTea(list []ytChannel) []ytChannel {
-	m := newYTSelectModel(list)
-	p := tea.NewProgram(m)
-	res, err := p.StartReturningModel()
-	if err != nil {
-		return nil
-	}
-	wm, ok := res.(*ytSelectModel)
-	if !ok {
-		return nil
-	}
-	if wm.cancelled || !wm.confirmed {
-		return nil
-	}
-	var out []ytChannel
-	for idx := range wm.selected {
-		if idx >= 0 && idx < len(wm.items) {
-			out = append(out, wm.items[idx])
-		}
-	}
-	sort.Slice(out, func(i, j int) bool { return strings.ToLower(out[i].Title) < strings.ToLower(out[j].Title) })
-	return out
-}
-
-// (legacy selection removed)
 
 func openBrowser(url string) error {
 	switch runtime.GOOS {

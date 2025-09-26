@@ -33,7 +33,6 @@ var innertubeContext = map[string]any{
 	},
 }
 
-// WebshareProxyConfig mirrors the Python WebshareProxyConfig in spirit.
 type WebshareProxyConfig struct {
 	Username string
 	Password string

@@ -83,69 +83,6 @@ func ExpandPath(p string) string {
 	return p
 }
 
-// DaemonConfig captures scheduling/ingestion settings for the Go daemon.
-type DaemonConfig struct {
-	Enabled     bool
-	IntervalMin int
-	Sources     []string
-	LogFile     string
-}
-
-// LoadDaemonConfig reads daemon configuration from the user YAML config if present.
-// It is tolerant to missing config and returns sensible defaults.
-func LoadDaemonConfig() (DaemonConfig, error) {
-	// defaults
-	dc := DaemonConfig{
-		Enabled:     false,
-		IntervalMin: 30,
-		Sources:     []string{"article", "youtube"},
-		LogFile:     "",
-	}
-
-	cfgPath, err := defaultConfigPath()
-	if err != nil {
-		return dc, nil // keep defaults
-	}
-	b, err := os.ReadFile(cfgPath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return dc, nil
-		}
-		// unreadable config: return defaults
-		return dc, nil
-	}
-	var raw map[string]any
-	if err := yaml.Unmarshal(b, &raw); err != nil {
-		return dc, nil
-	}
-	// daemon section
-	if d, ok := raw["daemon"].(map[string]any); ok {
-		if v, ok := d["enabled"].(bool); ok {
-			dc.Enabled = v
-		}
-		if v, ok := d["interval_minutes"].(int); ok && v > 0 {
-			dc.IntervalMin = v
-		} else if vf, ok := d["interval_minutes"].(float64); ok && int(vf) > 0 {
-			dc.IntervalMin = int(vf)
-		}
-		if s, ok := d["sources"].([]any); ok {
-			var out []string
-			for _, it := range s {
-				if str, ok := it.(string); ok {
-					out = append(out, strings.ToLower(strings.TrimSpace(str)))
-				}
-			}
-			if len(out) > 0 {
-				dc.Sources = out
-			}
-		}
-		if v, ok := d["log_file"].(string); ok && strings.TrimSpace(v) != "" {
-			dc.LogFile = ExpandPath(strings.TrimSpace(v))
-		}
-	}
-	return dc, nil
-}
-
 // AppConfig carries ingestion-related settings.
 type AppConfig struct {
 	RSSFeeds           []string

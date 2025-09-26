@@ -10,7 +10,7 @@ Colino now ships as a Go binary that:
 Quick start
 ```bash
 go build -o colino ./cmd/colino
-./colino daemon --once          # ingest once
+./colino ingest                 # ingest once (scheduling handled by launchd/systemd)
 ./colino server                 # run MCP server on stdio
 ```
 

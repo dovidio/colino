@@ -11,7 +11,7 @@ cd colino
 go build -o colino ./cmd/colino
 ```
 
-The resulting `./colino` binary provides both the ingestion daemon and the MCP server.
+The resulting `./colino` binary provides both the ingestion command and the MCP server.
 
 Optional: add it to your PATH or install to a `bin/` directory of your choice.
 
@@ -21,4 +21,4 @@ Optional: add it to your PATH or install to a `bin/` directory of your choice.
 ./colino setup
 ```
 
-This guides you through adding RSS feeds, choosing an ingestion interval, and (optionally) configuring a Webshare proxy. It then writes `~/.config/colino/config.yaml`, runs an initial ingest to bootstrap the database, and installs a scheduled daemon (on macOS via launchd).
+This guides you through adding RSS feeds, choosing an ingestion interval (for launchd scheduling), and (optionally) configuring a Webshare proxy. It then writes `~/.config/colino/config.yaml`, runs an initial ingest to bootstrap the database, and installs a scheduled launchd job on macOS.

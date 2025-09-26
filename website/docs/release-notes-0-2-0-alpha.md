@@ -1,9 +1,9 @@
 # Release Notes: 0.2.0-alpha
 
-Colino 0.2.0-alpha is a complete rewrite as a Go binary that bundles a background ingestion daemon and an MCP server into one CLI. This release focuses on performance, reliability, and a clean local-first architecture.
+Colino 0.2.0-alpha is a complete rewrite as a Go binary that bundles a one-shot ingestion command and an MCP server into one CLI. This release focuses on performance, reliability, and a clean local-first architecture.
 
 ## Highlights
-- Single Go binary providing both the ingestion daemon and MCP server.
+- Single Go binary providing both the ingestion command and MCP server.
 - Local SQLite database by default: `~/Library/Application Support/Colino/colino.db` on macOS, `./colino.db` elsewhere.
 - RSS ingestion with Trafilatura-based extraction for articles.
 - YouTube transcripts when RSS items link to YouTube (optional proxy support).
@@ -23,17 +23,16 @@ Colino 0.2.0-alpha is a complete rewrite as a Go binary that bundles a backgroun
    ```bash
    ./colino setup
    ```
-3. Optionally install the macOS daemon:
+3. Optionally install a macOS launchd schedule:
    ```bash
-   ./colino daemon install --interval-minutes 30 --sources article,youtube
+   ./colino ingest schedule --interval-minutes 30
    ```
 4. Update your MCP client to launch `./colino server` instead of the Python CLI.
 
 ## CLI Overview
 - `./colino setup` — interactive config + initial ingest, optional launchd install.
-- `./colino daemon --once` — one-shot ingest.
-- `./colino daemon --interval-minutes 30` — run continuously on an interval.
-- `./colino daemon install|uninstall` — manage macOS launchd agent.
+- `./colino ingest` — one-shot ingest. For scheduling, use launchd/systemd/cron.
+- `./colino ingest schedule|unschedule` — manage macOS launchd schedule.
 - `./colino server` — start the MCP server on stdio.
 
 ## MCP Tools
@@ -42,7 +41,7 @@ Colino 0.2.0-alpha is a complete rewrite as a Go binary that bundles a backgroun
 
 ## Known Issues (alpha)
 - Some YouTube videos do not provide transcripts; content may be empty.
-- If the DB is missing, run one ingest cycle first (`./colino daemon --once`).
+- If the DB is missing, run one ingest cycle first (`./colino ingest`).
 
 ## Contributors
 Thanks for trying the alpha and filing issues. Feedback on configuration, ingestion speed, and MCP client compatibility is especially helpful.
