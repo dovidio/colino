@@ -112,12 +112,22 @@ func Run(ctx context.Context) error {
 		}
 	}
 	if wm.mcpCodexChoice && wm.mcpCodexAvail && strings.TrimSpace(wm.codexPath) != "" {
-		_ = backupFile(wm.codexPath)
-		if err := appendTomlMCP(wm.codexPath, exe); err != nil {
-			fmt.Printf("Failed to add MCP to %s: %v\n", wm.codexPath, err)
-		} else {
-			fmt.Printf("Added MCP server to %s\n", wm.codexPath)
+		if wm.codexPath != "" {
+			b, err := os.ReadFile(wm.codexPath)
+			if err == nil || !strings.Contains(string(b), "[mcp_servers.colino]") {
+				fmt.Println("Colino is already configured in codex")
+
+			} else {
+				_ = backupFile(wm.codexPath)
+				if err := appendTomlMCP(wm.codexPath, exe); err != nil {
+					fmt.Printf("Failed to add MCP to %s: %v\n", wm.codexPath, err)
+				} else {
+					fmt.Printf("Added MCP server to %s\n", wm.codexPath)
+				}
+
+			}
 		}
+
 	}
 	return nil
 }
