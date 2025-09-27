@@ -35,26 +35,17 @@ func TestIngest(t *testing.T) {
 	appConfig.RSSFeeds = append(appConfig.RSSFeeds, fmt.Sprintf("%s/rss", server.URL))
 
 	loader := func() (config.AppConfig, error) {
-		databasePath := fmt.Sprintf("/tmp/ingest_test_%d.sqlite", time.Now().UnixNano())
-		c := config.AppConfig{
-			RSSTimeoutSec:       30,
-			RSSMaxPostsPerFeed:  100,
-			ScraperMaxWorkers:   5,
-			YouTubeProxyEnabled: false,
-			WebshareUsername:    "",
-			WebsharePassword:    "",
-			DatabasePath:        databasePath,
-		}
-		c.RSSFeeds = append(c.RSSFeeds, fmt.Sprintf("%s/rss", server.URL))
-
-		return c, nil
+		return appConfig, nil
 	}
 
 	// Run the ingestion
 	ingest.Run(t.Context(), options, loader)
 
 	// Assert that content was ingested
-	assertDatabaseContent(t, t.Context(), databasePath)
+	err := assertDatabaseContent(t, t.Context(), databasePath)
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
 }
 
 // Runs a server that serves mock rss information
@@ -68,7 +59,8 @@ func createHandler() http.Handler {
 
 // Return a list in rss format of all scrapable routes
 func rssHandler(w http.ResponseWriter, r *http.Request) {
-	pageContent := `
+	baseUrl := strings.TrimSuffix(r.URL.String(), "/rss")
+	pageTemplate := `
 	<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 	<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 		<channel>
@@ -79,36 +71,37 @@ func rssHandler(w http.ResponseWriter, r *http.Request) {
 			<atom:link href="/index.xml" rel="self" type="application/rss+xml"/>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 1</title>
-				<link>/articles/1</link>
+				<link>%[1]s//articles/1</link>
 				<pubDate>Mon, 25 Aug 2025 07:42:16 +0100</pubDate>
-				<guid>/post/2025-08-25>
+				<guid>/post/2025-08-25</guid>
 				<description>Content 1</description>
 			</item>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 2</title>
-				<link>/articles/2</link>
+				<link>%[1]s//articles/2</link>
 				<pubDate>Mon, 26 Aug 2025 07:42:16 +0100</pubDate>
-				<guid>/post/2025-08-26>
+				<guid>/post/2025-08-26</guid>
 				<description>Content 1</description>
 			</item>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 3</title>
-				<link>/articles/3</link>
+				<link>%[1]s//articles/3</link>
 				<pubDate>Mon, 27 Aug 2025 07:42:16 +0100</pubDate>
-				<guid>/post/2025-08-27>
+				<guid>/post/2025-08-27</guid>
 				<description>Content 1</description>
 			</item>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 4</title>
-				<link>/articles/4</link>
+				<link>%[1]s//articles/4</link>
 				<pubDate>Mon, 28 Aug 2025 07:42:16 +0100</pubDate>
-				<guid>/post/2025-08-28>
+				<guid>/post/2025-08-28</guid>
 				<description>Content 1</description>
 			</item>
 		</channel>
 	</rss>
 	`
 
+	pageContent := fmt.Sprintf(pageTemplate, baseUrl)
 	w.Header().Set("Content-Type", "application/xml")
 	w.Write([]byte(pageContent))
 }
@@ -159,5 +152,15 @@ func assertDatabaseContent(t *testing.T, ctx context.Context, databasePath strin
 	if len(content) != 4 {
 		t.Fatalf("Expected 4 articles saved, found %d", len(content))
 	}
+
+	for index, article := range content {
+		if article.Source != "article" {
+			t.Fatalf("Expected article %d source to be article, found %s instead", index, article.Source)
+		}
+		if strings.TrimSpace(article.Content) == "" {
+			t.Fatalf("Expected article %d to contain content", index)
+		}
+	}
+
 	return nil
 }
