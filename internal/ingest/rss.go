@@ -348,13 +348,6 @@ func firstNonEmpty(ss ...string) string {
 	return ""
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 // htmlToText converts a small HTML fragment into plain text by walking the node tree
 // and concatenating text nodes with minimal whitespace normalization.
 func htmlToText(s string) string {

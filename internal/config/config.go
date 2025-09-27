@@ -10,15 +10,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type ConfigLoad func() (AppConfig, error)
+
+func AppConfigLoader() ConfigLoad {
+	return LoadAppConfig
+}
+
 // LoadDBPath returns the SQLite DB path used by Colino.
-// It understands both Python Colino config (database.path) and
-// Golino config (database_path). Falls back to platform default.
 func LoadDBPath() (string, error) {
 	// Prefer user config at ~/.config/colino/config.yaml
 	cfgPath, err := defaultConfigPath()
 	if err == nil {
 		if p, err := readDBPathFrom(cfgPath); err == nil && p != "" {
-			return ExpandPath(p), nil
+			return expandPath(p), nil
 		}
 		if !errors.Is(err, os.ErrNotExist) && err != nil {
 			// if parsing failed for other reasons, we still fall back
@@ -63,8 +67,8 @@ func readDBPathFrom(path string) (string, error) {
 	return "", nil
 }
 
-// ExpandPath expands leading ~ and environment variables in a filesystem path.
-func ExpandPath(p string) string {
+// expandPath expands leading ~ and environment variables in a filesystem path.
+func expandPath(p string) string {
 	if p == "" {
 		return p
 	}
@@ -93,6 +97,8 @@ type AppConfig struct {
 	YouTubeProxyEnabled bool
 	WebshareUsername    string
 	WebsharePassword    string
+
+	DatabasePath string
 }
 
 // LoadAppConfig parses relevant ingestion config from ~/.config/colino/config.yaml.
@@ -104,6 +110,7 @@ func LoadAppConfig() (AppConfig, error) {
 		YouTubeProxyEnabled: false,
 		WebshareUsername:    "",
 		WebsharePassword:    "",
+		DatabasePath:        "",
 	}
 	cfgPath, err := defaultConfigPath()
 	if err != nil {
@@ -158,6 +165,12 @@ func LoadAppConfig() (AppConfig, error) {
 			}
 		}
 	}
+
+	dbPath, err := LoadDBPath()
+	if err == nil {
+		ac.DatabasePath = dbPath
+	}
+
 	// filters, ai, and default_lookback are intentionally ignored now.
 	return ac, nil
 }

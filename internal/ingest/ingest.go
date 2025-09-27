@@ -18,12 +18,10 @@ type Options struct {
 }
 
 // Run executes a single ingestion run. Scheduling is delegated to launchd/systemd/cron.
-func Run(ctx context.Context, opts Options) error {
-	// Always ingest all sources (article, youtube)
-	sources := []string{"article", "youtube"}
+func Run(ctx context.Context, opts Options, config config.ConfigLoad) error {
 	logFile := strings.TrimSpace(opts.LogFile)
 	if logFile != "" {
-		logFile = config.ExpandPath(logFile)
+		logFile = expandPath(logFile)
 	}
 
 	logger := log.New(os.Stdout, "[colino-daemon] ", log.LstdFlags)
@@ -46,19 +44,16 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	defer closeLog()
 
-	// single run and exit; scheduling handled externally (e.g., launchd)
-	return runGoIngest(ctx, logger, sources)
+	return runGoIngest(ctx, logger, config)
 }
 
-func runGoIngest(ctx context.Context, logger *log.Logger, sources []string) error {
+func runGoIngest(ctx context.Context, logger *log.Logger, load config.ConfigLoad) error {
 	// Load app config for feeds
-	appCfg, _ := config.LoadAppConfig()
-	dbPath, err := config.LoadDBPath()
+	appCfg, err := load()
 	if err != nil {
 		return err
 	}
-	dbPath = config.ExpandPath(dbPath)
-	db, err := colinodb.Open(dbPath)
+	db, err := colinodb.Open(appCfg.DatabasePath)
 	if err != nil {
 		return err
 	}
@@ -82,4 +77,23 @@ func dirOf(p string) string {
 		return "."
 	}
 	return p[:i]
+}
+
+func expandPath(p string) string {
+	if p == "" {
+		return p
+	}
+	// Expand environment variables like $HOME
+	p = os.ExpandEnv(p)
+	// Expand leading ~
+	if strings.HasPrefix(p, "~") {
+		if home, err := os.UserHomeDir(); err == nil {
+			if p == "~" {
+				p = home
+			} else if strings.HasPrefix(p, "~/") {
+				p = filepath.Join(home, p[2:])
+			}
+		}
+	}
+	return p
 }
