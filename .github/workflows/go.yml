@@ -20,4 +20,6 @@ jobs:
         run: |
           if [ -n "$(gofmt -l .)" ]; then
             echo "Go files not formatted:" && gofmt -l . && exit 1; fi
+      - name: Test
+        run: go test ./...
 
