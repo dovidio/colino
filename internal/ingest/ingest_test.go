@@ -3,6 +3,7 @@ package ingest
 import (
 	"context"
 	"fmt"
+	"golino/internal/colinodb"
 	"golino/internal/config"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,18 @@ func TestIngest(t *testing.T) {
 	options := Options{
 		LogFile: "",
 	}
+	databasePath := fmt.Sprintf("/tmp/ingest_test_%d.sqlite", time.Now().UnixNano())
+	appConfig := config.AppConfig{
+		RSSTimeoutSec:       30,
+		RSSMaxPostsPerFeed:  100,
+		ScraperMaxWorkers:   5,
+		YouTubeProxyEnabled: false,
+		WebshareUsername:    "",
+		WebsharePassword:    "",
+		DatabasePath:        databasePath,
+	}
+	appConfig.RSSFeeds = append(appConfig.RSSFeeds, fmt.Sprintf("%s/rss", server.URL))
+
 	loader := func() (config.AppConfig, error) {
 		databasePath := fmt.Sprintf("/tmp/ingest_test_%d.sqlite", time.Now().UnixNano())
 		c := config.AppConfig{
@@ -37,10 +50,10 @@ func TestIngest(t *testing.T) {
 	}
 
 	// Run the ingestion
-	Run(context.Background(), options, loader)
+	Run(t.Context(), options, loader)
 
 	// Assert that content was ingested
-	assertDatabaseContent()
+	assertDatabaseContent(t, t.Context(), databasePath)
 }
 
 // Runs a server that serves mock rss information
@@ -131,5 +144,19 @@ func articlesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(pageContent))
 }
 
-func assertDatabaseContent() {
+func assertDatabaseContent(t *testing.T, ctx context.Context, databasePath string) error {
+	db, err := colinodb.Open(databasePath)
+	if err != nil {
+		return err
+	}
+
+	content, err := colinodb.GetSince(ctx, db, time.Date(2025, time.August, 1, 0, 0, 0, 0, time.Local), "article", 100)
+	if err != nil {
+		return err
+	}
+
+	if len(content) != 4 {
+		t.Fatal(fmt.Sprintf("Expected 4 articles saved, found %d", len(content)))
+	}
+	return nil
 }
