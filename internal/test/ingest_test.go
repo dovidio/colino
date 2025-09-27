@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golino/internal/colinodb"
 	"golino/internal/config"
+	"golino/internal/ingest"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -18,7 +19,7 @@ func TestIngest(t *testing.T) {
 	server := httptest.NewServer(createHandler())
 	defer server.Close()
 
-	options := Options{
+	options := ingest.Options{
 		LogFile: "",
 	}
 	databasePath := fmt.Sprintf("/tmp/ingest_test_%d.sqlite", time.Now().UnixNano())
@@ -50,7 +51,7 @@ func TestIngest(t *testing.T) {
 	}
 
 	// Run the ingestion
-	Run(t.Context(), options, loader)
+	ingest.Run(t.Context(), options, loader)
 
 	// Assert that content was ingested
 	assertDatabaseContent(t, t.Context(), databasePath)
@@ -156,7 +157,7 @@ func assertDatabaseContent(t *testing.T, ctx context.Context, databasePath strin
 	}
 
 	if len(content) != 4 {
-		t.Fatal(fmt.Sprintf("Expected 4 articles saved, found %d", len(content)))
+		t.Fatalf("Expected 4 articles saved, found %d", len(content))
 	}
 	return nil
 }
