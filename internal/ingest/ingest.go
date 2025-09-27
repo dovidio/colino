@@ -60,8 +60,8 @@ func runGoIngest(ctx context.Context, logger *log.Logger, load config.ConfigLoad
 	defer db.Close()
 
 	// Always run ingestion of RSS feeds; entries are saved as source="article" or "youtube" based on URL.
-	ri := NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, logger)
-	n, err := ri.Ingest(ctx, db, appCfg.RSSFeeds)
+	ri := NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, 1500, logger)
+	n, err := ri.Ingest(ctx, db)
 	if err != nil {
 		logger.Printf("ingest error: %v", err)
 	} else {

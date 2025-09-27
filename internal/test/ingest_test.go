@@ -1,4 +1,4 @@
-package ingest
+package test
 
 import (
 	"context"
@@ -6,8 +6,10 @@ import (
 	"golino/internal/colinodb"
 	"golino/internal/config"
 	"golino/internal/ingest"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -19,9 +21,6 @@ func TestIngest(t *testing.T) {
 	server := httptest.NewServer(createHandler())
 	defer server.Close()
 
-	options := ingest.Options{
-		LogFile: "",
-	}
 	databasePath := fmt.Sprintf("/tmp/ingest_test_%d.sqlite", time.Now().UnixNano())
 	appConfig := config.AppConfig{
 		RSSTimeoutSec:       30,
@@ -34,15 +33,19 @@ func TestIngest(t *testing.T) {
 	}
 	appConfig.RSSFeeds = append(appConfig.RSSFeeds, fmt.Sprintf("%s/rss", server.URL))
 
-	loader := func() (config.AppConfig, error) {
-		return appConfig, nil
-	}
-
 	// Run the ingestion
-	ingest.Run(t.Context(), options, loader)
+	db, err := colinodb.Open(appConfig.DatabasePath)
+	if err != nil {
+		t.Fatalf("Could not open db: %v", err)
+	}
+	defer db.Close()
+
+	logger := log.New(os.Stdout, "[colino-daemon] ", log.LstdFlags)
+	ingestor := ingest.NewRSSIngestor(appConfig, 2000, 0, logger)
+	ingestor.Ingest(t.Context(), db)
 
 	// Assert that content was ingested
-	err := assertDatabaseContent(t, t.Context(), databasePath)
+	err = assertDatabaseContent(t, t.Context(), databasePath)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}

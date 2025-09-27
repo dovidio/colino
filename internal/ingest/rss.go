@@ -33,17 +33,14 @@ type RSSIngestor struct {
 }
 
 // NewRSSIngestor constructs an RSS ingestor with sensible defaults.
-func NewRSSIngestor(appCfg config.AppConfig, timeoutSec int, logger *log.Logger) *RSSIngestor {
+func NewRSSIngestor(appCfg config.AppConfig, timeoutSec int, minIntMs time.Duration, logger *log.Logger) *RSSIngestor {
 	if timeoutSec <= 0 {
 		timeoutSec = 30
 	}
 	cli := &http.Client{Timeout: time.Duration(timeoutSec) * time.Second}
 	p := gofeed.NewParser()
 	p.Client = cli
-	minInt := 1500 * time.Millisecond
-	if appCfg.ScraperMaxWorkers > 8 { // be a bit more gentle when highly parallel
-		minInt = 2 * time.Second
-	}
+	minInt := minIntMs * time.Millisecond
 	return &RSSIngestor{AppCfg: appCfg, Client: cli, Logger: logger, parser: p, minInterval: minInt}
 }
 
@@ -61,7 +58,7 @@ func (ri *RSSIngestor) debugf(format string, args ...any) {
 }
 
 // Ingest fetches all provided feed URLs and stores new items into DB.
-func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB, feeds []string) (int, error) {
+func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB) (int, error) {
 	if db == nil {
 		return 0, fmt.Errorf("nil db")
 	}
@@ -69,6 +66,8 @@ func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB, feeds []string) (
 	if err := colinodb.InitSchema(db); err != nil {
 		return 0, err
 	}
+
+	feeds := ri.AppCfg.RSSFeeds
 
 	// Preload existing URLs to avoid obvious duplicates upfront
 	existingURLSet, _ := colinodb.GetURLsBySource(ctx, db, "rss")
