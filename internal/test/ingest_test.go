@@ -59,7 +59,11 @@ func createHandler() http.Handler {
 
 // Return a list in rss format of all scrapable routes
 func rssHandler(w http.ResponseWriter, r *http.Request) {
-	baseUrl := strings.TrimSuffix(r.URL.String(), "/rss")
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	baseUrl := strings.TrimSuffix(fmt.Sprintf("%s://%s", scheme, r.Host), "/")
 	pageTemplate := `
 	<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 	<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -71,31 +75,31 @@ func rssHandler(w http.ResponseWriter, r *http.Request) {
 			<atom:link href="/index.xml" rel="self" type="application/rss+xml"/>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 1</title>
-				<link>%[1]s//articles/1</link>
-				<pubDate>Mon, 25 Aug 2025 07:42:16 +0100</pubDate>
+				<link>%[1]s/articles/1</link>
+				<pubDate>Mon, 28 Aug 2025 07:42:16 +0100</pubDate>
 				<guid>/post/2025-08-25</guid>
 				<description>Content 1</description>
 			</item>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 2</title>
-				<link>%[1]s//articles/2</link>
-				<pubDate>Mon, 26 Aug 2025 07:42:16 +0100</pubDate>
+				<link>%[1]s/articles/2</link>
+				<pubDate>Mon, 27 Aug 2025 07:42:16 +0100</pubDate>
 				<guid>/post/2025-08-26</guid>
-				<description>Content 1</description>
+				<description>Content 2</description>
 			</item>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 3</title>
-				<link>%[1]s//articles/3</link>
-				<pubDate>Mon, 27 Aug 2025 07:42:16 +0100</pubDate>
+				<link>%[1]s/articles/3</link>
+				<pubDate>Mon, 26 Aug 2025 07:42:16 +0100</pubDate>
 				<guid>/post/2025-08-27</guid>
-				<description>Content 1</description>
+				<description>Content 3</description>
 			</item>
 			<item>
 				<title>Breaking News, we have no autumn or spring anymore! Part 4</title>
-				<link>%[1]s//articles/4</link>
-				<pubDate>Mon, 28 Aug 2025 07:42:16 +0100</pubDate>
+				<link>%[1]s/articles/4</link>
+				<pubDate>Mon, 25 Aug 2025 07:42:16 +0100</pubDate>
 				<guid>/post/2025-08-28</guid>
-				<description>Content 1</description>
+				<description>Content 4</description>
 			</item>
 		</channel>
 	</rss>
@@ -125,8 +129,8 @@ func articlesHandler(w http.ResponseWriter, r *http.Request) {
 			<head>
 			</head>
 			<body>
-				<h1>Breaking News, we have no autumn or spring anymore! Part %d</h1>
-				<p>It occurred to me that we only have two seasons, summer and winter, and our weather abruptly switch between those.</p>
+				<h1>Breaking News, we have no autumn or spring anymore!</h1>
+	<p>Part %d: It occurred to me that we only have two seasons, summer and winter, and our weather abruptly switch between those.</p>
 			</body>
 		</html>
 	`
@@ -159,6 +163,12 @@ func assertDatabaseContent(t *testing.T, ctx context.Context, databasePath strin
 		}
 		if strings.TrimSpace(article.Content) == "" {
 			t.Fatalf("Expected article %d to contain content", index)
+		}
+		if !strings.Contains(article.Content, "It occurred to me") {
+			t.Fatalf("Expected article %d to contain string \"It occurred to me\". Actual content: %s", index, article.Content)
+		}
+		if !strings.Contains(article.Content, fmt.Sprintf("Part %d", index+1)) {
+			t.Fatalf("Expected article %d to contain string \"Part %d\". Actual content: %s", index, index+1, article.Content)
 		}
 	}
 
