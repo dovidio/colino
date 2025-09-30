@@ -16,12 +16,8 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:  "golino",
-		Usage: "Colino MCP server and ingestion daemon",
-		// Default action: run server when no subcommand is provided
-		Action: func(c *cli.Context) error {
-			return server.Run(c.Context)
-		},
+		Name:  "colino",
+		Usage: "Colino",
 		Commands: []*cli.Command{
 			{
 				Name:  "server",
