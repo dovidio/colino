@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 
 	"golino/internal/config"
+	"golino/internal/digest"
 	"golino/internal/ingest"
 	"golino/internal/launchd"
 	"golino/internal/server"
@@ -16,22 +18,34 @@ import (
 )
 
 func main() {
-	app := &cli.App{
+	app := &cli.Command{
 		Name:  "colino",
 		Usage: "Colino",
 		Commands: []*cli.Command{
 			{
 				Name:  "server",
 				Usage: "Run MCP server on stdio",
-				Action: func(c *cli.Context) error {
-					return server.Run(c.Context)
+				Action: func(ctx context.Context, c *cli.Command) error {
+					return server.Run(ctx)
 				},
 			},
 			{
 				Name:  "setup",
 				Usage: "Setup Colino's configuration",
-				Action: func(c *cli.Context) error {
-					return setup.Run(c.Context)
+				Action: func(ctx context.Context, c *cli.Command) error {
+					return setup.Run(ctx)
+				},
+			},
+			{
+				Name:  "digest",
+				Usage: "Digest an article or a video",
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name: "content",
+					},
+				},
+				Action: func(ctx context.Context, c *cli.Command) error {
+					return digest.Run(ctx, c.StringArg("content"))
 				},
 			},
 			{
@@ -43,7 +57,7 @@ func main() {
 					&cli.StringFlag{Name: "sources", Usage: "Comma-separated sources (article,youtube)", Value: "article"},
 					&cli.StringFlag{Name: "log-file", Usage: "Path to daemon log file"},
 				},
-				Subcommands: []*cli.Command{
+				Commands: []*cli.Command{
 					{
 						Name:  "install",
 						Usage: "Install launchd agent (macOS)",
@@ -54,7 +68,7 @@ func main() {
 							&cli.StringFlag{Name: "log-file", Usage: "daemon log file path"},
 							&cli.StringFlag{Name: "plist", Usage: "custom plist path (default ~/Library/LaunchAgents/<label>.plist)"},
 						},
-						Action: func(c *cli.Context) error {
+						Action: func(ctx context.Context, c *cli.Command) error {
 							exe, _ := os.Executable()
 							if strings.TrimSpace(exe) == "" {
 								return fmt.Errorf("cannot discover program path")
@@ -90,7 +104,7 @@ func main() {
 							&cli.StringFlag{Name: "label", Value: "com.colino.daemon", Usage: "launchd label"},
 							&cli.StringFlag{Name: "plist", Usage: "path to plist (default ~/Library/LaunchAgents/<label>.plist)"},
 						},
-						Action: func(c *cli.Context) error {
+						Action: func(ctx context.Context, c *cli.Command) error {
 							if err := launchd.Uninstall(c.String("label"), c.String("plist")); err != nil {
 								return err
 							}
@@ -99,17 +113,17 @@ func main() {
 						},
 					},
 				},
-				Action: func(c *cli.Context) error {
+				Action: func(ctx context.Context, c *cli.Command) error {
 					opts := ingest.Options{
 						LogFile: c.String("log-file"),
 					}
-					return ingest.Run(c.Context, opts, config.AppConfigLoader())
+					return ingest.Run(ctx, opts, config.AppConfigLoader())
 				},
 			},
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
