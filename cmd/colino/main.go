@@ -12,6 +12,7 @@ import (
 	"golino/internal/ingest"
 	"golino/internal/launchd"
 	"golino/internal/server"
+	"golino/internal/setup"
 )
 
 func main() {
@@ -24,6 +25,13 @@ func main() {
 				Usage: "Run MCP server on stdio",
 				Action: func(c *cli.Context) error {
 					return server.Run(c.Context)
+				},
+			},
+			{
+				Name:  "setup",
+				Usage: "Setup Colino's configuration",
+				Action: func(c *cli.Context) error {
+					return setup.Run(c.Context)
 				},
 			},
 			{
