@@ -16,6 +16,7 @@ import (
 	"golino/internal/colinodb"
 	"golino/internal/config"
 	"golino/internal/ingest"
+	"golino/internal/youtube"
 )
 
 type Article struct {
@@ -33,16 +34,20 @@ func Run(ctx context.Context, url string) error {
 	}
 
 	fmt.Printf("Digesting %s with base url : %s\n", url, appConfig.AIConf.BaseUrl)
-	article, err := getArticleFromCache(ctx, url)
+	content, err := getContentFromCache(ctx, url)
 	if err != nil {
-		fmt.Printf("Article was not found in cache, scraping content...\n")
-		article, err = getFreshArticle(ctx, url)
+		fmt.Printf("Content was not found in cache, scraping content...\n")
+		if youtube.IsYouTubeURL(url) {
+			// now we need to extract youtube video id, build a client and extract the webproxy configuration
+		}
+
+		content, err = getFreshArticle(ctx, url)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Article content was fetched, digesting...")
+		fmt.Printf("Content was fetched, digesting...")
 	} else {
-		fmt.Printf("Article was found in cache %v %v, digesting...\n", article, err)
+		fmt.Printf("Content was found in cache %v %v, digesting...\n", content, err)
 	}
 
 	template, err := template.New("template").Parse(appConfig.AIConf.ArticlePrompt)
@@ -51,7 +56,7 @@ func Run(ctx context.Context, url string) error {
 	}
 
 	var buf bytes.Buffer
-	err = template.Execute(&buf, article)
+	err = template.Execute(&buf, content)
 	if err != nil {
 		return err
 	}
@@ -76,7 +81,7 @@ func Run(ctx context.Context, url string) error {
 	return nil
 }
 
-func getArticleFromCache(ctx context.Context, url string) (*Article, error) {
+func getContentFromCache(ctx context.Context, url string) (*Article, error) {
 	dbPath, err := config.LoadDBPath()
 	if err != nil {
 		return nil, err

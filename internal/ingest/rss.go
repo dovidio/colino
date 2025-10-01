@@ -233,50 +233,9 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	// If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
 	didFetch := false
 	if youtube.IsYouTubeURL(url) {
-		var ws *youtube.WebshareProxyConfig
-		if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
-			ws = &youtube.WebshareProxyConfig{
-				Username: ri.AppCfg.WebshareUsername,
-				Password: ri.AppCfg.WebsharePassword,
-			}
-		}
-		if vid := youtube.ExtractYouTubeID(url); vid != "" {
-			if snippets, err := youtube.FetchDefaultTranscript(ctx, nil, vid, ws); err == nil && len(snippets) > 0 {
-				didFetch = true
-				var sb strings.Builder
-				for _, sn := range snippets {
-					line := strings.TrimSpace(sn.Text)
-					if line == "" {
-						continue
-					}
-					if sb.Len() > 0 {
-						sb.WriteString("\n")
-					}
-					sb.WriteString(line)
-				}
-				tr := strings.TrimSpace(sb.String())
-				if tr != "" {
-					content = "YouTube Transcript:\n" + tr
-				}
-			} else {
-				ri.debugf("yt transcript unavailable: url=%s err=%v", url, err)
-			}
-		}
-	}
-	// Extract main article text for non-YouTube or when transcript missing
-	if !youtube.IsYouTubeURL(url) || strings.TrimSpace(content) == "" || !strings.Contains(content, "YouTube Transcript:") {
-		extracted := ExtractMainText(ctx, url, ri.Client)
-		if strings.TrimSpace(extracted) != "" {
-			content = extracted
-			didFetch = true
-		} else {
-			// Fallback to RSS-provided content/description (strip HTML to text)
-			fallbackHTML := firstNonEmpty(it.Content, it.Description)
-			content = strings.TrimSpace(htmlToText(fallbackHTML))
-			if content == "" {
-				ri.debugf("content fetch empty: url=%s", url)
-			}
-		}
+		content, didFetch = ri.fetchYoutubeTranscript(ctx, url)
+	} else {
+		content, didFetch = ri.fetchArticle(ctx, url)
 	}
 
 	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
@@ -307,11 +266,54 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	return didFetch, nil
 }
 
+func (ri *RSSIngestor) fetchYoutubeTranscript(ctx context.Context, url string) (string, bool) {
+	didFetch := false
+	content := ""
+	var ws *youtube.WebshareProxyConfig
+	if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
+		ws = &youtube.WebshareProxyConfig{
+			Username: ri.AppCfg.WebshareUsername,
+			Password: ri.AppCfg.WebsharePassword,
+		}
+	}
+	if vid := youtube.ExtractYouTubeID(url); vid != "" {
+		if snippets, err := youtube.FetchDefaultTranscript(ctx, nil, vid, ws); err == nil && len(snippets) > 0 {
+			didFetch = true
+			var sb strings.Builder
+			for _, sn := range snippets {
+				line := strings.TrimSpace(sn.Text)
+				if line == "" {
+					continue
+				}
+				if sb.Len() > 0 {
+					sb.WriteString("\n")
+				}
+				sb.WriteString(line)
+			}
+			tr := strings.TrimSpace(sb.String())
+			if tr != "" {
+				content = "YouTube Transcript:\n" + tr
+			}
+		} else {
+			ri.debugf("yt transcript unavailable: url=%s err=%v", url, err)
+		}
+	}
+
+	return content, didFetch
+}
+
+func (ri *RSSIngestor) fetchArticle(ctx context.Context, url string) (string, bool) {
+	extracted := ExtractMainText(ctx, url, ri.Client)
+	if strings.TrimSpace(extracted) != "" {
+		return extracted, true
+	}
+	return "", true
+}
+
 func ExtractMainText(ctx context.Context, url string, client *http.Client) string {
 	if strings.TrimSpace(url) == "" {
 		return ""
 	}
-	// fetch
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	req.Header.Set("User-Agent", "Colino/Go-Ingestor")
 	resp, err := client.Do(req)
