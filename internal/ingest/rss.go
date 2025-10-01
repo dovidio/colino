@@ -44,6 +44,13 @@ func NewRSSIngestor(appCfg config.AppConfig, timeoutSec int, minIntMs time.Durat
 	return &RSSIngestor{AppCfg: appCfg, Client: cli, Logger: logger, parser: p, minInterval: minInt}
 }
 
+// RSSMetadata contains the metadata structure of an RSS article
+type RSSMetadata struct {
+	FeedUrl    string
+	FeedTitle  string
+	EntryTitle string
+}
+
 type rssTask struct {
 	FeedTitle string
 	FeedURL   string
@@ -258,7 +265,7 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	}
 	// Extract main article text for non-YouTube or when transcript missing
 	if !isYouTubeURL(url) || strings.TrimSpace(content) == "" || !strings.Contains(content, "YouTube Transcript:") {
-		extracted := ri.extractMainText(ctx, url)
+		extracted := ExtractMainText(ctx, url, ri.Client)
 		if strings.TrimSpace(extracted) != "" {
 			content = extracted
 			didFetch = true
@@ -300,14 +307,14 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	return didFetch, nil
 }
 
-func (ri *RSSIngestor) extractMainText(ctx context.Context, url string) string {
+func ExtractMainText(ctx context.Context, url string, client *http.Client) string {
 	if strings.TrimSpace(url) == "" {
 		return ""
 	}
 	// fetch
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	req.Header.Set("User-Agent", "Colino/Go-Ingestor")
-	resp, err := ri.Client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil || resp == nil || resp.Body == nil {
 		return ""
 	}
