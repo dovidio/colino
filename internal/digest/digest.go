@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"text/template"
 	"time"
@@ -34,8 +35,14 @@ func Run(ctx context.Context, url string) error {
 	fmt.Printf("Digesting %s with base url : %s\n", url, appConfig.AIConf.BaseUrl)
 	article, err := getArticleFromCache(ctx, url)
 	if err != nil {
-		fmt.Printf("Error while getting article from cache %v\n", err)
-		return err
+		fmt.Printf("Article was not found in cache, scraping content...\n")
+		article, err = getFreshArticle(ctx, url)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Article content was fetched, digesting...")
+	} else {
+		fmt.Printf("Article was found in cache %v %v, digesting...\n", article, err)
 	}
 
 	template, err := template.New("template").Parse(appConfig.AIConf.ArticlePrompt)
@@ -53,7 +60,7 @@ func Run(ctx context.Context, url string) error {
 	client := openai.NewClient(
 		option.WithBaseURL(appConfig.AIConf.BaseUrl),
 	)
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	chatCompletion, err := client.Chat.Completions.New(timeoutCtx, openai.ChatCompletionNewParams{
@@ -82,14 +89,14 @@ func getArticleFromCache(ctx context.Context, url string) (*Article, error) {
 	if err != nil {
 		return nil, err
 	}
-	if content == nil {
+	if content == nil || content.ID == "" {
 		return nil, fmt.Errorf("No content found in cache")
 	}
+
 	metadata := content.Metadata
 	if !metadata.Valid {
 		return nil, fmt.Errorf("Did not found any metadata")
 	}
-
 	var rssMetadata ingest.RSSMetadata
 	dec := json.NewDecoder(strings.NewReader(metadata.String))
 	err = dec.Decode(&rssMetadata)
@@ -103,5 +110,22 @@ func getArticleFromCache(ctx context.Context, url string) (*Article, error) {
 		Published: content.CreatedAt.String(),
 		Content:   content.Content,
 	}
+	return &article, nil
+}
+
+func getFreshArticle(ctx context.Context, url string) (*Article, error) {
+	client := &http.Client{Timeout: time.Duration(10) * time.Second}
+	content := ingest.ExtractMainText(ctx, url, client)
+	if content == "" {
+		return nil, fmt.Errorf("could not extract content")
+	}
+	article := Article{
+		Source:    "scraped",
+		Title:     "unknown",
+		Url:       url,
+		Published: "unknown",
+		Content:   content,
+	}
+
 	return &article, nil
 }
