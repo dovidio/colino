@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"log"
 	"strings"
 	"text/template"
 	"time"
@@ -37,11 +37,7 @@ func Run(ctx context.Context, url string) error {
 	content, err := getContentFromCache(ctx, url)
 	if err != nil {
 		fmt.Printf("Content was not found in cache, scraping content...\n")
-		if youtube.IsYouTubeURL(url) {
-			// now we need to extract youtube video id, build a client and extract the webproxy configuration
-		}
-
-		content, err = getFreshArticle(ctx, url)
+		content, err = getFreshContent(ctx, appConfig, url)
 		if err != nil {
 			return err
 		}
@@ -118,9 +114,16 @@ func getContentFromCache(ctx context.Context, url string) (*Article, error) {
 	return &article, nil
 }
 
-func getFreshArticle(ctx context.Context, url string) (*Article, error) {
-	client := &http.Client{Timeout: time.Duration(10) * time.Second}
-	content := ingest.ExtractMainText(ctx, url, client)
+func getFreshContent(ctx context.Context, appConfig config.AppConfig, url string) (*Article, error) {
+	ri := ingest.NewRSSIngestor(appConfig, 60, 0, log.Default())
+	content := ""
+	if youtube.IsYouTubeURL(url) {
+		content, _ = ri.FetchYoutubeTranscript(ctx, url)
+		// now we need to extract youtube video id, build a client and extract the webproxy configuration
+	} else {
+		content, _ = ri.FetchArticle(ctx, url)
+	}
+
 	if content == "" {
 		return nil, fmt.Errorf("could not extract content")
 	}

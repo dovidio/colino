@@ -231,9 +231,9 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	// If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
 	didFetch := false
 	if youtube.IsYouTubeURL(url) {
-		content, didFetch = ri.fetchYoutubeTranscript(ctx, url)
+		content, didFetch = ri.FetchYoutubeTranscript(ctx, url)
 	} else {
-		content, didFetch = ri.fetchArticle(ctx, url)
+		content, didFetch = ri.FetchArticle(ctx, url)
 	}
 
 	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
@@ -264,7 +264,7 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	return didFetch, nil
 }
 
-func (ri *RSSIngestor) fetchYoutubeTranscript(ctx context.Context, url string) (string, bool) {
+func (ri *RSSIngestor) FetchYoutubeTranscript(ctx context.Context, url string) (string, bool) {
 	didFetch := false
 	content := ""
 	var ws *youtube.WebshareProxyConfig
@@ -300,7 +300,7 @@ func (ri *RSSIngestor) fetchYoutubeTranscript(ctx context.Context, url string) (
 	return content, didFetch
 }
 
-func (ri *RSSIngestor) fetchArticle(ctx context.Context, url string) (string, bool) {
+func (ri *RSSIngestor) FetchArticle(ctx context.Context, url string) (string, bool) {
 	extracted := ExtractMainText(ctx, url, ri.Client)
 	if strings.TrimSpace(extracted) != "" {
 		return extracted, true
