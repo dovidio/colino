@@ -87,6 +87,17 @@ func expandPath(p string) string {
 	return p
 }
 
+type AIConfig struct {
+	BaseUrl string
+	Model   string
+	// TODO: think hard if this is the best configuration we can have for prompts
+	// 1. Do we need to separate youtube from article? 2. Is it flexible enough for future use cases?
+	// 3. Do we want a prompt for digesting a list (this could be useful to build our own filtering algorithm)?
+	// 4. Do we want an interactive digest?
+	ArticlePrompt string
+	YoutubePrompt string
+}
+
 // AppConfig carries ingestion-related settings.
 type AppConfig struct {
 	RSSFeeds           []string
@@ -97,6 +108,8 @@ type AppConfig struct {
 	YouTubeProxyEnabled bool
 	WebshareUsername    string
 	WebsharePassword    string
+
+	AIConf AIConfig
 
 	DatabasePath string
 }
@@ -111,6 +124,11 @@ func LoadAppConfig() (AppConfig, error) {
 		WebshareUsername:    "",
 		WebsharePassword:    "",
 		DatabasePath:        "",
+		AIConf: AIConfig{
+			BaseUrl:       "",
+			ArticlePrompt: "",
+			YoutubePrompt: "",
+		},
 	}
 	cfgPath, err := defaultConfigPath()
 	if err != nil {
@@ -163,6 +181,21 @@ func LoadAppConfig() (AppConfig, error) {
 				}
 				// filter_ip_locations and retries_when_blocked are no longer supported
 			}
+		}
+	}
+
+	if ai, ok := raw["ai"].(map[string]any); ok {
+		if baseUrl, ok := ai["base_url"].(string); ok {
+			ac.AIConf.BaseUrl = baseUrl
+		}
+		if model, ok := ai["model"].(string); ok {
+			ac.AIConf.Model = model
+		}
+		if articlePrompt, ok := ai["article_prompt"].(string); ok {
+			ac.AIConf.ArticlePrompt = articlePrompt
+		}
+		if youtubePrompt, ok := ai["youtube_prompt"].(string); ok {
+			ac.AIConf.YoutubePrompt = youtubePrompt
 		}
 	}
 
