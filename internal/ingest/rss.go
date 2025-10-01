@@ -9,14 +9,12 @@ import (
 	"log"
 	"net/http"
 	neturl "net/url"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
 
 	trafilatura "github.com/markusmobius/go-trafilatura"
 	"github.com/mmcdole/gofeed"
-	"golang.org/x/net/html"
 
 	"golino/internal/colinodb"
 	"golino/internal/config"
@@ -354,39 +352,4 @@ func firstNonEmpty(ss ...string) string {
 		}
 	}
 	return ""
-}
-
-// htmlToText converts a small HTML fragment into plain text by walking the node tree
-// and concatenating text nodes with minimal whitespace normalization.
-func htmlToText(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return ""
-	}
-	n, err := html.Parse(strings.NewReader(s))
-	if err != nil || n == nil {
-		// If parsing fails, fall back to a naive strip of angle-bracket tags.
-		out := s
-		// best-effort: remove tags
-		out = regexp.MustCompile(`<[^>]+>`).ReplaceAllString(out, " ")
-		return strings.Join(strings.Fields(out), " ")
-	}
-	var b strings.Builder
-	var walk func(*html.Node)
-	walk = func(n *html.Node) {
-		if n.Type == html.TextNode {
-			t := strings.TrimSpace(n.Data)
-			if t != "" {
-				if b.Len() > 0 {
-					b.WriteString(" ")
-				}
-				b.WriteString(t)
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
-		}
-	}
-	walk(n)
-	return b.String()
 }
