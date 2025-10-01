@@ -344,3 +344,20 @@ func extractConsentV(htmlStr string) string {
 	}
 	return ""
 }
+
+var ytHostRe = regexp.MustCompile(`(?i)(^|\.)youtube\.com$`)
+
+func IsYouTubeURL(u string) bool {
+	if strings.TrimSpace(u) == "" {
+		return false
+	}
+	parsed, err := neturl.Parse(u)
+	if err != nil {
+		return false
+	}
+	h := strings.ToLower(parsed.Host)
+	if h == "youtu.be" {
+		return true
+	}
+	return ytHostRe.MatchString(h)
+}

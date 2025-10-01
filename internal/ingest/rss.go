@@ -232,7 +232,7 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 
 	// If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
 	didFetch := false
-	if isYouTubeURL(url) {
+	if youtube.IsYouTubeURL(url) {
 		var ws *youtube.WebshareProxyConfig
 		if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
 			ws = &youtube.WebshareProxyConfig{
@@ -240,7 +240,7 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 				Password: ri.AppCfg.WebsharePassword,
 			}
 		}
-		if vid := extractYouTubeID(url); vid != "" {
+		if vid := youtube.ExtractYouTubeID(url); vid != "" {
 			if snippets, err := youtube.FetchDefaultTranscript(ctx, nil, vid, ws); err == nil && len(snippets) > 0 {
 				didFetch = true
 				var sb strings.Builder
@@ -264,7 +264,7 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 		}
 	}
 	// Extract main article text for non-YouTube or when transcript missing
-	if !isYouTubeURL(url) || strings.TrimSpace(content) == "" || !strings.Contains(content, "YouTube Transcript:") {
+	if !youtube.IsYouTubeURL(url) || strings.TrimSpace(content) == "" || !strings.Contains(content, "YouTube Transcript:") {
 		extracted := ExtractMainText(ctx, url, ri.Client)
 		if strings.TrimSpace(extracted) != "" {
 			content = extracted
@@ -281,7 +281,7 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 
 	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
 	src := "article"
-	if isYouTubeURL(url) {
+	if youtube.IsYouTubeURL(url) {
 		src = "youtube"
 	}
 	rec := colinodb.ContentInsert{
@@ -387,42 +387,4 @@ func htmlToText(s string) string {
 	}
 	walk(n)
 	return b.String()
-}
-
-var ytHostRe = regexp.MustCompile(`(?i)(^|\.)youtube\.com$`)
-
-func isYouTubeURL(u string) bool {
-	if strings.TrimSpace(u) == "" {
-		return false
-	}
-	parsed, err := neturl.Parse(u)
-	if err != nil {
-		return false
-	}
-	h := strings.ToLower(parsed.Host)
-	if h == "youtu.be" {
-		return true
-	}
-	return ytHostRe.MatchString(h)
-}
-
-func extractYouTubeID(u string) string {
-	parsed, err := neturl.Parse(u)
-	if err != nil {
-		return ""
-	}
-	h := strings.ToLower(parsed.Host)
-	if h == "youtu.be" {
-		return strings.Trim(parsed.Path, "/")
-	}
-	if ytHostRe.MatchString(h) {
-		if strings.HasPrefix(parsed.Path, "/watch") {
-			q := parsed.Query()
-			return strings.TrimSpace(q.Get("v"))
-		}
-		if strings.HasPrefix(parsed.Path, "/shorts/") {
-			return strings.Trim(strings.TrimPrefix(parsed.Path, "/shorts/"), "/")
-		}
-	}
-	return ""
 }
