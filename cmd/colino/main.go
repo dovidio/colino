@@ -41,7 +41,8 @@ func main() {
 				Usage: "Digest an article or a video",
 				Arguments: []cli.Argument{
 					&cli.StringArg{
-						Name: "content",
+						Name:      "content",
+						UsageText: "url",
 					},
 				},
 				Action: func(ctx context.Context, c *cli.Command) error {
