@@ -39,9 +39,10 @@ func Run(ctx context.Context, url string) error {
 		fmt.Printf("Content was not found in cache, scraping content...\n")
 		content, err = getFreshContent(ctx, appConfig, url)
 		if err != nil {
+			fmt.Printf("❌ Could not extract content from the website")
 			return err
 		}
-		fmt.Printf("Content was fetched, digesting...")
+		fmt.Printf("✅ Extracted content (%d characters)\n", len(content.Content))
 	} else {
 		fmt.Printf("Content was found in cache %v %v, digesting...\n", content, err)
 	}
