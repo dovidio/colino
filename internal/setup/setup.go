@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -143,6 +142,7 @@ const (
 	stepYTSelect
 	stepInterval
 	stepProxy
+	stepAI
 	stepMCP
 	stepSummary
 	stepDone
@@ -184,6 +184,7 @@ type wizardModel struct {
 	// AI (for digest)
 	configureDigest bool
 	aiModel         string
+	articlePrompt   string
 
 	// MCP integration
 	mcpClaudeAvail  bool
@@ -413,6 +414,10 @@ func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			return m, cmd
+		case stepAI:
+			if msg.Type == tea.KeyRunes {
+
+			}
 		case stepMCP:
 			// Toggle choices; Enter to continue
 			if msg.Type == tea.KeyRunes {
@@ -485,14 +490,14 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, "Override it (will create a .bak) or keep it?")
 		fmt.Fprintln(b, "[o] Override    [k] Keep existing")
 	case stepRSS:
-		fmt.Fprintln(b, "Step 1 – RSS Feeds")
+		fmt.Fprintln(b, "RSS Feeds")
 		fmt.Fprintln(b, "Enter one or more RSS feed URLs, separated by commas.")
 		fmt.Fprintln(b, "You can add more later by editing ~/.config/colino/config.yaml.")
 		fmt.Fprintln(b, "Example of a channel feed: https://feeds.bbci.co.uk/news/rss.xml")
 		fmt.Fprintln(b, m.rssInput.View())
 		fmt.Fprintln(b, "\nPress Enter to continue")
 	case stepYTAsk:
-		fmt.Fprintln(b, "Step 2 – YouTube Channels (optional)")
+		fmt.Fprintln(b, "YouTube Channels (optional)")
 		fmt.Fprintln(b, "Connect your YouTube account to import channel feeds from your subscriptions.")
 		fmt.Fprintln(b, "[y] Yes    [n] No")
 	case stepYTAuth:
@@ -513,7 +518,7 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, m.ytSel.View())
 		fmt.Fprintln(b, "Enter to confirm selection · q to quit")
 	case stepInterval:
-		fmt.Fprintln(b, "Step 3 – Ingestion Interval")
+		fmt.Fprintln(b, "Ingestion Interval")
 		fmt.Fprintln(b, "How often should ingestion run? Minutes [30]:")
 		fmt.Fprintln(b, m.intervalInput.View())
 		if m.errMsg != "" {
@@ -521,7 +526,7 @@ func (m *wizardModel) View() string {
 		}
 		fmt.Fprintln(b, "\nPress Enter to continue")
 	case stepProxy:
-		fmt.Fprintln(b, "Step 4 – Optional Webshare Proxy")
+		fmt.Fprintln(b, "Webshare Proxy (optional)")
 		fmt.Fprintln(b, "If you ingest many YouTube transcripts, enabling a rotating proxy helps avoid IP blocking.")
 		fmt.Fprintln(b, "Leave either field empty to skip.")
 		fmt.Fprintln(b, "\nUsername (press Enter to move to password):")
@@ -530,7 +535,7 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, m.wsPassInput.View())
 		fmt.Fprintln(b, "\nPress Enter on password to continue")
 	case stepMCP:
-		fmt.Fprintln(b, "Step 5 – MCP Integration (optional)")
+		fmt.Fprintln(b, "MCP Integration (optional)")
 		fmt.Fprintln(b, "Configure Colino MCP client integration.")
 		if !m.mcpClaudeAvail && !m.mcpCodexAvail {
 			fmt.Fprintln(b, "No supported MCP clients detected.")
@@ -731,40 +736,7 @@ func backupFile(path string) error {
 	return os.WriteFile(bak, b, 0o644)
 }
 
-func maybeConfigureMCP() {
-	exe, _ := os.Executable()
-	// Try Claude CLI first
-	if _, err := exec.LookPath("claude"); err == nil {
-		if askYesNo("\nDetected Claude CLI. Add Colino MCP via 'claude mcp add'? [y/N]: ") {
-			if err := runClaudeCLIAdd(exe); err != nil {
-				fmt.Printf("Failed to add MCP via Claude CLI: %v\nFalling back to config file detection...\n", err)
-			}
-		}
-	}
-	// Codex
-	codexPath := pathIfExists(filepath.Join(userHome(), ".codex", "config.toml"))
-
-	if codexPath != "" {
-		b, err := os.ReadFile(codexPath)
-		if err == nil || !strings.Contains(string(b), "[mcp_servers.colino]") {
-			if askYesNo("\nDetected ~/.codex/config.toml. Add Colino MCP there? [y/N]: ") {
-				_ = backupFile(codexPath)
-				_ = appendTomlMCP(codexPath, exe)
-				fmt.Println("Added MCP server to ~/.codex/config.toml")
-			}
-		}
-	}
-}
-
 func userHome() string { h, _ := os.UserHomeDir(); return h }
-
-func askYesNo(prompt string) bool {
-	fmt.Print(prompt)
-	rdr := bufio.NewReader(os.Stdin)
-	s, _ := rdr.ReadString('\n')
-	s = strings.ToLower(strings.TrimSpace(s))
-	return s == "y" || s == "yes"
-}
 
 func appendTomlMCP(path, exe string) error {
 	snippet := fmt.Sprintf("\n[mcp_servers.colino]\ncommand = \"%s\"\nargs = [\"server\"]\nenv = {}\n", exe)
@@ -794,9 +766,6 @@ func runClaudeCLIAdd(exe string) error {
 
 // ---------------- YouTube onboarding ----------------
 func oauthBaseURL() string {
-	if v := strings.TrimSpace(os.Getenv("COLINO_OAUTH_BASE")); v != "" {
-		return v
-	}
 	return "https://colino.umberto.xyz"
 }
 
@@ -1154,18 +1123,13 @@ func (m *ytSelectModel) View() string {
 	} else if strings.TrimSpace(m.filter) != "" {
 		fmt.Fprintf(b, "Filter: %s (press / to edit)\n", m.filter)
 	}
-	maxRows := m.pageSize()
-	if maxRows > len(m.filtered) {
-		maxRows = len(m.filtered)
-	}
+	maxRows := min(m.pageSize(), len(m.filtered))
 	start := 0
 	if m.cursor >= maxRows {
 		start = m.cursor - maxRows + 1
 	}
-	end := start + maxRows
-	if end > len(m.filtered) {
-		end = len(m.filtered)
-	}
+
+	end := min(start+maxRows, len(m.filtered))
 	for i := start; i < end; i++ {
 		orig := m.filtered[i]
 		ch := m.items[orig]
@@ -1201,11 +1165,7 @@ func openBrowser(url string) error {
 	switch runtime.GOOS {
 	case "darwin":
 		return exec.Command("open", url).Start()
-	case "linux":
-		return exec.Command("xdg-open", url).Start()
-	case "windows":
-		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	default:
-		return nil
+		return fmt.Errorf("OS %v is not supported", runtime.GOOS)
 	}
 }
