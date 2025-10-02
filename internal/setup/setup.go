@@ -33,7 +33,6 @@ type userConfig struct {
 
 // Run executes the interactive setup flow
 func Run(ctx context.Context) error {
-	// Launch Bubble Tea wizard to collect inputs
 	cfgPath := configPath()
 	cfgExists := fileExists(cfgPath)
 
@@ -181,6 +180,10 @@ type wizardModel struct {
 
 	// Status/error
 	errMsg string
+
+	// AI (for digest)
+	configureDigest bool
+	aiModel         string
 
 	// MCP integration
 	mcpClaudeAvail  bool
@@ -980,8 +983,6 @@ func fetchYouTubeSubscriptions(accessToken string) ([]ytChannel, error) {
 	}
 	return out, nil
 }
-
-// (legacy selector removed; Bubble Tea selector is used within the wizard)
 
 // Bubble Tea model and TUI for multi-selecting channels with basic filtering.
 type ytSelectModel struct {

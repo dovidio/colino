@@ -19,17 +19,9 @@ youtube:
 # AI/LLM Configuration
 ai:
   stream: false
-  # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)
-  # or uncomment and set here (not recommended for production)
-  # openai_api_key: "your_key_here"
 
   # Model settings
   model: "gpt-5-mini"
-  extract_web_content: true
-
-  # Digest auto-save
-  auto_save: true
-  save_directory: "digests"
 
   article_prompt: |
     You are an expert news curator and summarizer.
@@ -43,16 +35,6 @@ ai:
 
     **Content:**
     {{ article.content }}
-
-  youtube_prompt: |
-    You are an expert video summarizer.
-    I'm going to send you the transcript of a video and you'll summarize it for me.
-    Format your response in clean markdown with headers and bullet points if required.
-
-    Video transcript: {{ transcript }}
-
-    If possible, find links to existing theories, philosophic positions, trends and suggest possible follow ups. If not, don't mention any of that.
-    Do not offer any follow up help.
 
 # Database
 database:
