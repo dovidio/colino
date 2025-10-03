@@ -571,8 +571,8 @@ func TestWizardModel_AsyncMessages(t *testing.T) {
 		if wm.polling {
 			t.Error("expected polling to be false")
 		}
-		if wm.pollErr != "poll error" {
-			t.Errorf("expected poll error %q, got %q", "poll error", wm.pollErr)
+		if wm.pollErr != "OAuth error: poll error" {
+			t.Errorf("expected poll error %q, got %q", "OAuth error: poll error", wm.pollErr)
 		}
 	})
 }
