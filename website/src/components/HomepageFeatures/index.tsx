@@ -12,29 +12,29 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Privacy-First',
+    title: 'Privacy Control',
     imgSrc: require('@site/static/img/Privacy.png').default,
     description: (
       <>
-        No accounts, no tracking, no ads. Colino works entirely offline and stores everything locally, so you stay in control.
+        No accounts, no tracking, no cloud services. Your personal knowledge garden stays entirely on your device, under your control.
       </>
     ),
   },
   {
-    title: 'Focus, No Distraction',
+    title: 'Intentional Consumption',
     imgSrc: require('@site/static/img/Brain.png').default,
     description: (
       <>
-        Colino is designed for deep focus. No notifications, no feeds, no noise—just the content you choose, when you want it.
+        Break free from algorithmic feeds and attention-grabbing interfaces. Choose your sources, set your pace, and consume information on your terms.
       </>
     ),
   },
   {
-    title: 'Smart Summarization',
+    title: 'LLM Integration',
     imgSrc: require('@site/static/img/Chatbot.png').default,
     description: (
       <>
-        Colino uses advanced AI to summarize articles and videos, helping you stay informed without information overload.
+        Seamlessly connect with your AI assistant through Model Context Protocol. Query, summarize, and analyze your curated content using the LLM you trust.
       </>
     ),
   },

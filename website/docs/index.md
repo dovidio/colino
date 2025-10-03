@@ -1,15 +1,29 @@
 # Colino Documentation
 
-Welcome to the Colino documentation site!
+Welcome to your journey toward intentional information consumption. Colino helps you break free from algorithmic feeds and build a personal knowledge garden that serves your goals, not engagement metrics.
 
-- **What’s new:** 0.2.0 alpha delivers a rewritten Go ingestion command and MCP server.
-- **Philosophy:** Privacy-first, distraction-free content aggregation.
-- **Usage:** Learn how to install, configure, and use Colino.
-- **Configuration:** Customize Colino to fit your needs.
-- **FAQ:** Find answers to common questions.
+## Quick Start
+- **[Introduction](./introduction)** - Understand the philosophy behind Colino
+- **[Installation](./installation)** - Get Colino running on your system
+- **[Quick Setup Guide](./usage)** - Configure your first RSS feeds and start ingesting content
 
-Get started by exploring the docs in the sidebar, especially:
-- Architecture: how the ingest and MCP server fit together
-- CLI: commands for ingesting and serving your content
- - Release Notes: what's changed in 0.2.0-alpha
+## Core Features
+- **Privacy-First**: Everything stays local on your device. No accounts, no tracking.
+- **Curated Sources**: You choose exactly what content enters your knowledge base.
+- **AI Integration**: Use your preferred LLM to analyze and summarize your content.
+- **Automated Ingestion**: Set it up once and let Colino keep your library current.
+
+## Documentation
+- **[Usage Guide](./usage)** - Learn how to use Colino effectively
+- **[Configuration](./configuration)** - Customize Colino to fit your workflow
+- **[CLI Reference](./cli)** - Complete command documentation
+- **[Architecture](./architecture)** - How Colino works under the hood
+
+## Community & Support
+- **[Troubleshooting](./troubleshooting)** - Common issues and solutions
+- **[Contributing](./contributing)** - Help us improve Colino
+- **[Release Notes](./release-notes-0-2-0-alpha)** - What's new in 0.2.0 alpha
+
+## Need Help?
+Found an issue or have a feature request? [Open an issue on GitHub](https://github.com/dovidio/colino/issues) and join our community of mindful information consumers.
  

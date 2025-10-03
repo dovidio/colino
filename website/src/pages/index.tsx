@@ -19,7 +19,7 @@ function HomepageHeader() {
             Colino
           </Heading>
           <p className="hero__subtitle">
-            Minimal, privacy-first content aggregation and summarization. Stay informed, not overwhelmed.
+            Reclaim your attention from algorithmic feeds. Your personal, privacy-first gateway to intentional information consumption.
           </p>
         </div>
         <img

@@ -1,74 +1,106 @@
 # CLI Reference
 
-Colino ships as a single binary with subcommands for ingestion and the MCP server. Below is a concise reference for common tasks.
+Colino ships as a single binary with commands for setup, ingestion, content management, and MCP server access. Everything is designed to be simple and intuitive.
 
-## Global
+## Global Commands
 ```bash
-./colino --help
-./colino --version
+./colino --help          # Show all available commands
+./colino --version       # Show current version
 ```
 
-## Setup
-Interactive wizard that writes `~/.config/colino/config.yaml`, bootstraps the DB, and optionally installs a launchd schedule on macOS.
+## Setup - Your First Steps
+The interactive setup wizard guides you through creating your configuration, adding RSS feeds, and optional scheduling.
+
 ```bash
 ./colino setup
 ```
 
-## Daemon
-Run ingestion once. For scheduling, use launchd/systemd/cron.
+The setup will help you:
+- Create your configuration file
+- Add your first RSS feeds
+- Set up automatic ingestion (macOS only for now)
+- Run an initial content fetch
 
-One-shot ingest:
+## Content Ingestion
+Fetch new content from your RSS feeds and add it to your local knowledge base.
+
+### Manual Ingestion
 ```bash
-./colino ingest
+./colino daemon              # Fetch all content from your configured feeds
 ```
 
-Run in the foreground every N minutes:
+### Automatic Scheduling (macOS)
 ```bash
-# Interval flag removed; configure periodicity via your scheduler
+./colino daemon schedule     # Install automatic background fetching
+./colino daemon unschedule   # Remove automatic fetching
 ```
 
-Install as a macOS `launchd` agent:
+## Explore Your Content
+See what content you've collected without needing an AI assistant.
+
+### List Recent Content
 ```bash
-./colino ingest schedule \
-  # interval flag removed; scheduler controls cadence \
-  # sources flag removed; daemon ingests all sources
-  --log-file "$HOME/Library/Logs/Colino/daemon.launchd.log"
+./colino list                # Show content from the last 24 hours
+./colino list --hours 72     # Show content from the last 3 days
 ```
 
-Uninstall the agent:
+Perfect for quickly checking what's new in your feeds without opening your AI client.
+
+## Digest Individual Content
+Process specific articles or videos directly from your terminal.
+
 ```bash
-./colino ingest unschedule
+./colino digest "https://example.com/article"     # Process an article
+./colino digest "https://youtube.com/watch?v=..."  # Process a YouTube video
 ```
 
-Notes
-- Sources are currently consolidated via RSS: `article` performs full-text extraction with Trafilatura; `youtube` attempts transcript retrieval for YouTube links. The stored `content` field is plain text, not HTML.
-- Logs default to `~/Library/Logs/Colino/colino.log` unless overridden.
+This is useful for:
+- Quick content analysis without full ingestion
+- Testing new sources before adding them to your feeds
+- Processing individual interesting links you discover
 
-## MCP Server
-Expose local content to your LLM client via stdio.
+## MCP Server - Connect with AI
+Expose your knowledge base to your preferred AI assistant through Model Context Protocol.
+
 ```bash
 ./colino server
 ```
 
-Configure your client to start the MCP server. Example for a TOML-based client config:
+Configure your AI client to connect to Colino as an MCP server. Example configuration:
+
 ```toml
 [mcp_servers.colino]
-command = "/absolute/path/to/colino"
+command = "/path/to/colino"
 args = ["server"]
 ```
 
-### Tools
-- `list_cache(hours=24, source?, limit=50, include_content=false)`
-  - Returns recent entries; use `hours` to scope. Set `include_content=true` to include bodies (otherwise metadata only).
-- `get_content(ids[] | url | hours, source?, limit?, include_content=true)`
-  - Fetch by a list of entry IDs, a URL, or a time window.
+**Available AI Tools:**
+- `list_cache(hours=24, source?, limit=50, include_content=false)` - Discover recent content
+- `get_content(ids[] | url | hours, source?, limit?, include_content=true)` - Fetch full content for analysis
 
-## Build from Source
+## Common Workflows
+
+### Daily Content Review
 ```bash
-go version   # requires 1.23+
-go build -o colino ./cmd/colino
+./colino list                # See what's new
+./colino daemon              # Fetch latest content
+./colino server              # Start AI for deeper analysis
 ```
 
-## Install as a User Tool
-- Move the binary into a directory on your PATH (e.g., `~/bin`), or call it via an absolute path from your MCP client.
-- macOS users can rely on `ingest schedule` for scheduled runs; non-macOS users can use systemd/cron with `./colino ingest` on a schedule.
+### Add New Source
+```bash
+./colino digest "https://new-source.com/feed"  # Test the source
+# Add to ~/.config/colino/config.yaml if good
+./colino daemon                          # Ingest from new source
+```
+
+## Technical Details
+- **Requirements**: Go 1.23+ for building from source
+- **Storage**: Local SQLite database (default: `~/Library/Application Support/Colino/colino.db` on macOS)
+- **Platform**: Primary support for macOS (with launchd integration), works on other platforms with manual scheduling
+- **Logging**: macOS logs to `~/Library/Logs/Colino/colino.log` by default
+
+## Installation Tips
+- Add the built binary to your PATH for easier access
+- Use absolute paths when configuring MCP clients
+- macOS users get automatic scheduling, other platforms can use systemd/cron
