@@ -1,46 +1,89 @@
-# Configuration
+# Configuration Guide
 
-Colino uses a YAML configuration file (`config.yaml`) to control its behavior. Colino will search the following paths for the config file:
-- `~/.config/colino/config.yaml`
-- `./config.yaml`
+Colino uses a simple YAML configuration file that controls how it fetches and stores content. Most users won't need to change anything after the initial setup, but this guide shows you what's possible.
 
-## RSS Configuration
-The `rss` section controls how Colino fetches and processes RSS feeds.
+## Configuration File Location
+
+Colino looks for your configuration in this order:
+1. `~/.config/colino/config.yaml` (recommended)
+2. `./config.yaml` (in the current directory)
+
+## Quick Configuration with Setup
+
+For most users, the interactive setup is all you need:
+
+```bash
+colino setup
+```
+
+This will help you:
+- Add your first RSS feeds
+- Configure YouTube transcript access
+- Set up automatic content fetching (macOS)
+- Create the initial configuration file
+
+## Configuration Options
+
+### Database Settings
+
+```yaml
+database_path: "~/Library/Application Support/Colino/colino.db"
+```
+
+- **macOS default**: `~/Library/Application Support/Colino/colino.db`
+- **Other platforms**: `./colino.db` in the current directory
+- **Custom location**: Any path you prefer
+
+**Example for Linux/Windows:**
+```yaml
+database_path: "~/.local/share/colino/colino.db"
+```
+
+### RSS Feeds
+
+The heart of your knowledge garden:
+
 ```yaml
 rss:
-    feeds:
-        - https://hnrss.org/frontpage
-    user_agent: "Colino RSS Reader 1.0.0"
-    timeout: 30
-    max_posts_per_feed: 100
-    scraper_max_workers: 5
+  feeds:
+    - https://hnrss.org/frontpage
+    - https://feeds.arstechnica.com/arstechnica/index
+    - https://stratechery.com/feed/
+  timeout: 30               # seconds to wait for each feed
+  max_posts_per_feed: 100   # maximum posts to keep per feed
+  scraper_max_workers: 5    # parallel downloads for article content
 ```
-Feeds can be passed as a list of URLs. Other options include
-- **user_agent**: Custom user agent string for HTTP requests.
-- **timeout**: Timeout (in seconds) for fetching feeds.
-- **max_posts_per_feed**: Maximum number of posts to fetch per feed.
-- **scraper_max_workers**: Number of parallel threads for scraping article content.
 
-## Filtering
-The `filters` section can be used to include or exclude posts based on keywords:
-```yaml
-filters:
-  include_keywords: []  # Only show posts with these words
-  exclude_keywords:
-    - ads
-    - sponsored
-    - advertisement
-```
-- **include_keywords**: Only include posts containing these keywords.
-- **exclude_keywords**: Exclude posts containing these keywords.
+#### Choosing Quality Feeds
 
-## YouTube Configuration
-The `youtube` section controls how Colino fetches and processes YouTube subscriptions.
+Start with sources that provide consistent value:
+
+**Technology & Research:**
+- `https://hnrss.org/frontpage` - Hacker News
+- `https://feeds.arstechnica.com/arstechnica/index` - Ars Technica
+- `https://www.technologyreview.com/feed/` - MIT Technology Review
+
+**Business & Analysis:**
+- `https://stratechery.com/feed/` - Stratechery
+- `https://www.aei.org/feed/` - American Enterprise Institute
+- `https://www.theatlantic.com/feed/business/` - The Atlantic Business
+
+**Science & Learning:**
+- `https://www.nature.com/news/rss` - Nature News
+- `https://www.sciencedaily.com/rss/all.xml` - ScienceDaily
+
+#### RSS Settings Explained
+
+- **timeout**: How long to wait for feeds to respond (default: 30 seconds)
+- **max_posts_per_feed**: Prevents any single feed from overwhelming your database (default: 100)
+- **scraper_max_workers**: How many articles to download simultaneously (default: 5, reduce if you have connection issues)
+
+### YouTube Transcripts (Optional)
+
+When your RSS feeds include YouTube links, Colino can automatically fetch transcripts:
+
 ```yaml
 youtube:
-  transcript_languages:
-    - en
-    - it
   proxy:
     enabled: false
     webshare:
@@ -48,108 +91,130 @@ youtube:
       password: "your_password"
 ```
 
-### Webshare Proxy Configuration
-The `proxy` section is optional and can be used to configure a rotating proxy for fetching YouTube transcripts. This is useful for avoiding rate limits when fetching many transcripts.
-Webshare.io is a popular proxy provider that offers rotating residential proxies. Here's a referral link to sign up: [https://www.webshare.io](https://www.webshare.io/?referral_code=vtgc5gn0jdhg)
-- **enabled**: Set to `true` to enable proxy usage.
-- **webshare**: (Optional) Credentials for webshare.io proxies.
-  - **username**: Your webshare.io username.
-  - **password**: Your webshare.io password.
+#### When to Use a Proxy
 
-## AI Configuration
-The `ai` section configures the AI model and summarization behavior.
+Most users won't need a proxy. Consider one only if:
+- You're fetching many YouTube transcripts daily
+- You encounter rate limiting errors
+- You want to ensure consistent access
+
+**Note**: This is entirely optional and not needed for normal usage.
+
+### Daemon Settings (Informational)
+
 ```yaml
-ai:
-    model: "gpt-5-mini"
-    extract_web_content: true
-    auto_save: true
-    save_directory: "digests"
-    stream: false  # Set to true to stream LLM output as it is generated (see below)
-    prompt: |
-        You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts. Focus on:
-        1. Key insights and takeaways
-        2. Important facts and developments
-        3. Implications and context
-        4. Clear, engaging writing
-
-        Format your response in clean markdown with headers and bullet points.
-
-        Please create a comprehensive digest summary of these {{ article_count }} recent articles/posts:
-
-        {% for article in articles %}
-        ## Article {{ loop.index }}: {{ article.title }}
-        **Source:** {{ article.source }} | **Published:** {{ article.published }}
-        **URL:** {{ article.url }}
-
-        **Content:**
-        {{ article.content[:1500] }}{% if article.content|length > 1500 %}...{% endif %}
-
-        ---
-        {% endfor %}
-
-        If any of the previous articles don't have any meat, and they feel very clickbaity, make a note. We'll share a list later.
-
-        Please provide:
-        1. **Executive Summary** - 2-3 sentences covering the main themes across all {{ article_count }} articles
-        2. **Key Highlights** - Bullet points of the most important developments (include most articles)
-        3. **Notable Insights** - Interesting patterns, trends, or implications you see
-        4. **Article Breakdown** - Brief one-line summary for each of the {{ article_count }} article together with the link of the article and the source.
-        5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why. Add the link to the article.
-        6. **Purge candidates** - List the articles that are not very novel and that you suggest to remove, and the reason why.
-
-        Keep it concise but comprehensive. Use clear markdown formatting. Do not offer any follow up help.
-
-    article_prompt: |
-        You are an expert news curator and summarizer.
-        Create an insightful summary of the article content below.
-        The content can come from news articles, youtube videos transcripts or blog posts.
-        Format your response in clean markdown with headers and bullet points if required.
-
-        ## Article {{ article.title }}
-        **Source:** {{ article.source }} | **Published:** {{ article.published }}
-        **URL:** {{ article.url }}
-
-        **Content:**
-        {{ article.content[:10000] }}{% if article.content|length > 10000 %}...{% endif %}
-
-  youtube_prompt: |
-    You are an expert video summarizer.
-    I'm going to send you the transcript of a video and you'll summarize it for me.
-    Format your response in clean markdown with headers and bullet points if required.
-
-    Video transcript: {{ transcript }}
-
-    If possible, find links to existing theories, philosophic positions, trends and suggest possible follow ups. If not, don't mention any of that.
-    Do not offer any follow up help.
+daemon:
+  enabled: true
+  log_file: "~/Library/Logs/Colino/colino.log"
 ```
 
-### Streaming LLM Output
+These settings are mainly for reference:
+- **enabled**: Informational only - controlled by CLI commands
+- **log_file**: Where to write log files (macOS default shown above)
 
-The `stream` flag in the `ai` section controls whether Colino streams the AI digest output to your terminal as it is generated, or waits for the full response before displaying it.
+## Advanced Configuration Examples
 
-- `stream: false` (default): Colino waits for the full AI response, then prints it all at once.
-- `stream: true`: Colino prints the AI response live, as it is generated by the model (faster feedback, more interactive experience).
+### Research-Oriented Setup
 
-**Important:**
-To use streaming with OpenAI models, your OpenAI organization must be verified. If you see an error like:
+```yaml
+database_path: "~/research/colino.db"
 
+rss:
+  feeds:
+    # Academic journals
+    - https://www.nature.com/nature/articles?type=news&format=rss
+    - https://science.sciencemag.org/rss/news_current.xml
+    # Research blogs
+    - https://blog.acolyer.org/feed/
+    - https://www.marginalrevolution.com/feed/
+  timeout: 60
+  max_posts_per_feed: 200
+  scraper_max_workers: 3
+
+youtube:
+  proxy:
+    enabled: false
 ```
-Your organization must be verified to stream this model. Please go to: https://platform.openai.com/settings/organization/general and click on Verify Organization.
+
+### Business Intelligence Setup
+
+```yaml
+rss:
+  feeds:
+    # Industry news
+    - https://feeds.bloomberg.com/markets/news.rss
+    - https://feeds.feedburner.com/venturebeat/SZYF
+    - https://techcrunch.com/feed/
+    # Company blogs
+    - https://blog.google/rss/
+    - https://openai.com/blog/rss.xml
+  timeout: 30
+  max_posts_per_feed: 50
+  scraper_max_workers: 8
 ```
 
-You must follow the link and verify your organization. It may take up to 15 minutes for access to propagate after verification.
+### Minimalist Setup
 
-If you are not verified, keep `stream: false` to use non-streaming mode.
+```yaml
+rss:
+  feeds:
+    - https://hnrss.org/frontpage
+    - https://stratechery.com/feed/
+  timeout: 20
+  max_posts_per_feed: 30
+  scraper_max_workers: 2
+```
 
-Prompts support Jinja-style templating with the following variables:
-- **article_count**: Number of articles being summarized.
-- **articles**: List of articles with `title`, `source`, `published`,
-    `url`, and `content` fields.
-- **transcript**: Transcript text of the YouTube video.
-- **model**: The LLM model to use for summarization (e.g., `gpt-5-mini`).
-- **extract_web_content**: If `true`, Colino will extract full web content for summarization.
-- **auto_save**: If `true`, digests are automatically saved to disk.
-- **save_directory**: Directory where digests are saved.
-- **prompt**: Custom prompt for digest generation (supports Jinja-style variables).
-- **article_prompt**: Custom prompt for single-article summaries.
-- **youtube_prompt**: Custom prompt for YouTube transcript summaries.
+## Configuration Tips
+
+### Starting Out
+1. **Begin with 3-5 feeds** you know and trust
+2. **Use defaults** for timeout and worker settings
+3. **Monitor for a week** before adding more feeds
+
+### Performance Tuning
+- **Reduce `scraper_max_workers`** if you have connection issues
+- **Increase `timeout`** for slow websites or poor connections
+- **Lower `max_posts_per_feed`** if your database grows too quickly
+
+### Feed Quality Management
+- **Remove feeds** that consistently provide low-value content
+- **Add specialized feeds** for specific research projects
+- **Test new feeds** with `colino digest` before adding permanently
+
+## Troubleshooting Configuration
+
+### Feed Not Working?
+1. **Test the URL**: Open it in your browser or feed reader
+2. **Check timeout**: Increase from 30 to 60 seconds
+3. **Verify format**: Should be standard RSS/Atom
+
+### Too Much Content?
+1. **Reduce `max_posts_per_feed`** to 20-50 per feed
+2. **Remove less valuable feeds**
+3. **Use time-based queries** with your AI assistant
+
+### Connection Issues?
+1. **Reduce `scraper_max_workers`** to 2-3
+2. **Increase `timeout`** to 60+ seconds
+3. **Check your internet connection**
+
+## Changing Configuration
+
+1. **Edit the file** at `~/.config/colino/config.yaml`
+2. **Restart any running daemon** processes
+3. **Run manual ingestion** to test changes:
+   ```bash
+   colino daemon
+   ```
+
+## Getting Help
+
+If you're having trouble with configuration:
+
+1. **Check the syntax** - YAML is picky about indentation
+2. **Validate URLs** - Make sure feeds are accessible
+3. **Start simple** - Use the setup wizard to create a working config
+4. **Ask for help** - Open an issue on GitHub with your config (remove sensitive info)
+
+Remember: The goal is a configuration that serves your information needs without becoming overwhelming. Start simple and evolve based on your actual usage patterns.

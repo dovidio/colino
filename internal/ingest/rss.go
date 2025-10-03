@@ -1,0 +1,355 @@
+package ingest
+
+import (
+	"bytes"
+	"context"
+	"database/sql"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	neturl "net/url"
+	"strings"
+	"sync"
+	"time"
+
+	trafilatura "github.com/markusmobius/go-trafilatura"
+	"github.com/mmcdole/gofeed"
+
+	"golino/internal/colinodb"
+	"golino/internal/config"
+	"golino/internal/youtube"
+)
+
+// RSSIngestor fetches RSS/Atom feeds and persists full content into the Colino DB.
+type RSSIngestor struct {
+	AppCfg      config.AppConfig
+	Client      *http.Client
+	Logger      *log.Logger
+	parser      *gofeed.Parser
+	minInterval time.Duration
+}
+
+// NewRSSIngestor constructs an RSS ingestor with sensible defaults.
+func NewRSSIngestor(appCfg config.AppConfig, timeoutSec int, minIntMs time.Duration, logger *log.Logger) *RSSIngestor {
+	if timeoutSec <= 0 {
+		timeoutSec = 30
+	}
+	cli := &http.Client{Timeout: time.Duration(timeoutSec) * time.Second}
+	p := gofeed.NewParser()
+	p.Client = cli
+	minInt := minIntMs * time.Millisecond
+	return &RSSIngestor{AppCfg: appCfg, Client: cli, Logger: logger, parser: p, minInterval: minInt}
+}
+
+// RSSMetadata contains the metadata structure of an RSS article
+type RSSMetadata struct {
+	FeedUrl    string
+	FeedTitle  string
+	EntryTitle string
+}
+
+type rssTask struct {
+	FeedTitle string
+	FeedURL   string
+	Entry     *gofeed.Item
+	Host      string
+}
+
+func (ri *RSSIngestor) debugf(format string, args ...any) {
+	if ri.Logger != nil {
+		ri.Logger.Printf(format, args...)
+	}
+}
+
+// Ingest fetches all provided feed URLs and stores new items into DB.
+func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB) (int, error) {
+	if db == nil {
+		return 0, fmt.Errorf("nil db")
+	}
+	// Ensure schema exists to avoid failures on fresh DBs
+	if err := colinodb.InitSchema(db); err != nil {
+		return 0, err
+	}
+
+	feeds := ri.AppCfg.RSSFeeds
+
+	// Preload existing URLs to avoid obvious duplicates upfront
+	existingURLSet, _ := colinodb.GetURLsBySource(ctx, db, "rss")
+
+	// Fetch all feeds concurrently
+	type feedResult struct {
+		url  string
+		host string
+		feed *gofeed.Feed
+		err  error
+	}
+	var wgFeeds sync.WaitGroup
+	resCh := make(chan feedResult, len(feeds))
+	for _, raw := range feeds {
+		feedURL := strings.TrimSpace(raw)
+		if feedURL == "" {
+			continue
+		}
+		host := func() string {
+			if u, err := neturl.Parse(feedURL); err == nil {
+				return u.Host
+			}
+			return ""
+		}()
+		wgFeeds.Add(1)
+		go func(feedURL, host string) {
+			defer wgFeeds.Done()
+			f, err := ri.parser.ParseURLWithContext(feedURL, ctx)
+			// Be polite between subsequent feed requests from same goroutine
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(ri.minInterval):
+			}
+			resCh <- feedResult{url: feedURL, host: host, feed: f, err: err}
+		}(feedURL, host)
+	}
+
+	go func() { wgFeeds.Wait(); close(resCh) }()
+
+	// Build tasks from feeds
+	tasks := make([]rssTask, 0, 128)
+	for r := range resCh {
+		if r.err != nil || r.feed == nil {
+			ri.debugf("rss feed fetch failed: host=%s url=%s err=%v", r.host, r.url, r.err)
+			continue
+		}
+		skippedExisting := 0
+		count := 0
+		for _, it := range r.feed.Items {
+			if ri.AppCfg.RSSMaxPostsPerFeed > 0 && count >= ri.AppCfg.RSSMaxPostsPerFeed {
+				break
+			}
+			if it == nil {
+				continue
+			}
+			// Skip if URL already present (cheap pre-filter)
+			if u := strings.TrimSpace(it.Link); u != "" {
+				if _, ok := existingURLSet[u]; ok {
+					skippedExisting++
+					continue
+				}
+			}
+			host := r.host
+			if u, err := neturl.Parse(it.Link); err == nil && u.Host != "" {
+				host = u.Host
+			}
+			tasks = append(tasks, rssTask{FeedTitle: r.feed.Title, FeedURL: r.url, Entry: it, Host: host})
+			count++
+		}
+		if ri.Logger != nil {
+			ri.Logger.Printf("rss feed parsed: host=%s url=%s items=%d queued=%d skipped_existing=%d", r.host, r.url, len(r.feed.Items), count, skippedExisting)
+		}
+	}
+
+	// Scrape per host: one worker per domain
+	tasksByHost := map[string][]rssTask{}
+	for _, t := range tasks {
+		h := strings.TrimSpace(t.Host)
+		if h == "" {
+			h = "__unknown__"
+		}
+		tasksByHost[h] = append(tasksByHost[h], t)
+	}
+	if ri.Logger != nil {
+		ri.Logger.Printf("rss ingest: scraping hosts=%d tasks=%d", len(tasksByHost), len(tasks))
+	}
+	var wgScrape sync.WaitGroup
+	saved := 0
+	processed := 0
+	mu := sync.Mutex{}
+	for _, list := range tasksByHost {
+		items := list
+		wgScrape.Add(1)
+		go func() {
+			defer wgScrape.Done()
+			for _, t := range items {
+				did, _ := ri.processOne(ctx, db, t, &saved, &mu)
+				mu.Lock()
+				processed++
+				mu.Unlock()
+				if ctx.Err() != nil {
+					return
+				}
+				if did { // pace only when we actually fetched from the site
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(ri.minInterval):
+					}
+				}
+			}
+		}()
+	}
+	wgScrape.Wait()
+	if ri.Logger != nil {
+		ri.Logger.Printf("rss ingest: done tasks=%d saved=%d processed=%d", len(tasks), saved, processed)
+	}
+	return saved, nil
+}
+
+func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, saved *int, mu *sync.Mutex) (bool, error) {
+	it := t.Entry
+	if it == nil {
+		ri.debugf("skip process (nil entry): feed_url=%s", t.FeedURL)
+		return false, nil
+	}
+	id := firstNonEmpty(it.GUID, it.Link)
+	if id == "" {
+		ri.debugf("skip process (no id): url=%s title=%q", it.Link, it.Title)
+		return false, nil
+	}
+	url := it.Link
+	// Skip if already cached by ID or URL (N+1/2 queries; acceptable for local SQLite)
+	if existing, err := colinodb.GetByID(ctx, db, id); err == nil && existing != nil {
+		ri.debugf("skip process (db exists id): id=%s url=%s", id, url)
+		return false, nil
+	}
+	if url != "" {
+		if byURL, err := colinodb.GetByURL(ctx, db, url); err == nil && byURL != nil {
+			ri.debugf("skip process (db exists url): url=%s", url)
+			return false, nil
+		}
+	}
+	// We'll store only extracted plain text (no HTML). If extraction fails,
+	// we fall back to a stripped-text version of the RSS description/content.
+	content := ""
+	title := it.Title
+	createdAt := time.Now().UTC()
+	if it.PublishedParsed != nil {
+		createdAt = it.PublishedParsed.UTC()
+	} else if it.UpdatedParsed != nil {
+		createdAt = it.UpdatedParsed.UTC()
+	}
+
+	// If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
+	didFetch := false
+	if youtube.IsYouTubeURL(url) {
+		content, didFetch = ri.FetchYoutubeTranscript(ctx, url)
+	} else {
+		content, didFetch = ri.FetchArticle(ctx, url)
+	}
+
+	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
+	src := "article"
+	if youtube.IsYouTubeURL(url) {
+		src = "youtube"
+	}
+	rec := colinodb.ContentInsert{
+		ID:                id,
+		Source:            src,
+		AuthorUsername:    t.FeedTitle,
+		AuthorDisplayName: t.FeedTitle,
+		Content:           content,
+		URL:               url,
+		CreatedAt:         createdAt,
+		MetadataJSON:      meta,
+		LikeCount:         0,
+		ReplyCount:        0,
+	}
+	if err := colinodb.UpsertContent(ctx, db, rec); err != nil {
+		ri.debugf("upsert failed: id=%s url=%s err=%v", id, url, err)
+		return didFetch, err
+	}
+	ri.debugf("upsert ok: id=%s url=%s", id, url)
+	mu.Lock()
+	*saved++
+	mu.Unlock()
+	return didFetch, nil
+}
+
+func (ri *RSSIngestor) FetchYoutubeTranscript(ctx context.Context, url string) (string, bool) {
+	didFetch := false
+	content := ""
+	var ws *youtube.WebshareProxyConfig
+	if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
+		ws = &youtube.WebshareProxyConfig{
+			Username: ri.AppCfg.WebshareUsername,
+			Password: ri.AppCfg.WebsharePassword,
+		}
+	}
+	if vid := youtube.ExtractYouTubeID(url); vid != "" {
+		if snippets, err := youtube.FetchDefaultTranscript(ctx, nil, vid, ws); err == nil && len(snippets) > 0 {
+			didFetch = true
+			var sb strings.Builder
+			for _, sn := range snippets {
+				line := strings.TrimSpace(sn.Text)
+				if line == "" {
+					continue
+				}
+				if sb.Len() > 0 {
+					sb.WriteString("\n")
+				}
+				sb.WriteString(line)
+			}
+			tr := strings.TrimSpace(sb.String())
+			if tr != "" {
+				content = "YouTube Transcript:\n" + tr
+			}
+		} else {
+			ri.debugf("yt transcript unavailable: url=%s err=%v", url, err)
+		}
+	}
+
+	return content, didFetch
+}
+
+func (ri *RSSIngestor) FetchArticle(ctx context.Context, url string) (string, bool) {
+	extracted := ExtractMainText(ctx, url, ri.Client)
+	if strings.TrimSpace(extracted) != "" {
+		return extracted, true
+	}
+	return "", true
+}
+
+func ExtractMainText(ctx context.Context, url string, client *http.Client) string {
+	if strings.TrimSpace(url) == "" {
+		return ""
+	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req.Header.Set("User-Agent", "Colino/Go-Ingestor")
+	resp, err := client.Do(req)
+	if err != nil || resp == nil || resp.Body == nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return ""
+	}
+	// read body once; we'll feed it to trafilatura
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil || len(bodyBytes) == 0 {
+		return ""
+	}
+	// extract with Trafilatura
+	// Prefer text content; ignore very short outputs which are likely boilerplate
+	// Note: go-trafilatura expects raw HTML and a base URL for resolving links/metadata.
+	res, err := trafilatura.Extract(bytes.NewReader(bodyBytes), trafilatura.Options{
+		OriginalURL: func() *neturl.URL { u, _ := neturl.Parse(url); return u }(),
+		// Favor balanced extraction; include fallback for robustness.
+		EnableFallback: true,
+		Focus:          trafilatura.Balanced,
+	})
+	if err == nil && res != nil {
+		if txt := strings.TrimSpace(res.ContentText); len(txt) > 100 {
+			return txt
+		}
+	}
+	return ""
+}
+
+// Filtering removed: we ingest everything; LLM will filter downstream.
+func firstNonEmpty(ss ...string) string {
+	for _, s := range ss {
+		if strings.TrimSpace(s) != "" {
+			return s
+		}
+	}
+	return ""
+}

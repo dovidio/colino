@@ -2,55 +2,57 @@
 
 If you encounter issues running or using Colino, check the following common problems and solutions.
 
-## 1. Shell errors with URLs (zsh: no matches found)
+## 1. “Database not found” from MCP tools
 
 **Problem:**
-When running a command like:
-
-```
-colino digest https://www.youtube.com/watch?v=W26bBFyFaR8
-```
-
-You get:
-
-```
-zsh: no matches found: https://www.youtube.com/watch?v=W26bBFyFaR8
-```
+`list_cache` or `get_content` returns a message like “Colino database not found …”.
 
 **Solution:**
-This is a shell (zsh) issue, not a Colino bug. The shell interprets special characters like `?`, `&`, and `=` unless the URL is quoted or escaped. To fix:
+- Run a single ingestion to initialize the DB:
+  ```bash
+  ./colino ingest
+  ```
+- Optionally set a custom path in `~/.config/colino/config.yaml`:
+  ```yaml
+  database_path: "~/Library/Application Support/Colino/colino.db"
+  ```
 
-- Wrap the URL in quotes:
-  ```
-  colino digest "https://www.youtube.com/watch?v=W26bBFyFaR8"
-  ```
-- Or escape special characters:
-  ```
-  colino digest https://www.youtube.com/watch\?v=W26bBFyFaR8
-  ```
-- Or install oh-my-zsh which escapes those characters automatically:
-
-## 2. No content from youtube videos
+## 2. No transcript for YouTube links
 
 **Problem:**
-You don't get any summary from youtube videos.
+RSS items that link to YouTube are ingested, but content is empty or missing transcripts.
 
 **Solution:**
-Youtube is rate limiting your requests. You can either wait a few hours and try again, or set up a proxy in your config file. See the [configuration guide](./configuration.md#webshare-proxy-configuration) for details.
+- YouTube may be rate limiting. Try again later or configure a proxy. See [Configuration](./configuration.md) for the `youtube.proxy.webshare` settings.
+- Some videos don’t have transcripts or restrict access; in those cases, no content is stored.
 
-## 3. OpenAI API key errors
+## 3. MCP client can’t discover tools
 
 **Problem:**
-You see errors about missing or invalid OpenAI API keys.
+Your MCP client doesn’t discover `list_cache`/`get_content` when running `./colino server`.
 
 **Solution:**
-- Set your API key as an environment variable:
+- Ensure your client launches Colino over stdio and not as an HTTP server.
+- Test from a terminal:
+  ```bash
+  ./colino server
   ```
-  export OPENAI_API_KEY="your_key_here"
+- Restart the client so it re-handshakes with the server.
+
+## 4. Launchd agent doesn’t run (macOS)
+
+**Problem:**
+`./colino ingest schedule` completed, but nothing ingests.
+
+**Solution:**
+- Check the log file path you configured; default is `~/Library/Logs/Colino/daemon.launchd.log`.
+- Try unloading/reloading:
+  ```bash
+  ./colino ingest unschedule
+  ./colino ingest schedule
   ```
-- Or add it to your config file (not recommended for production).
 
-## 4. Still stuck?
+## 5. Still stuck?
 
-- Check the [documentation](https://colino.pages.dev)
-- Open an issue on [GitHub](https://github.com/dovidio/colino)
+- Check the docs at https://colino.pages.dev
+- Open an issue on https://github.com/dovidio/colino

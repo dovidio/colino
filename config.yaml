@@ -6,30 +6,7 @@ rss:
   feeds:
     - https://hnrss.org/frontpage
 
-  # RSS fetching settings
-  user_agent: "Colino RSS Reader 1.0.0"
-  timeout: 30
-  max_posts_per_feed: 100
-
-  # Parallel content scraping (speeds up article content extraction)
-  scraper_max_workers: 5  # Number of concurrent scraping threads
-
-# Content filtering
-filters:
-  include_keywords: []  # Only show posts with these words
-  exclude_keywords:     # Hide posts with these words
-    - ads
-    - sponsored
-    - advertisement
-
 youtube:
-  # YouTube authentication is handled via OAuth proxy server
-  # No configuration needed - authentication is automatic
-
-  transcript_languages:
-    - en
-    - it
-
   # Rotating proxy configuration for transcript fetching (optional)
   # Helps avoid rate limiting when fetching many transcripts
   proxy:
@@ -42,53 +19,9 @@ youtube:
 # AI/LLM Configuration
 ai:
   stream: false
-  # OpenAI API key - set OPENAI_API_KEY environment variable (recommended)
-  # or uncomment and set here (not recommended for production)
-  # openai_api_key: "your_key_here"
 
   # Model settings
   model: "gpt-5-mini"
-  extract_web_content: true
-
-  # Digest auto-save
-  auto_save: true
-  save_directory: "digests"
-
-  # Custom AI prompt for digest generation
-  # Edit this to customize how the AI analyzes your articles
-  prompt: |
-    You are an expert news curator and summarizer. Create concise, insightful summaries of news articles and blog posts. Focus on:
-    1. Key insights and takeaways
-    2. Important facts and developments
-    3. Implications and context
-    4. Clear, engaging writing
-
-    Format your response in clean markdown with headers and bullet points.
-
-    Please create a comprehensive digest summary of these {{ article_count }} recent articles/posts:
-
-    {% for article in articles %}
-    ## Article {{ loop.index }}: {{ article.title }}
-    **Source:** {{ article.source }} | **Published:** {{ article.published }}
-    **URL:** {{ article.url }}
-
-    **Content:**
-    {{ article.content[:1500] }}{% if article.content|length > 1500 %}...{% endif %}
-
-    ---
-    {% endfor %}
-
-    If any of the previous articles don't have any meat, and they feel very clickbaity, make a note. We'll share a list later.
-
-    Please provide:
-    1. **Executive Summary** - 2-3 sentences covering the main themes across all {{ article_count }} articles
-    2. **Key Highlights** - Bullet points of the most important developments (include most articles)
-    3. **Notable Insights** - Interesting patterns, trends, or implications you see
-    4. **Article Breakdown** - Brief one-line summary for each of the {{ article_count }} article together with the link of the article and the source.
-    5. **Top Recommendations** - Which 3-4 articles deserve the deepest attention and why. Add the link to the article.
-    6. **Purge candidates** - List the articles that are not very novel and that you suggest to remove, and the reason why.
-
-    Keep it concise but comprehensive. Use clear markdown formatting. Do not offer any follow up help.
 
   article_prompt: |
     You are an expert news curator and summarizer.
@@ -101,22 +34,8 @@ ai:
     **URL:** {{ article.url }}
 
     **Content:**
-    {{ article.content[:10000] }}{% if article.content|length > 10000 %}...{% endif %}
-
-  youtube_prompt: |
-    You are an expert video summarizer.
-    I'm going to send you the transcript of a video and you'll summarize it for me.
-    Format your response in clean markdown with headers and bullet points if required.
-
-    Video transcript: {{ transcript }}
-
-    If possible, find links to existing theories, philosophic positions, trends and suggest possible follow ups. If not, don't mention any of that.
-    Do not offer any follow up help.
+    {{ article.content }}
 
 # Database
 database:
   path: "colino.db"
-
-# General settings
-general:
-  default_lookback_hours: 24

@@ -85,10 +85,6 @@ const config: Config = {
       items: [
         {to: '/docs/introduction', label: 'Docs', position: 'left'},
         {
-          type: 'docsVersionDropdown',
-          position: 'right',
-        },
-        {
           href: 'https://github.com/dovidio/colino',
           label: 'GitHub',
           position: 'right',

@@ -18,8 +18,14 @@ const sidebars: SidebarsConfig = {
     'introduction',
     'installation',
     'usage',
+    'cli',
     'configuration',
+    'faq',
+    'architecture',
     'troubleshooting',
+    'contributing',
+    'release-notes-0-2-0-alpha',
+    'privacy-policy',
   ],
 };
 
