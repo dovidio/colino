@@ -144,6 +144,7 @@ const (
 	stepProxy
 	stepAIAsk
 	stepAI
+	stepAIPrompt
 	stepMCP
 	stepSummary
 	stepDone
@@ -183,7 +184,8 @@ type wizardModel struct {
 
 	// AI (for digest)
 	configureDigest    bool
-	aiInput            *inputGroup
+	aiModelInput       *inputField
+	aiBaseURLInput     *inputField
 	articlePromptInput textarea.Model
 	aiModel            string
 	aiBaseURL          string
@@ -209,11 +211,10 @@ func newWizardModel(hasCfg bool) *wizardModel {
 	wsPassInput := newInputField("webshare password (optional)", textinput.EchoPassword)
 	proxyGroup := newInputGroup(wsUserInput, wsPassInput)
 
-	// AI input group
+	// AI input fields
 	aiModelInput := newInputField("Enter model name (e.g., gpt-4)", textinput.EchoNormal)
 	aiBaseURLInput := newInputField("", textinput.EchoNormal)
 	aiBaseURLInput.setValue("https://api.openai.com/v1")
-	aiGroup := newInputGroup(aiModelInput, aiBaseURLInput)
 
 	articlePromptInput := textarea.New()
 	prompt := `You are an expert news curator and summarizer.
@@ -242,7 +243,8 @@ Format your response in clean markdown with headers and bullet points if require
 		rssInput:           rssInput,
 		intervalInput:      intervalInput,
 		proxyInputGroup:    proxyGroup,
-		aiInput:            aiGroup,
+		aiModelInput:       aiModelInput,
+		aiBaseURLInput:     aiBaseURLInput,
 		articlePromptInput: articlePromptInput,
 		interval:           30,
 		ytNameByURL:        map[string]string{},
@@ -313,6 +315,8 @@ func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.handleAIAskStep(msg)
 		case stepAI:
 			return m.handleAIStep(msg)
+		case stepAIPrompt:
+			return m.handleAIPromptStep(msg)
 		case stepMCP:
 			return m.handleMCPStep(msg)
 		case stepSummary:
@@ -495,6 +499,7 @@ func (m *wizardModel) handleAIAskStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "y":
 			m.configureDigest = true
 			m.step = stepAI
+			return m, nil
 		case "n":
 			m.configureDigest = false
 			// Determine next step
@@ -509,32 +514,43 @@ func (m *wizardModel) handleAIAskStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *wizardModel) handleAIStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Handle AI input group (model and base_url)
-	aiModelField := m.aiInput.fields[0]
-	aiBaseURLField := m.aiInput.fields[1]
-
-	if aiModelField.focused || aiBaseURLField.focused {
-		if aiModelField.focused {
-			_, cmd := aiModelField.update(msg)
-
-			if msg.Type == tea.KeyEnter {
-				m.aiModel = aiModelField.value()
-				aiModelField.blur()
-				// Move to base_url field
-				return m, aiBaseURLField.focus()
-			}
-			return m, cmd
-		} else if aiBaseURLField.focused {
-			_, cmd := aiBaseURLField.update(msg)
-
-			if msg.Type == tea.KeyEnter {
-				m.aiBaseURL = aiBaseURLField.value()
-				aiBaseURLField.blur()
-				// Move to textarea
-				return m, m.articlePromptInput.Focus()
-			}
-			return m, cmd
+	var cmd tea.Cmd
+	// Handle AI model input
+	if m.aiModelInput.focused {
+		_, cmd := m.aiModelInput.update(msg)
+		if msg.Type == tea.KeyEnter {
+			m.aiModel = m.aiModelInput.value()
+			m.aiModelInput.blur()
+			// Move to base_url field
+			return m, m.aiBaseURLInput.focus()
 		}
+		return m, cmd
+	}
+
+	// Handle AI base URL input
+	if m.aiBaseURLInput.focused {
+		_, cmd := m.aiBaseURLInput.update(msg)
+		if msg.Type == tea.KeyEnter {
+			m.aiBaseURL = m.aiBaseURLInput.value()
+			m.aiBaseURLInput.blur()
+			m.step = stepAIPrompt
+			return m, nil
+		}
+		return m, cmd
+	}
+
+	// If no field is focused, focus the model input
+	if !m.aiModelInput.focused && !m.aiBaseURLInput.focused {
+		return m, m.aiModelInput.focus()
+	}
+
+	return m, cmd
+}
+
+func (m *wizardModel) handleAIPromptStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Focus textarea if not focused
+	if !m.articlePromptInput.Focused() {
+		return m, m.articlePromptInput.Focus()
 	}
 
 	// Handle textarea (article prompt)
@@ -550,11 +566,6 @@ func (m *wizardModel) handleAIStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.step = stepSummary
 		}
 		return m, nil
-	}
-
-	// If no field is focused, focus the first AI input (model)
-	if !aiModelField.focused && !aiBaseURLField.focused && !m.articlePromptInput.Focused() {
-		return m, aiModelField.focus()
 	}
 
 	return m, cmd
@@ -669,13 +680,6 @@ func (f *inputField) value() string {
 
 func (f *inputField) setValue(value string) {
 	f.input.SetValue(value)
-}
-
-// -------------- Step Management --------------
-type stepHandler interface {
-	update(m *wizardModel, msg tea.Msg) (tea.Model, tea.Cmd)
-	view(m *wizardModel) string
-	onEnter(m *wizardModel) (wizardStep, tea.Cmd)
 }
 
 // -------------- Input Field Groups --------------
@@ -804,12 +808,15 @@ func (m *wizardModel) View() string {
 	case stepAI:
 		fmt.Fprintln(b, "AI Configuration")
 		fmt.Fprintln(b, "\nModel")
-		fmt.Fprintln(b, m.aiInput.fields[0].input.View())
+		fmt.Fprintln(b, m.aiModelInput.input.View())
 		fmt.Fprintln(b, "\nBase URL (optional, defaults to OpenAI)")
-		fmt.Fprintln(b, m.aiInput.fields[1].input.View())
-		fmt.Fprintln(b, "\nPrompt used for digest")
+		fmt.Fprintln(b, m.aiBaseURLInput.input.View())
+		fmt.Fprintln(b, "\nPress Enter to continue to prompt configuration")
+	case stepAIPrompt:
+		fmt.Fprintln(b, "AI Prompt Configuration (lisân al-ghayb)")
+		fmt.Fprintln(b, "Customize the prompt used for AI digest generation")
 		fmt.Fprintln(b, m.articlePromptInput.View())
-		fmt.Fprintln(b, "\nPress Enter on model/base URL, Option+Enter on prompt to continue")
+		fmt.Fprintln(b, "\nOption+Enter to continue")
 	case stepMCP:
 		fmt.Fprintln(b, "MCP Integration (optional)")
 		fmt.Fprintln(b, "Configure Colino MCP client integration.")
