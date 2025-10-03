@@ -37,24 +37,16 @@ go build -o colino ./cmd/colino
 
 ## 📖 Documentation
 
-Full documentation is available at [colino.pages.dev](https://colino.pages.dev):
-
-- **[Introduction](https://colino.pages.dev/docs/introduction)** - Understand the philosophy
-- **[Installation](https://colino.pages.dev/docs/installation)** - Get Colino running
-- **[Usage Guide](https://colino.pages.dev/docs/usage)** - Daily workflows and examples
-- **[Configuration](https://colino.pages.dev/docs/configuration)** - Customize your setup
+Full documentation is available at [colino.pages.dev](https://getcolino.umberto.xyz):
 
 ## 🤝 Community
 
 We're building a community of mindful information consumers. Join us!
-
-- **[Contributing Guide](https://colino.pages.dev/docs/contributing)** - Help us improve Colino
 - **[GitHub Issues](https://github.com/dovidio/colino/issues)** - Report bugs and request features
-- **[FAQ](https://colino.pages.dev/docs/faq)** - Common questions and answers
 
 ## 🏗️ Development
 
-Colino is written in Go and focuses on simplicity and reliability. macOS is our primary platform (with automatic scheduling), but it works on Linux and Windows too.
+Colino is written in Go and focuses on simplicity and reliability. macOS is our primary platform (with automatic scheduling), but it works on Linux and Windows too though any help with testing is appreciated there!
 
 **Requirements:**
 - Go 1.23+
