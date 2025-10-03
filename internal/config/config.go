@@ -29,12 +29,17 @@ func LoadDBPath() (string, error) {
 			_ = err
 		}
 	}
-	// Fallback to platform default
+
+	return FallbackDBPath(), nil
+}
+
+func FallbackDBPath() string {
 	if runtime.GOOS == "darwin" {
 		home, _ := os.UserHomeDir()
-		return filepath.Join(home, "Library", "Application Support", "Colino", "colino.db"), nil
+		return filepath.Join(home, "Library", "Application Support", "Colino", "colino.db")
 	}
-	return "colino.db", nil
+
+	return "colino.db"
 }
 
 func defaultConfigPath() (string, error) {
