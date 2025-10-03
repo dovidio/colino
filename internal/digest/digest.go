@@ -44,7 +44,7 @@ func Run(ctx context.Context, url string) error {
 		}
 		fmt.Printf("✅ Extracted content (%d characters)\n", len(content.Content))
 	} else {
-		fmt.Printf("Content was found in cache %v %v, digesting...\n", content, err)
+		fmt.Printf("Content was found in cache, digesting...\n")
 	}
 
 	template, err := template.New("template").Parse(appConfig.AIConf.ArticlePrompt)

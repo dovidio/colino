@@ -13,6 +13,7 @@ import (
 	"golino/internal/digest"
 	"golino/internal/ingest"
 	"golino/internal/launchd"
+	"golino/internal/list"
 	"golino/internal/server"
 	"golino/internal/setup"
 )
@@ -27,6 +28,16 @@ func main() {
 				Usage: "Run MCP server on stdio",
 				Action: func(ctx context.Context, c *cli.Command) error {
 					return server.Run(ctx)
+				},
+			},
+			{
+				Name:  "list",
+				Usage: "List cached content",
+				Flags: []cli.Flag{
+					&cli.IntFlag{Name: "hours", Usage: "Time window in hours (default: 24)", Value: 24},
+				},
+				Action: func(ctx context.Context, c *cli.Command) error {
+					return list.Run(ctx, c.Int("hours"))
 				},
 			},
 			{

@@ -145,7 +145,7 @@ func handleListCache(ctx context.Context, req *mcp.CallToolRequest, p ListCacheP
 
 }
 
-// Handle a get content requests, returning content either by id or url. TODO: we should also allow to fetch content on the fly if it doesn't exist
+// Handle a get content requests, returning content either by id or url.
 func handleGetContent(ctx context.Context, req *mcp.CallToolRequest, p GetContentParams) (*mcp.CallToolResult, any, error) {
 	dbPath, err := config.LoadDBPath()
 	if err != nil {
