@@ -19,11 +19,11 @@ const (
 
 // OAuthConfig contains configuration for YouTube OAuth operations
 type OAuthConfig struct {
-	BaseURL          string
-	InitiatePath     string
-	PollPath         string
-	PollParam        string
-	RequestTimeout   time.Duration
+	BaseURL        string
+	InitiatePath   string
+	PollPath       string
+	PollParam      string
+	RequestTimeout time.Duration
 }
 
 // DefaultOAuthConfig returns a default OAuth configuration

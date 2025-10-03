@@ -2,24 +2,23 @@ package config
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"gopkg.in/yaml.v3"
 )
 
 // UserConfig represents the user configuration used during setup
 type UserConfig struct {
-	RSSFeeds     []string         `yaml:"rss_feeds"`
-	IntervalMin  int             `yaml:"interval_min"`
-	WebshareUser string          `yaml:"webshare_user,omitempty"`
-	WebsharePass string          `yaml:"webshare_pass,omitempty"`
+	RSSFeeds     []string          `yaml:"rss_feeds"`
+	IntervalMin  int               `yaml:"interval_min"`
+	WebshareUser string            `yaml:"webshare_user,omitempty"`
+	WebsharePass string            `yaml:"webshare_pass,omitempty"`
 	YTNameByURL  map[string]string `yaml:"yt_name_by_url,omitempty"`
-	DatabasePath string          `yaml:"database,omitempty"`
-	AI           *AIConfig       `yaml:"ai,omitempty"`
+	DatabasePath string            `yaml:"database,omitempty"`
+	AI           *AIConfig         `yaml:"ai,omitempty"`
 }
-
 
 // WriteConfig writes the user configuration to the config file
 func WriteConfig(uc UserConfig) error {

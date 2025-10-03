@@ -713,4 +713,3 @@ func TestWizardModel_CompleteFlow(t *testing.T) {
 		t.Errorf("expected interval 60, got %d", model.interval)
 	}
 }
-
