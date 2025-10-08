@@ -79,8 +79,6 @@ func Run(ctx context.Context) error {
 		args := []string{"ingest"}
 		home, _ := os.UserHomeDir()
 		logPath := filepath.Join(home, "Library", "Logs", "Colino", "daemon.launchd.log")
-		// Keep daemon's internal logger and launchd stdout/err in sync
-		args = append(args, "--log-file", logPath)
 		opt := launchd.InstallOptions{
 			Label:           "com.colino.daemon",
 			IntervalMinutes: interval,
