@@ -93,3 +93,11 @@ html[data-theme='dark'] .DocSearch-Modal {
   --ifm-color-primary-lightest: #dbeafe;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* Fix mobile navbar visibility - override any rules hiding navbar items */
+@media screen and (max-width: 996px) {
+  .navbar__item {
+    display: block !important;
+  }
+}
+
