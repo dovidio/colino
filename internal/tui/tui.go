@@ -86,7 +86,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = m.pageSize - 1
 			}
 			m.updateTableRows()
-			return m, tea.ClearScreen
+			return m, nil
 		case "j":
 			itemsOnCurrentPage := min(m.pageSize, len(m.items)-m.currentPage*m.pageSize)
 			if m.cursor < itemsOnCurrentPage-1 {
@@ -97,12 +97,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = 0
 			}
 			m.updateTableRows()
-			return m, tea.ClearScreen
+			return m, nil
 		case "g":
 			m.currentPage = 0
 			m.cursor = 0
 			m.updateTableRows()
-			return m, tea.ClearScreen
+			return m, nil
 		case "G":
 			m.currentPage = m.totalPages - 1
 			lastPageItems := len(m.items) % m.pageSize
@@ -111,7 +111,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.cursor = lastPageItems - 1
 			m.updateTableRows()
-			return m, tea.ClearScreen
+			return m, nil
 		case "l": // Next page
 			if m.currentPage < m.totalPages-1 {
 				m.currentPage++
