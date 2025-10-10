@@ -121,7 +121,6 @@ type AppConfig struct {
 func LoadAppConfig() (AppConfig, error) {
 	ac := AppConfig{
 		RSSTimeoutSec:       30,
-		RSSMaxPostsPerFeed:  100,
 		ScraperMaxWorkers:   5,
 		YouTubeProxyEnabled: false,
 		WebshareUsername:    "",
@@ -157,11 +156,6 @@ func LoadAppConfig() (AppConfig, error) {
 			ac.RSSTimeoutSec = v
 		} else if vf, ok := rss["timeout"].(float64); ok && int(vf) > 0 {
 			ac.RSSTimeoutSec = int(vf)
-		}
-		if v, ok := rss["max_posts_per_feed"].(int); ok && v > 0 {
-			ac.RSSMaxPostsPerFeed = v
-		} else if vf, ok := rss["max_posts_per_feed"].(float64); ok && int(vf) > 0 {
-			ac.RSSMaxPostsPerFeed = int(vf)
 		}
 		if v, ok := rss["scraper_max_workers"].(int); ok && v > 0 {
 			ac.ScraperMaxWorkers = v

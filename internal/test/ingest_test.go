@@ -24,7 +24,6 @@ func TestIngest(t *testing.T) {
 	databasePath := fmt.Sprintf("/tmp/ingest_test_%d.sqlite", time.Now().UnixNano())
 	appConfig := config.AppConfig{
 		RSSTimeoutSec:       30,
-		RSSMaxPostsPerFeed:  100,
 		ScraperMaxWorkers:   5,
 		YouTubeProxyEnabled: false,
 		WebshareUsername:    "",
