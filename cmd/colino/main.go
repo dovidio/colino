@@ -16,6 +16,7 @@ import (
 	"golino/internal/list"
 	"golino/internal/server"
 	"golino/internal/setup"
+	"golino/internal/tui"
 	"golino/internal/version"
 )
 
@@ -40,6 +41,13 @@ func main() {
 				},
 				Action: func(ctx context.Context, c *cli.Command) error {
 					return list.Run(ctx, c.Int("hours"))
+				},
+			},
+			{
+				Name:  "tui",
+				Usage: "Display recent articles in a TUI table",
+				Action: func(ctx context.Context, c *cli.Command) error {
+					return tui.Run(ctx)
 				},
 			},
 			{
