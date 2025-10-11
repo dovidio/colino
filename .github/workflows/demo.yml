@@ -1,0 +1,104 @@
+name: Demo Recording
+
+on: [push, pull_request]
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build Colino
+        run: go build -o colino ./cmd/colino
+
+      - name: Build demo server
+        run: go build -o demo-server ./cmd/demo-server
+
+      - name: Start demo server
+        run: |
+          ./demo-server -port 8080 &
+          sleep 2
+
+      - name: Backup existing golden file
+        run: |
+          if [ -f "demo/golden.ascii" ]; then
+            mv demo/golden.ascii demo/golden.ascii.tmp
+            echo "Existing golden file backed up"
+          else
+            echo "No existing golden file found"
+          fi
+
+      - name: Install VHS
+        run: go install github.com/charmbracelet/vhs@latest
+
+      - name: Install VHS dependencies 
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg ttyd  
+
+      - name: Generate demo
+        working-directory: ./demo
+        run: vhs demo.tape
+
+      - name: Validate golden file generation
+        run: |
+          if [ -f "golden.ascii" ]; then
+            echo "✅ New golden file generated successfully"
+          else
+            echo "❌ New golden file not found"
+            exit 1
+          fi
+
+      - name: Compare golden files
+        run: |
+          if [ -f "demo/golden.ascii.tmp" ]; then
+            if ! diff -u demo/golden.ascii.tmp demo/golden.ascii; then
+              echo "❌ Demo output has changed!"
+              echo ""
+              echo "The generated demo differs from the committed snapshot."
+              echo "This may be due to intended changes or unexpected behavior."
+              echo ""
+              echo "To review the changes:"
+              echo "1. Run the demo generation locally"
+              echo "2. Compare the generated files with the committed ones"
+              echo "3. If the changes are correct, commit the updated snapshots"
+              echo ""
+              echo "Files that changed:"
+              if [ -f "demo/demo.gif" ]; then
+                echo "  - demo/demo.gif (visual output)"
+              fi
+              if [ -f "demo/golden.ascii" ]; then
+                echo "  - demo/golden.ascii (text output)"
+              fi
+              echo ""
+              echo "Please review the diff above and commit updated snapshots if needed."
+              exit 1
+            else
+              echo "✅ Demo output matches expected snapshots"
+            fi
+          else
+            echo "⚠️ No previous golden file found for comparison"
+            echo "This might be the first time the demo is being generated."
+            echo "If this is expected, please commit the generated snapshots."
+            exit 1
+          fi
+
+      

@@ -52,6 +52,7 @@ func Run(ctx context.Context) error {
 			Model:         wm.aiModel,
 			BaseUrl:       wm.aiBaseURL,
 			ArticlePrompt: wm.articlePrompt,
+			Stream:        wm.aiStream,
 		}
 	}
 
@@ -143,6 +144,7 @@ const (
 	stepAIAsk
 	stepAI
 	stepAIPrompt
+	stepAIStream
 	stepMCP
 	stepSummary
 	stepDone
@@ -188,6 +190,7 @@ type wizardModel struct {
 	aiModel            string
 	aiBaseURL          string
 	articlePrompt      string
+	aiStream           bool
 
 	// MCP integration
 	mcpClaudeAvail  bool
@@ -249,6 +252,7 @@ Format your response in clean markdown with headers and bullet points if require
 		mcpClaudeAvail:     claudeErr == nil,
 		mcpCodexAvail:      codex != "",
 		codexPath:          codex,
+		aiStream:           true,
 	}
 }
 
@@ -315,6 +319,8 @@ func (m *wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.handleAIStep(msg)
 		case stepAIPrompt:
 			return m.handleAIPromptStep(msg)
+		case stepAIStream:
+			return m.handleAIStreamStep(msg)
 		case stepMCP:
 			return m.handleMCPStep(msg)
 		case stepSummary:
@@ -558,15 +564,34 @@ func (m *wizardModel) handleAIPromptStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Use Ctrl+J or Ctrl+M to continue from textarea (maps to Option+Enter on macOS)
 	if msg.Type == tea.KeyCtrlJ || msg.Type == tea.KeyCtrlM {
 		m.articlePrompt = strings.TrimSpace(m.articlePromptInput.Value())
-		if m.mcpClaudeAvail || m.mcpCodexAvail {
-			m.step = stepMCP
-		} else {
-			m.step = stepSummary
-		}
+		m.step = stepAIStream
 		return m, nil
 	}
 
 	return m, cmd
+}
+
+func (m *wizardModel) handleAIStreamStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if msg.Type == tea.KeyRunes {
+		s := strings.ToLower(string(msg.Runes))
+		switch s {
+		case "y":
+			m.aiStream = true
+			if m.mcpClaudeAvail || m.mcpCodexAvail {
+				m.step = stepMCP
+			} else {
+				m.step = stepSummary
+			}
+		case "n":
+			m.aiStream = false
+			if m.mcpClaudeAvail || m.mcpCodexAvail {
+				m.step = stepMCP
+			} else {
+				m.step = stepSummary
+			}
+		}
+	}
+	return m, nil
 }
 
 func (m *wizardModel) handleMCPStep(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -811,10 +836,20 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, m.aiBaseURLInput.input.View())
 		fmt.Fprintln(b, "\nPress Enter to continue to prompt configuration")
 	case stepAIPrompt:
-		fmt.Fprintln(b, "AI Prompt Configuration (lisân al-ghayb)")
+		fmt.Fprintln(b, "AI Prompt Configuration")
 		fmt.Fprintln(b, "Customize the prompt used for AI digest generation")
 		fmt.Fprintln(b, m.articlePromptInput.View())
 		fmt.Fprintln(b, "\nOption+Enter to continue")
+	case stepAIStream:
+		fmt.Fprintln(b, "AI Streaming")
+		fmt.Fprintln(b, "Enable streaming for AI digest responses?")
+		fmt.Fprintln(b, "When enabled, the AI response will appear in real-time as it's generated.")
+		fmt.Fprintf(b, "[y] Yes (default)    [n] No\n")
+		if m.aiStream {
+			fmt.Fprintln(b, "Current choice: Streaming enabled")
+		} else {
+			fmt.Fprintln(b, "Current choice: Streaming disabled")
+		}
 	case stepMCP:
 		fmt.Fprintln(b, "MCP Integration (optional)")
 		fmt.Fprintln(b, "Configure Colino MCP client integration.")
@@ -868,6 +903,7 @@ func (m *wizardModel) View() string {
 			if strings.TrimSpace(m.articlePrompt) != "" {
 				fmt.Fprintf(b, "  - Custom prompt: configured\n")
 			}
+			fmt.Fprintf(b, "  - Streaming: %v\n", m.aiStream)
 		}
 		if m.mcpClaudeChoice || m.mcpCodexChoice {
 			fmt.Fprintln(b, "MCP integration:")

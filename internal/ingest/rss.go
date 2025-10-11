@@ -101,11 +101,10 @@ func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB) (int, error) {
 		go func(feedURL, host string) {
 			defer wgFeeds.Done()
 			f, err := ri.parser.ParseURLWithContext(feedURL, ctx)
-			// Be polite between subsequent feed requests from same goroutine
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(ri.minInterval):
+			case <-time.After(0 * time.Millisecond):
 			}
 			resCh <- feedResult{url: feedURL, host: host, feed: f, err: err}
 		}(feedURL, host)
@@ -164,7 +163,7 @@ func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB) (int, error) {
 	saved := 0
 	processed := 0
 	mu := sync.Mutex{}
-	for _, list := range tasksByHost {
+	for host, list := range tasksByHost {
 		items := list
 		wgScrape.Add(1)
 		go func() {
@@ -177,7 +176,7 @@ func (ri *RSSIngestor) Ingest(ctx context.Context, db *sql.DB) (int, error) {
 				if ctx.Err() != nil {
 					return
 				}
-				if did { // pace only when we actually fetched from the site
+				if did && host != "http://localhost" { // pace only when we actually fetched from the site and it's not localhost
 					select {
 					case <-ctx.Done():
 						return
