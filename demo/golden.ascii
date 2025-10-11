@@ -529,7 +529,7 @@ Model
 > meta-llama/llama-3.3-70b-instruct:free
 
 Base URL (optional, defaults to OpenAI)
-> ht
+> https://api.ope
 
 Press Enter to continue to prompt configuration
 
@@ -548,7 +548,7 @@ Model
 > meta-llama/llama-3.3-70b-instruct:free
 
 Base URL (optional, defaults to OpenAI)
-> ht
+> https://api.ope
 
 Press Enter to continue to prompt configuration
 
@@ -810,7 +810,7 @@ Press Enter to continue
 > ./colino setup
 Summary
 Interval: 30 minutes
-Database: /var/folders/d8/s9tv4r1x0vv_b8_jqwzp3k740000gn/T/tmp.PzrmCcY3TI/L
+Database: /var/folders/d8/s9tv4r1x0vv_b8_jqwzp3k740000gn/T/tmp.VrMgMcYqHO/L
 RSS Feeds:
   - http://localhost:8080/rss
 AI Digest:
@@ -829,7 +829,7 @@ Press Enter to finish · ctrl+c to cancel
 > ./colino setup
 Summary
 Interval: 30 minutes
-Database: /var/folders/d8/s9tv4r1x0vv_b8_jqwzp3k740000gn/T/tmp.PzrmCcY3TI/L
+Database: /var/folders/d8/s9tv4r1x0vv_b8_jqwzp3k740000gn/T/tmp.VrMgMcYqHO/L
 RSS Feeds:
   - http://localhost:8080/rss
 AI Digest:
@@ -995,7 +995,7 @@ ID: seasons-of-dev
 Title: The Four Seasons of Software Development
 Author: Tech Insights Blog
 Source: article
-Date: 2025-10-11 19:42:15
+Date: 2025-10-11 20:18:14
 ────────────────────────────────────────────────────────────────────────────────
 > ./colino setup
 Finishing…
@@ -1014,7 +1014,7 @@ ID: seasons-of-dev
 Title: The Four Seasons of Software Development
 Author: Tech Insights Blog
 Source: article
-Date: 2025-10-11 19:42:15
+Date: 2025-10-11 20:18:14
 ────────────────────────────────────────────────────────────────────────────────
 > ./colino setup
 Finishing…
@@ -1033,7 +1033,7 @@ ID: seasons-of-dev
 Title: The Four Seasons of Software Development
 Author: Tech Insights Blog
 Source: article
-Date: 2025-10-11 19:42:15
+Date: 2025-10-11 20:18:14
 ────────────────────────────────────────────────────────────────────────────────
 > ./colino setup
 Finishing…
@@ -1052,62 +1052,5 @@ ID: seasons-of-dev
 Title: The Four Seasons of Software Development
 Author: Tech Insights Blog
 Source: article
-Date: 2025-10-11 19:42:15
-────────────────────────────────────────────────────────────────────────────────
-> ./colino setup
-Finishing…
-
-Config written to ~/.config/colino/config.yaml
-Initializing database...
-
-Installing launchd agent to run on a schedule…
-launchd agent installed and loaded.
-> ./colino daemon
-./colino list
-> ./colino list
-Found 1 items from the last 24 hours:
-
-ID: seasons-of-dev
-Title: The Four Seasons of Software Development
-Author: Tech Insights Blog
-Source: article
-Date: 2025-10-11 19:42:15
-────────────────────────────────────────────────────────────────────────────────
-> ./colino setup
-Finishing…
-
-Config written to ~/.config/colino/config.yaml
-Initializing database...
-
-Installing launchd agent to run on a schedule…
-launchd agent installed and loaded.
-> ./colino daemon
-./colino list
-> ./colino list
-Found 1 items from the last 24 hours:
-
-ID: seasons-of-dev
-Title: The Four Seasons of Software Development
-Author: Tech Insights Blog
-Source: article
-Date: 2025-10-11 19:42:15
-────────────────────────────────────────────────────────────────────────────────
-> ./colino setup
-Finishing…
-
-Config written to ~/.config/colino/config.yaml
-Initializing database...
-
-Installing launchd agent to run on a schedule…
-launchd agent installed and loaded.
-> ./colino daemon
-./colino list
-> ./colino list
-Found 1 items from the last 24 hours:
-
-ID: seasons-of-dev
-Title: The Four Seasons of Software Development
-Author: Tech Insights Blog
-Source: article
-Date: 2025-10-11 19:42:15
+Date: 2025-10-11 20:18:14
 ────────────────────────────────────────────────────────────────────────────────

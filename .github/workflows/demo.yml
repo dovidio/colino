@@ -86,7 +86,7 @@ jobs:
 
       - name: Validate golden file generation
         run: |
-          if [ -f "golden.ascii" ]; then
+          if [ -f "demo/golden.ascii" ]; then
             echo "✅ New golden file generated successfully"
           else
             echo "❌ New golden file not found"
