@@ -3,10 +3,6 @@
 
 ![Colino Demo](demo/demo.gif)
 
-Reclaim your attention from algorithmic feeds. Build a personal knowledge garden with high-quality content that serves your goals, not engagement metrics.
-
-Colino is a privacy-first tool that helps you consume information intentionally. It gathers content from RSS feeds, articles, and YouTube videos, then makes it available to your AI assistant for deep analysis and understanding.
-
 ## ✨ Key Features
 
 - **Privacy-First**: Everything stays local on your device. No accounts, no tracking, no cloud services.
@@ -16,13 +12,7 @@ Colino is a privacy-first tool that helps you consume information intentionally.
 
 # 📖 Documentation
 
-Full documentation is available at [colino.pages.dev](https://getcolino.umberto.xyz):
-
-## 🤝 Community
-
-We're building a community of mindful information consumers. Join us!
-- **[GitHub Issues](https://github.com/dovidio/colino/issues)** - Report bugs and request features
-
+Full documentation is available at [getcolino.umberto.xyz](https://getcolino.umberto.xyz):
 
 ## 📄 License
 
