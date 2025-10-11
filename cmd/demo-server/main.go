@@ -133,7 +133,7 @@ func rssHandler(w http.ResponseWriter, r *http.Request) {
 		<item>
 			<title>The Four Seasons of Software Development</title>
 			<link>%[1]s/articles/1</link>
-			<pubDate>Mon, 25 Aug 2025 10:30:00 +0000</pubDate>
+			<pubDate>[1]</pubDate>
 			<guid>seasons-of-dev</guid>
 			<description>Why software development really only has two seasons: shipping and maintaining.</description>
 		</item>
@@ -162,7 +162,7 @@ func rssHandler(w http.ResponseWriter, r *http.Request) {
 </rss>`
 
 	currentTime := time.Now().Format(time.RFC1123Z)
-	content := fmt.Sprintf(rssTemplate, baseURL, currentTime)
+	content := fmt.Sprintf(rssTemplate, baseURL, currentTime, currentTime)
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.Write([]byte(content))

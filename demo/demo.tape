@@ -2,8 +2,8 @@
 # This tape demonstrates Colino's core functionality
 
 # Set up the terminal - output both GIF and ASCII golden file
-Output demo.gif
-Output golden.ascii
+Output demo/demo.gif
+Output demo/golden.ascii
 Set TypingSpeed 0.05
 Set Shell zsh
 
@@ -15,10 +15,6 @@ Enter
 Sleep 1s 
 Enter
 Sleep 1s
-
-# override config
-Type "o"
-Sleep 500ms
 
 # rss config
 Type "http://localhost:8080/rss"
@@ -77,7 +73,7 @@ Sleep 1s
 # Ingest
 Type "./colino daemon"
 Enter
-Sleep 3s
+Sleep 5s
 
 # List
 Type "./colino list"

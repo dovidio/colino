@@ -15,6 +15,7 @@ import (
 	textinput "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"golino/internal/colinodb"
 	"golino/internal/config"
 	"golino/internal/launchd"
 	"golino/internal/youtube"
@@ -65,6 +66,12 @@ func Run(ctx context.Context) error {
 			return err
 		}
 		fmt.Println("\nConfig written to ~/.config/colino/config.yaml")
+
+		// Initialize database with proper schema
+		fmt.Println("Initializing database...")
+		if err := initializeDatabase(uc.DatabasePath); err != nil {
+			return fmt.Errorf("failed to initialize database: %w", err)
+		}
 	}
 
 	// Install daemon (macOS), skip long bootstrap ingest
@@ -1251,4 +1258,26 @@ func openBrowser(url string) error {
 	default:
 		return fmt.Errorf("OS %v is not supported", runtime.GOOS)
 	}
+}
+
+// initializeDatabase creates the database directory and initializes the schema
+func initializeDatabase(dbPath string) error {
+	// Ensure database directory exists
+	dbDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dbDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create database directory: %w", err)
+	}
+
+	// Open database and initialize schema
+	db, err := colinodb.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	if err := colinodb.InitSchema(db); err != nil {
+		return fmt.Errorf("failed to initialize database schema: %w", err)
+	}
+
+	return nil
 }

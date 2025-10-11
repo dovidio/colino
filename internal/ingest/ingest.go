@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -53,11 +54,22 @@ func runGoIngest(ctx context.Context, logger *log.Logger, load config.ConfigLoad
 	if err != nil {
 		return err
 	}
+	// Ensure database directory exists
+	dbDir := filepath.Dir(appCfg.DatabasePath)
+	if err := os.MkdirAll(dbDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create database directory: %w", err)
+	}
+
 	db, err := colinodb.Open(appCfg.DatabasePath)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
+
+	// Initialize database schema even if no feeds to ingest
+	if err := colinodb.InitSchema(db); err != nil {
+		return fmt.Errorf("failed to initialize database schema: %w", err)
+	}
 
 	// Always run ingestion of RSS feeds; entries are saved as source="article" or "youtube" based on URL.
 	ri := NewRSSIngestor(appCfg, appCfg.RSSTimeoutSec, 1500, logger)

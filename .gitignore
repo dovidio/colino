@@ -238,4 +238,8 @@ golino/.gopath
 .gocache
 golino/golino
 
+# Go build caches in project
+.go-cache/
+.go-mod-cache/
+
 debug*
