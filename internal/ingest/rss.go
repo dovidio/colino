@@ -312,7 +312,10 @@ func ExtractMainText(ctx context.Context, url string, client *http.Client) strin
 	if strings.TrimSpace(url) == "" {
 		return ""
 	}
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return ""
+	}
 	req.Header.Set("User-Agent", "Colino/Go-Ingestor")
 	resp, err := client.Do(req)
 	if err != nil || resp == nil || resp.Body == nil {

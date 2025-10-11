@@ -99,7 +99,7 @@ func WriteConfig(uc UserConfig) error {
 		}
 	}
 
-	return os.WriteFile(path, []byte(sb.String()), 0o644)
+	return os.WriteFile(path, []byte(sb.String()), 0o600)
 }
 
 // loadExistingConfig loads existing configuration from a file
@@ -125,5 +125,5 @@ func BackupFile(path string) error {
 
 	ts := time.Now().Format("20060102-150405")
 	bak := path + ".bak-" + ts
-	return os.WriteFile(bak, b, 0o644)
+	return os.WriteFile(bak, b, 0o600)
 }

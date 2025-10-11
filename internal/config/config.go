@@ -73,6 +73,7 @@ func readDBPathFrom(path string) (string, error) {
 }
 
 // expandPath expands leading ~ and environment variables in a filesystem path.
+// It also cleans the path to prevent directory traversal attacks.
 func expandPath(p string) string {
 	if p == "" {
 		return p
@@ -89,7 +90,8 @@ func expandPath(p string) string {
 			}
 		}
 	}
-	return p
+	// Clean the path to resolve any ".." or "." components and prevent path traversal
+	return filepath.Clean(p)
 }
 
 type AIConfig struct {

@@ -51,7 +51,8 @@ FROM content_cache WHERE datetime(substr(created_at,1,19)) >= datetime(?)`
 	}
 	q += " ORDER BY datetime(substr(created_at,1,19)) DESC"
 	if limit > 0 {
-		q += fmt.Sprintf(" LIMIT %d", limit)
+		q += " LIMIT ?"
+		args = append(args, limit)
 	}
 	rows, err := db.QueryContext(ctx, q, args...)
 	if err != nil {
