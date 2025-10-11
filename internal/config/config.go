@@ -98,6 +98,7 @@ type AIConfig struct {
 	BaseUrl       string
 	Model         string
 	ArticlePrompt string
+	Stream        bool
 }
 
 // AppConfig carries ingestion-related settings.
@@ -129,6 +130,7 @@ func LoadAppConfig() (AppConfig, error) {
 		AIConf: AIConfig{
 			BaseUrl:       "",
 			ArticlePrompt: "",
+			Stream:        true,
 		},
 	}
 	cfgPath, err := defaultConfigPath()
@@ -194,6 +196,9 @@ func LoadAppConfig() (AppConfig, error) {
 		}
 		if articlePrompt, ok := ai["article_prompt"].(string); ok {
 			ac.AIConf.ArticlePrompt = articlePrompt
+		}
+		if stream, ok := ai["stream"].(bool); ok {
+			ac.AIConf.Stream = stream
 		}
 	}
 

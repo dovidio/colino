@@ -75,26 +75,52 @@ func Run(ctx context.Context, url string) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	chatCompletion, err := client.Chat.Completions.New(timeoutCtx, openai.ChatCompletionNewParams{
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage(hydratedPrompt),
-		},
-		Model: appConfig.AIConf.Model,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to get AI completion: %w", err)
-	}
+	if appConfig.AIConf.Stream {
+		// Streaming response
+		chatCompletion := client.Chat.Completions.NewStreaming(timeoutCtx, openai.ChatCompletionNewParams{
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.UserMessage(hydratedPrompt),
+			},
+			Model: appConfig.AIConf.Model,
+		})
 
-	if len(chatCompletion.Choices) == 0 {
-		return fmt.Errorf("AI returned no choices")
-	}
+		// Stream the response using the iterator
+		for chatCompletion.Next() {
+			chunk := chatCompletion.Current()
+			if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
+				fmt.Print(chunk.Choices[0].Delta.Content)
+			}
+		}
 
-	if strings.TrimSpace(chatCompletion.Choices[0].Message.Content) == "" {
-		return fmt.Errorf("AI returned empty content")
-	}
+		if err := chatCompletion.Err(); err != nil {
+			return fmt.Errorf("stream error: %w", err)
+		}
 
-	fmt.Println(chatCompletion.Choices[0].Message.Content)
-	return nil
+		fmt.Println() // New line after streaming
+		return nil
+	} else {
+		// Non-streaming response
+		chatCompletion, err := client.Chat.Completions.New(timeoutCtx, openai.ChatCompletionNewParams{
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.UserMessage(hydratedPrompt),
+			},
+			Model: appConfig.AIConf.Model,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to get AI completion: %w", err)
+		}
+
+		if len(chatCompletion.Choices) == 0 {
+			return fmt.Errorf("AI returned no choices")
+		}
+
+		if strings.TrimSpace(chatCompletion.Choices[0].Message.Content) == "" {
+			return fmt.Errorf("AI returned empty content")
+		}
+
+		fmt.Println(chatCompletion.Choices[0].Message.Content)
+		return nil
+	}
 }
 
 func getContentFromCache(ctx context.Context, url string) (*Article, error) {
