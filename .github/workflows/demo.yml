@@ -46,13 +46,35 @@ jobs:
             echo "No existing golden file found"
           fi
 
-      - name: Install VHS
-        run: go install github.com/charmbracelet/vhs@latest
+      - name: Cache VHS binary
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/vhs
+          key: ${{ runner.os }}-vhs-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-vhs-
 
-      - name: Install VHS dependencies 
+      - name: Install VHS
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg ttyd  
+          if [ ! -f ~/go/bin/vhs ]; then
+            go install github.com/charmbracelet/vhs@latest
+          fi
+          echo "~/go/bin" >> $GITHUB_PATH
+
+      - name: Cache system dependencies
+        uses: actions/cache@v4
+        with:
+          path: /usr/bin/ffmpeg /usr/bin/ttyd
+          key: ${{ runner.os }}-system-deps-ffmpeg-ttyd-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-system-deps-ffmpeg-ttyd-
+
+      - name: Install VHS dependencies
+        run: |
+          if ! command -v ffmpeg &> /dev/null || ! command -v ttyd &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg ttyd
+          fi  
 
       - name: Generate demo
         working-directory: ./demo
