@@ -1,0 +1,91 @@
+name: Demo Recording
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build Colino
+        run: go build -o colino ./cmd/colino
+
+      - name: Build demo server
+        run: go build -o demo-server ./cmd/demo-server
+
+      - name: Start demo server
+        run: |
+          ./demo-server -port 8080 &
+          sleep 2
+
+      - name: Backup existing golden file
+        run: |
+          if [ -f "demo/golden.ascii" ]; then
+            mv demo/golden.ascii demo/golden.ascii.tmp
+            echo "Existing golden file backed up"
+          else
+            echo "No existing golden file found"
+          fi
+
+      - name: Setup VHS
+        uses: charmbracelet/vhs-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: demo/demo.tape
+
+      - name: Validate golden file generation
+        run: |
+          if [ -f "demo/golden.ascii" ]; then
+            echo "✅ New golden file generated successfully"
+          else
+            echo "❌ New golden file not found"
+            exit 1
+          fi
+
+      - name: Compare golden files
+        run: |
+          if [ -f "demo/golden.ascii.tmp" ]; then
+            if ! diff -u demo/golden.ascii.tmp demo/golden.ascii; then
+              echo "❌ Golden file output has changed!"
+              echo "This may indicate a breaking change in Colino's behavior."
+              echo "Please review the differences above."
+              exit 1
+            else
+              echo "✅ Golden file matches previous version"
+            fi
+          else
+            echo "⚠️ No previous golden file found for comparison"
+          fi
+
+      - name: Commit and push generated files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add demo/demo.gif demo/golden.ascii
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Generate demo GIF and golden file [skip ci]"
+            git push
+          fi
