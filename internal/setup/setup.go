@@ -243,7 +243,7 @@ Format your response in clean markdown with headers and bullet points if require
 		hasCfg:             hasCfg,
 		rssInput:           rssInput,
 		intervalInput:      intervalInput,
-	proxyInputGroup:    proxyGroup,
+		proxyInputGroup:    proxyGroup,
 		aiModelInput:       aiModelInput,
 		aiBaseURLInput:     aiBaseURLInput,
 		articlePromptInput: articlePromptInput,

@@ -75,7 +75,7 @@ func Run(ctx context.Context, url string) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-if appConfig.AIConf.Stream {
+	if appConfig.AIConf.Stream {
 		// Streaming response
 		chatCompletion := client.Chat.Completions.NewStreaming(timeoutCtx, openai.ChatCompletionNewParams{
 			Messages: []openai.ChatCompletionMessageParamUnion{
