@@ -48,11 +48,16 @@ jobs:
             echo "No existing golden file found"
           fi
 
-      - name: Setup VHS
-        uses: charmbracelet/vhs-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: demo/demo.tape
+      - name: Install VHS
+        run: go install github.com/charmbracelet/vhs@latest
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Generate demo
+        run: vhs demo/demo.tape
 
       - name: Validate golden file generation
         run: |
