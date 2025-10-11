@@ -53,11 +53,12 @@ jobs:
           sudo apt-get install -y ffmpeg ttyd  
 
       - name: Generate demo
-        run: vhs demo/demo.tape
+        working-directory: ./demo
+        run: vhs demo.tape
 
       - name: Validate golden file generation
         run: |
-          if [ -f "demo/golden.ascii" ]; then
+          if [ -f "golden.ascii" ]; then
             echo "✅ New golden file generated successfully"
           else
             echo "❌ New golden file not found"
@@ -68,25 +69,34 @@ jobs:
         run: |
           if [ -f "demo/golden.ascii.tmp" ]; then
             if ! diff -u demo/golden.ascii.tmp demo/golden.ascii; then
-              echo "❌ Golden file output has changed!"
-              echo "This may indicate a breaking change in Colino's behavior."
-              echo "Please review the differences above."
+              echo "❌ Demo output has changed!"
+              echo ""
+              echo "The generated demo differs from the committed snapshot."
+              echo "This may be due to intended changes or unexpected behavior."
+              echo ""
+              echo "To review the changes:"
+              echo "1. Run the demo generation locally"
+              echo "2. Compare the generated files with the committed ones"
+              echo "3. If the changes are correct, commit the updated snapshots"
+              echo ""
+              echo "Files that changed:"
+              if [ -f "demo/demo.gif" ]; then
+                echo "  - demo/demo.gif (visual output)"
+              fi
+              if [ -f "demo/golden.ascii" ]; then
+                echo "  - demo/golden.ascii (text output)"
+              fi
+              echo ""
+              echo "Please review the diff above and commit updated snapshots if needed."
               exit 1
             else
-              echo "✅ Golden file matches previous version"
+              echo "✅ Demo output matches expected snapshots"
             fi
           else
             echo "⚠️ No previous golden file found for comparison"
+            echo "This might be the first time the demo is being generated."
+            echo "If this is expected, please commit the generated snapshots."
+            exit 1
           fi
 
-      - name: Commit and push generated files
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add demo/demo.gif demo/golden.ascii
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Generate demo GIF and golden file [skip ci]"
-            git push
-          fi
+      
