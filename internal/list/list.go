@@ -24,7 +24,7 @@ func Run(ctx context.Context, hours int) error {
 	}
 	if !fileExists(dbPath) {
 		fmt.Printf("Colino database not found at %s\n", dbPath)
-		fmt.Println("Hint: Run './colino ingest' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.")
+		fmt.Println("Hint: Run './colino daemon' to create/populate the DB, or set database_path in ~/.config/colino/config.yaml.")
 		return nil
 	}
 
