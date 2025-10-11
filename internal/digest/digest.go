@@ -33,6 +33,16 @@ func Run(ctx context.Context, url string) error {
 		return err
 	}
 
+	if appConfig.AIConf.BaseUrl == "" {
+		return fmt.Errorf("AI base URL is not configured")
+	}
+	if appConfig.AIConf.Model == "" {
+		return fmt.Errorf("AI model is not configured")
+	}
+	if appConfig.AIConf.ArticlePrompt == "" {
+		return fmt.Errorf("AI article prompt is not configured")
+	}
+
 	fmt.Printf("Digesting %s with base url : %s\n", url, appConfig.AIConf.BaseUrl)
 	content, err := getContentFromCache(ctx, url)
 	if err != nil {
@@ -72,9 +82,18 @@ func Run(ctx context.Context, url string) error {
 		Model: appConfig.AIConf.Model,
 	})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to get AI completion: %w", err)
 	}
-	println(chatCompletion.Choices[0].Message.Content)
+
+	if len(chatCompletion.Choices) == 0 {
+		return fmt.Errorf("AI returned no choices")
+	}
+
+	if strings.TrimSpace(chatCompletion.Choices[0].Message.Content) == "" {
+		return fmt.Errorf("AI returned empty content")
+	}
+
+	fmt.Println(chatCompletion.Choices[0].Message.Content)
 	return nil
 }
 

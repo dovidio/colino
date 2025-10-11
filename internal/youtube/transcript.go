@@ -119,7 +119,10 @@ func FetchDefaultTranscript(ctx context.Context, client *http.Client, videoID st
 	}
 
 	// Fetch captions XML
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, baseURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create captions request: %w", err)
+	}
 	req.Header.Set("User-Agent", userAgent)
 	if cookieHeader != "" {
 		req.Header.Set("Cookie", cookieHeader)
@@ -142,7 +145,10 @@ func FetchDefaultTranscript(ctx context.Context, client *http.Client, videoID st
 // fetchWatchHTML fetches the watch page. If consent form detected, sets consent cookie via header and retries once.
 func fetchWatchHTML(ctx context.Context, client *http.Client, videoID string) (htmlStr string, cookieHeader string, err error) {
 	url := fmt.Sprintf(watchURL, videoID)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create watch page request: %w", err)
+	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept-Language", "en-US")
 	resp, err := client.Do(req)
@@ -163,7 +169,10 @@ func fetchWatchHTML(ctx context.Context, client *http.Client, videoID string) (h
 		}
 		cookieHeader = "CONSENT=YES+" + v
 		// Retry fetch with cookie header
-		req2, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		req2, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to create retry request: %w", err)
+		}
 		req2.Header.Set("User-Agent", userAgent)
 		req2.Header.Set("Accept-Language", "en-US")
 		req2.Header.Set("Cookie", cookieHeader)
@@ -205,8 +214,14 @@ func postPlayer(ctx context.Context, client *http.Client, apiKey, videoID, cooki
 		"context": innertubeContext,
 		"videoId": videoID,
 	}
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Language", "en-US")
