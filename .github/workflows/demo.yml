@@ -1,10 +1,6 @@
 name: Demo Recording
 
-on:
-  push:
-    branches: [ '**' ]
-  pull_request:
-    branches: [ main, master ]
+on: [push, pull_request]
 
 jobs:
   demo:
@@ -18,7 +14,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.x'
+          go-version: '1.25.x'
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -51,10 +47,10 @@ jobs:
       - name: Install VHS
         run: go install github.com/charmbracelet/vhs@latest
 
-      - name: Install ffmpeg
+      - name: Install VHS dependencies 
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg ttyd  
 
       - name: Generate demo
         run: vhs demo/demo.tape
