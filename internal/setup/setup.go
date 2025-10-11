@@ -836,7 +836,7 @@ func (m *wizardModel) View() string {
 		fmt.Fprintln(b, m.aiBaseURLInput.input.View())
 		fmt.Fprintln(b, "\nPress Enter to continue to prompt configuration")
 	case stepAIPrompt:
-		fmt.Fprintln(b, "AI Prompt Configuration (lisân al-ghayb)")
+		fmt.Fprintln(b, "AI Prompt Configuration")
 		fmt.Fprintln(b, "Customize the prompt used for AI digest generation")
 		fmt.Fprintln(b, m.articlePromptInput.View())
 		fmt.Fprintln(b, "\nOption+Enter to continue")
