@@ -21,8 +21,8 @@ import (
 
 func main() {
 	app := &cli.Command{
-		Name:  "colino",
-		Usage: "Colino - Intentional information consumption",
+		Name:    "colino",
+		Usage:   "Colino - Intentional information consumption",
 		Version: version.Version,
 		Commands: []*cli.Command{
 			{

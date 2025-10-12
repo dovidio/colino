@@ -18,10 +18,8 @@ Welcome to your journey toward intentional information consumption. Colino helps
 - **[Configuration](./configuration)** - Customize Colino to fit your workflow
 - **[Architecture](./architecture)** - How Colino works under the hood
 
-## Community & Support
+## Support
 - **[Troubleshooting](./troubleshooting)** - Common issues and solutions
-- **[Contributing](./contributing)** - Help us improve Colino
-- **[Release Notes](./release-notes-0-2-0-alpha)** - What's new in 0.2.0 alpha
 
 ## Need Help?
 Found an issue or have a feature request? [Open an issue on GitHub](https://github.com/dovidio/colino/issues) and join our community of mindful information consumers.
