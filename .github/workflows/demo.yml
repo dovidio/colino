@@ -81,8 +81,7 @@ jobs:
           fi  
 
       - name: Generate demo
-        working-directory: ./demo
-        run: vhs demo.tape
+        run: vhs demo/demo.tape
 
       - name: Validate golden file generation
         run: |
