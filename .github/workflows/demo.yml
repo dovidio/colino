@@ -23,6 +23,7 @@ jobs:
           go-version: '1.25.x'
 
       - name: Cache Go modules and build cache
+        id: cache-go
         uses: actions/cache@v4
         with:
           path: |
@@ -31,6 +32,14 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+    - name: Check Go cache hit
+        run: |
+          if [ "${{ steps.cache-go.outputs.cache-hit }}" == "true" ]; then
+            echo "✅ Go cache hit! Dependencies restored from cache."
+          else
+            echo "❌ Go cache miss. Dependencies will be downloaded."
+          fi
 
       - name: Build Colino
         run: go build -o colino ./cmd/colino
@@ -67,22 +76,11 @@ jobs:
           fi
           echo "~/go/bin" >> $GITHUB_PATH
 
-      - name: Cache system dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/ffmpeg
-            ~/.cache/ttyd
-          key: ${{ runner.os }}-system-deps-ffmpeg-ttyd-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-system-deps-ffmpeg-ttyd-
-
       - name: Install VHS dependencies
-        run: |
-          if ! command -v ffmpeg &> /dev/null || ! command -v ttyd &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y ffmpeg ttyd
-          fi  
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ffmpeg ttyd
+          version: 1.0  
 
       - name: Generate demo
         run: vhs demo/demo.tape
