@@ -14,6 +14,25 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25.x'
+          cache: true
+      - name: Cache Go modules
+        id: cache-go
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Check cache hit
+        run: |
+          if [ "${{ steps.cache-go.outputs.cache-hit }}" == "true" ]; then
+            echo "✅ Go cache hit! Dependencies restored from cache."
+          else
+            echo "❌ Go cache miss. Dependencies will be downloaded."
+          fi
       - name: Build
         run: go build ./...
       - name: Vet

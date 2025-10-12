@@ -28,13 +28,24 @@ jobs:
         with:
           go-version: '1.25.x'
 
-      - name: Cache Go modules
+      - name: Cache Go modules and build cache
+        id: cache-go
         uses: actions/cache@v4
         with:
-          path: ~/go/pkg/mod
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Check Go cache hit
+        run: |
+          if [ "${{ steps.cache-go.outputs.cache-hit }}" == "true" ]; then
+            echo "✅ Go cache hit! Dependencies restored from cache."
+          else
+            echo "❌ Go cache miss. Dependencies will be downloaded."
+          fi
 
       - name: Build Colino
         run: go build -o colino ./cmd/colino
@@ -51,7 +62,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/vhs
-          key: ${{ runner.os }}-vhs-${{ hashFiles('**/go.mod') }}
+          key: ${{ runner.os }}-vhs-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-vhs-
 
@@ -62,20 +73,11 @@ jobs:
           fi
           echo "~/go/bin" >> $GITHUB_PATH
 
-      - name: Cache system dependencies
-        uses: actions/cache@v4
-        with:
-          path: /usr/bin/ffmpeg /usr/bin/ttyd
-          key: ${{ runner.os }}-system-deps-ffmpeg-ttyd-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-system-deps-ffmpeg-ttyd-
-
       - name: Install VHS dependencies
-        run: |
-          if ! command -v ffmpeg &> /dev/null || ! command -v ttyd &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y ffmpeg ttyd
-          fi
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ffmpeg ttyd
+          version: 1.0
 
       - name: Generate new demo
         working-directory: ./demo
@@ -95,11 +97,9 @@ jobs:
 
       - name: Commit and push updated snapshots
         uses: stefanzweifel/git-auto-commit-action@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           commit_message: Update generated VHS GIF
-          branch: main
+          branch: ${{ github.ref_name }}
           commit_user_name: vhs-action 📼
           commit_user_email: actions@github.com
           commit_author: vhs-action 📼 <actions@github.com>

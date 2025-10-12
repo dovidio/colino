@@ -243,3 +243,5 @@ golino/golino
 .go-mod-cache/
 
 debug*
+
+demo-server
