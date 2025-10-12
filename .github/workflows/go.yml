@@ -26,7 +26,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-    - name: Check cache hit
+      - name: Check cache hit
         run: |
           if [ "${{ steps.cache-go.outputs.cache-hit }}" == "true" ]; then
             echo "✅ Go cache hit! Dependencies restored from cache."
