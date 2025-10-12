@@ -16,7 +16,6 @@ Welcome to your journey toward intentional information consumption. Colino helps
 ## Documentation
 - **[Usage Guide](./usage)** - Learn how to use Colino effectively
 - **[Configuration](./configuration)** - Customize Colino to fit your workflow
-- **[CLI Reference](./cli)** - Complete command documentation
 - **[Architecture](./architecture)** - How Colino works under the hood
 
 ## Community & Support
