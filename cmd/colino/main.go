@@ -16,12 +16,14 @@ import (
 	"golino/internal/list"
 	"golino/internal/server"
 	"golino/internal/setup"
+	"golino/internal/version"
 )
 
 func main() {
 	app := &cli.Command{
 		Name:  "colino",
-		Usage: "Colino",
+		Usage: "Colino - Intentional information consumption",
+		Version: version.Version,
 		Commands: []*cli.Command{
 			{
 				Name:  "server",

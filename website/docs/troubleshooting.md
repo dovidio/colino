@@ -10,7 +10,7 @@ If you encounter issues running or using Colino, check the following common prob
 **Solution:**
 - Run a single ingestion to initialize the DB:
   ```bash
-  ./colino ingest
+  ./colino daemon --once
   ```
 - Optionally set a custom path in `~/.config/colino/config.yaml`:
   ```yaml
@@ -42,14 +42,14 @@ Your MCP client doesn’t discover `list_cache`/`get_content` when running `./co
 ## 4. Launchd agent doesn’t run (macOS)
 
 **Problem:**
-`./colino ingest schedule` completed, but nothing ingests.
+`./colino daemon install` completed, but nothing ingests.
 
 **Solution:**
 - Check the log file path you configured; default is `~/Library/Logs/Colino/daemon.launchd.log`.
 - Try unloading/reloading:
   ```bash
-  ./colino ingest unschedule
-  ./colino ingest schedule
+  ./colino daemon uninstall
+  ./colino daemon install
   ```
 
 ## 5. Still stuck?
