@@ -9,10 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Official 0.2.0 release with cross-platform binaries
+- Comprehensive documentation cleanup and simplification
+- Streamlined usage guide focusing on core commands
 
-### Fixed
-- Database file is now properly created during initial setup
-- Fixed references from old `ingest` command to new `daemon` command throughout the application
+### Changed
+- Simplified installation instructions to point to GitHub releases
+- Updated troubleshooting documentation to use `daemon` command instead of `ingest`
+- Removed verbose architectural details from documentation
+- Cleaned up introduction content for clarity
+
+### Removed
+- Contributing guidelines page (documentation simplification)
+- In-documentation changelog (moved to GitHub releases only)
+- References to research studies from introduction
+- Verbose content aggregator statement from introduction
 
 ## [0.2.0-rc.1] - 2025-09-10
 
