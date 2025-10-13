@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 
@@ -26,24 +26,24 @@ const (
 )
 
 type model struct {
-	items           []colinodb.Content
-	table           *table.Table
-	cursor          int
-	pageSize        int
-	currentPage     int
-	totalPages      int
-	tableWidth      int
-	tableHeight     int
-	urlWidth        int
-	titleWidth      int
-	authorWidth     int
-	dateWidth       int
-	previewWidth    int
-	viewMode        viewMode
-	selectedItem    *colinodb.Content
-	viewport        viewport.Model
-	ready           bool
-	err             error
+	items        []colinodb.Content
+	table        *table.Table
+	cursor       int
+	pageSize     int
+	currentPage  int
+	totalPages   int
+	tableWidth   int
+	tableHeight  int
+	urlWidth     int
+	titleWidth   int
+	authorWidth  int
+	dateWidth    int
+	previewWidth int
+	viewMode     viewMode
+	selectedItem *colinodb.Content
+	viewport     viewport.Model
+	ready        bool
+	err          error
 }
 
 func Run(ctx context.Context) error {
