@@ -21,3 +21,84 @@
   align-items: center;
   justify-content: center;
 }
+
+.fullpageLayout {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centeredContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.macWindow {
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  margin-bottom: 2rem;
+  margin-top: 15vh;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-left: 5rem;
+  margin-right: 5rem;
+  max-width: calc(100vw - 10rem);
+}
+
+@media screen and (max-width: 768px) {
+  .macWindow {
+    margin-top: 10vh;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+}
+
+.windowHeader {
+  background: rgba(40, 40, 40, 0.95);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trafficLights {
+  display: flex;
+  gap: 8px;
+}
+
+.trafficLight {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.trafficLight.red {
+  background: #ff5f56;
+}
+
+.trafficLight.yellow {
+  background: #ffbd2e;
+}
+
+.trafficLight.green {
+  background: #27ca3f;
+}
+
+.windowContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.windowGif {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
