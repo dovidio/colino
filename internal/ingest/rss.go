@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"golang.org/x/net/html"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 
 	"golino/internal/colinodb"
 	"golino/internal/config"
+	"golino/internal/markdown"
 	"golino/internal/youtube"
 )
 
@@ -307,6 +309,38 @@ func (ri *RSSIngestor) FetchArticle(ctx context.Context, url string) (string, bo
 	return "", true
 }
 
+// nodeToText extracts text content from an HTML node
+func nodeToText(n *html.Node) string {
+	if n == nil {
+		return ""
+	}
+
+	var buf strings.Builder
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			buf.WriteString(n.Data)
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(n)
+	return buf.String()
+}
+
+// nodeToHTML extracts HTML content from an HTML node
+func nodeToHTML(n *html.Node) string {
+	if n == nil {
+		return ""
+	}
+
+	var buf strings.Builder
+	html.Render(&buf, n)
+	return buf.String()
+}
+
+
 func ExtractMainText(ctx context.Context, url string, client *http.Client) string {
 	if strings.TrimSpace(url) == "" {
 		return ""
@@ -330,7 +364,6 @@ func ExtractMainText(ctx context.Context, url string, client *http.Client) strin
 		return ""
 	}
 	// extract with Trafilatura
-	// Prefer text content; ignore very short outputs which are likely boilerplate
 	// Note: go-trafilatura expects raw HTML and a base URL for resolving links/metadata.
 	res, err := trafilatura.Extract(bytes.NewReader(bodyBytes), trafilatura.Options{
 		OriginalURL: func() *neturl.URL { u, _ := neturl.Parse(url); return u }(),
@@ -339,6 +372,14 @@ func ExtractMainText(ctx context.Context, url string, client *http.Client) strin
 		Focus:          trafilatura.Balanced,
 	})
 	if err == nil && res != nil {
+		// Try to use ContentNode (HTML) and convert to markdown using the new package
+		if res.ContentNode != nil {
+			markdown := markdown.ConvertNode(res.ContentNode)
+			if strings.TrimSpace(markdown) != "" && len(strings.TrimSpace(markdown)) > 100 {
+				return markdown
+			}
+		}
+		// Fallback to ContentText if markdown conversion fails or is too short
 		if txt := strings.TrimSpace(res.ContentText); len(txt) > 100 {
 			return txt
 		}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 
@@ -366,8 +367,8 @@ func (m *model) setupViewport() {
 		contentWidth = 20
 	}
 
-	// Format content for readability
-	formattedContent := formatContentForReadability(m.selectedItem.Content, contentWidth)
+	// Render markdown content using Glow
+	renderedContent := renderMarkdown(m.selectedItem.Content, contentWidth)
 
 	// Calculate viewport height (leave space for title, URL, metadata, scroll info, help)
 	viewportHeight := m.tableHeight - 10
@@ -375,9 +376,35 @@ func (m *model) setupViewport() {
 		viewportHeight = 5
 	}
 
-	// Initialize viewport with formatted content
+	// Initialize viewport with rendered content
 	m.viewport = viewport.New(contentWidth, viewportHeight)
-	m.viewport.SetContent(formattedContent)
+	m.viewport.SetContent(renderedContent)
+}
+
+// renderMarkdown uses Glamour to render markdown content with terminal styling
+func renderMarkdown(content string, width int) string {
+	if strings.TrimSpace(content) == "" {
+		return "No content available"
+	}
+
+	// Create a Glamour renderer with terminal width
+	r, err := glamour.NewTermRenderer(
+		glamour.WithWordWrap(width),
+		glamour.WithStandardStyle("dark"),
+	)
+	if err != nil {
+		// Fallback to plain content if renderer fails
+		return content
+	}
+
+	// Render the markdown
+	rendered, err := r.Render(content)
+	if err != nil {
+		// Fallback to plain content if rendering fails
+		return content
+	}
+
+	return rendered
 }
 
 // configureTable sets up the table with dynamic column widths based on available space
@@ -442,6 +469,71 @@ func (m *model) configureTable(width, height int) {
 }
 
 // updateTableRows updates only the table rows without recalculating layout
+// extractPreview extracts a clean preview from markdown content
+func extractPreview(content string, maxLength int) string {
+	if strings.TrimSpace(content) == "" {
+		return "No content"
+	}
+
+	// Remove markdown formatting for cleaner preview
+	preview := content
+
+	// Remove headings (# ## ### etc)
+	headingPattern := regexp.MustCompile(`^#{1,6}\s+`)
+	preview = headingPattern.ReplaceAllString(preview, "")
+
+	// Remove bold/italic markers (**text**, *text*)
+	boldPattern := regexp.MustCompile(`\*\*([^*]+)\*\*`)
+	preview = boldPattern.ReplaceAllString(preview, "$1")
+
+	italicPattern := regexp.MustCompile(`\*([^*]+)\*`)
+	preview = italicPattern.ReplaceAllString(preview, "$1")
+
+	// Remove links [text](url) -> keep text only
+	linkPattern := regexp.MustCompile(`\[([^\]]+)\]\([^\)]+\)`)
+	preview = linkPattern.ReplaceAllString(preview, "$1")
+
+	// Remove list markers (-, 1., etc.)
+	listPattern := regexp.MustCompile(`^(\s*[-*+]|\s*\d+\.)\s+`)
+	preview = listPattern.ReplaceAllString(preview, "")
+
+	// Remove code blocks and inline code
+	codePattern := regexp.MustCompile("`[^`]+`")
+	preview = codePattern.ReplaceAllString(preview, "code")
+
+	codeBlockPattern := regexp.MustCompile("```[^`]*```")
+	preview = codeBlockPattern.ReplaceAllString(preview, "code block")
+
+	// Split by paragraphs and get first meaningful content
+	paragraphs := strings.Split(strings.TrimSpace(preview), "\n\n")
+	for _, paragraph := range paragraphs {
+		paragraph = strings.TrimSpace(paragraph)
+		if paragraph != "" && !strings.HasPrefix(paragraph, "#") {
+			// This is a meaningful paragraph
+			if len(paragraph) <= maxLength-3 {
+				return paragraph
+			} else {
+				return paragraph[:maxLength-3] + "..."
+			}
+		}
+	}
+
+	// Fallback: return first few lines
+	lines := strings.Split(strings.TrimSpace(preview), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			if len(line) <= maxLength-3 {
+				return line
+			} else {
+				return line[:maxLength-3] + "..."
+			}
+		}
+	}
+
+	return "No preview available"
+}
+
 func (m *model) updateTableRows() {
 	if len(m.items) == 0 {
 		return
@@ -472,17 +564,8 @@ func (m *model) updateTableRows() {
 			author = "Unknown author"
 		}
 
-		preview := item.Content
-		// Split by newlines and take the first non-empty line
-		lines := strings.Split(strings.TrimSpace(preview), "\n")
-		if len(lines) > 0 {
-			preview = lines[0]
-		}
-		// Truncate if still too long
-		previewLimit := m.previewWidth - 3
-		if len(preview) > previewLimit && previewLimit > 0 {
-			preview = preview[:previewLimit] + "..."
-		}
+		// Extract clean preview from markdown content
+		preview := extractPreview(item.Content, m.previewWidth)
 
 		row := []string{
 			truncateString(title, m.titleWidth),
@@ -569,120 +652,3 @@ func max(a, b int) int {
 	return b
 }
 
-func formatContentForReadability(content string, width int) string {
-	if strings.TrimSpace(content) == "" {
-		return "No content available"
-	}
-
-	// Check if content already has paragraph structure (multiple newlines)
-	if strings.Contains(content, "\n\n") {
-		// Content already has paragraph structure, just wrap it nicely
-		return wrapPreservingParagraphs(content, width)
-	}
-
-	// For content without paragraph structure, create intelligent formatting
-	return formatIntoParagraphs(content, width)
-}
-
-func wrapPreservingParagraphs(content string, width int) string {
-	paragraphs := strings.Split(content, "\n\n")
-	var wrappedParagraphs []string
-
-	for _, paragraph := range paragraphs {
-		paragraph = strings.TrimSpace(paragraph)
-		if paragraph == "" {
-			continue
-		}
-
-		// Wrap each paragraph
-		wrappedLines := wrapText(paragraph, width)
-		wrappedParagraphs = append(wrappedParagraphs, strings.Join(wrappedLines, "\n"))
-	}
-
-	return strings.Join(wrappedParagraphs, "\n\n")
-}
-
-func formatIntoParagraphs(content string, width int) string {
-	// Split into sentences using punctuation
-	sentencePattern := regexp.MustCompile(`([.!?]+\s+)`)
-	sentences := sentencePattern.Split(content, -1)
-
-	// Remove empty strings and trim whitespace
-	var cleanSentences []string
-	for _, sentence := range sentences {
-		sentence = strings.TrimSpace(sentence)
-		if sentence != "" {
-			cleanSentences = append(cleanSentences, sentence)
-		}
-	}
-
-	if len(cleanSentences) == 0 {
-		return "No content available"
-	}
-
-	// Group sentences into paragraphs (2-4 sentences per paragraph)
-	var paragraphs []string
-	sentencesPerParagraph := 3 // Default, can be adjusted
-
-	if len(cleanSentences) <= 2 {
-		sentencesPerParagraph = 2
-	} else if len(cleanSentences) >= 8 {
-		sentencesPerParagraph = 4
-	}
-
-	for i := 0; i < len(cleanSentences); i += sentencesPerParagraph {
-		end := i + sentencesPerParagraph
-		if end > len(cleanSentences) {
-			end = len(cleanSentences)
-		}
-
-		paragraph := strings.Join(cleanSentences[i:end], " ")
-		// Add proper punctuation if missing
-		if !strings.HasSuffix(paragraph, ".") && !strings.HasSuffix(paragraph, "!") && !strings.HasSuffix(paragraph, "?") {
-			paragraph += "."
-		}
-
-		// Wrap the paragraph
-		wrappedLines := wrapText(paragraph, width)
-		paragraphs = append(paragraphs, strings.Join(wrappedLines, "\n"))
-	}
-
-	return strings.Join(paragraphs, "\n\n")
-}
-
-func wrapText(text string, width int) []string {
-	if width <= 0 {
-		return []string{text}
-	}
-
-	words := strings.Fields(text)
-	if len(words) == 0 {
-		return []string{}
-	}
-
-	var lines []string
-	var currentLine strings.Builder
-
-	for _, word := range words {
-		if currentLine.Len() == 0 {
-			currentLine.WriteString(word)
-			continue
-		}
-
-		testLine := currentLine.String() + " " + word
-		if len(testLine) <= width {
-			currentLine.WriteString(" ")
-			currentLine.WriteString(word)
-		} else {
-			lines = append(lines, currentLine.String())
-			currentLine.Reset()
-			currentLine.WriteString(word)
-		}
-	}
-
-	if currentLine.Len() > 0 {
-		lines = append(lines, currentLine.String())
-	}
-
-	return lines
-}
