@@ -8,7 +8,7 @@ build:
 	go build -o colino ./cmd/colino
 
 format:
-	gofmt -l .
+	go fmt ./... 
 
 # Run tests
 test:

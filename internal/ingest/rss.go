@@ -340,7 +340,6 @@ func nodeToHTML(n *html.Node) string {
 	return buf.String()
 }
 
-
 func ExtractMainText(ctx context.Context, url string, client *http.Client) string {
 	if strings.TrimSpace(url) == "" {
 		return ""

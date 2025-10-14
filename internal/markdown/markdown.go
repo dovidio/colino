@@ -1,8 +1,8 @@
 package markdown
 
 import (
-	"strings"
 	"golang.org/x/net/html"
+	"strings"
 )
 
 // Converter handles HTML to Markdown conversion using node traversal

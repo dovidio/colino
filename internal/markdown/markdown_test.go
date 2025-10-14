@@ -1,9 +1,9 @@
 package markdown
 
 import (
+	"golang.org/x/net/html"
 	"strings"
 	"testing"
-	"golang.org/x/net/html"
 )
 
 func TestConverter_ConvertHTMLString(t *testing.T) {
