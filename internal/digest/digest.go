@@ -164,10 +164,10 @@ func getFreshContent(ctx context.Context, appConfig config.AppConfig, url string
 	ri := ingest.NewRSSIngestor(appConfig, 60, 0, log.Default())
 	content := ""
 	if youtube.IsYouTubeURL(url) {
-		content, _ = ri.FetchYoutubeTranscript(ctx, url)
+		content, _, _ = ri.FetchYoutubeTranscript(ctx, url)
 		// now we need to extract youtube video id, build a client and extract the webproxy configuration
 	} else {
-		content, _ = ri.FetchArticle(ctx, url)
+		content, _, _ = ri.FetchArticle(ctx, url)
 	}
 
 	if content == "" {

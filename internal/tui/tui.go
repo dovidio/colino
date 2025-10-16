@@ -162,6 +162,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.currentPage++
 					m.cursor = 0
 					m.updateTableRows()
+					return m, tea.ClearScreen // Force screen refresh to fix border rendering
 				}
 				return m, nil
 			case "h": // Previous page
@@ -169,6 +170,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.currentPage--
 					m.cursor = 0
 					m.updateTableRows()
+					return m, tea.ClearScreen // Force screen refresh to fix border rendering
 				}
 				return m, nil
 			}
@@ -178,10 +180,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.viewMode == detailView {
 			switch msg.String() {
 			case "k":
-				m.viewport.LineUp(1)
+				m.viewport.ScrollUp(1)
 				return m, nil
 			case "j":
-				m.viewport.LineDown(1)
+				m.viewport.ScrollDown(1)
 				return m, nil
 			case "g":
 				m.viewport.GotoTop()
@@ -367,8 +369,16 @@ func (m *model) setupViewport() {
 		contentWidth = 20
 	}
 
-	// Render markdown content using Glow
-	renderedContent := renderMarkdown(m.selectedItem.Content, contentWidth)
+	// Check content type to handle PDFs specially
+	contentType := extractContentType(m.selectedItem.Metadata)
+	var renderedContent string
+
+	if strings.Contains(contentType, "pdf") || strings.Contains(contentType, "application/pdf") {
+		renderedContent = "PDF document - content preview not available"
+	} else {
+		// Render markdown content using Glow
+		renderedContent = renderMarkdown(m.selectedItem.Content, contentWidth)
+	}
 
 	// Calculate viewport height (leave space for title, URL, metadata, scroll info, help)
 	viewportHeight := m.tableHeight - 10
@@ -469,8 +479,13 @@ func (m *model) configureTable(width, height int) {
 }
 
 // updateTableRows updates only the table rows without recalculating layout
-// extractPreview extracts a clean preview from markdown content
-func extractPreview(content string, maxLength int) string {
+// ExtractPreview extracts a clean preview from markdown content
+func ExtractPreview(content string, maxLength int, contentType string) string {
+	// Handle PDF content type specially
+	if strings.Contains(contentType, "pdf") || strings.Contains(contentType, "application/pdf") {
+		return "PDF document"
+	}
+
 	if strings.TrimSpace(content) == "" {
 		return "No content"
 	}
@@ -518,7 +533,7 @@ func extractPreview(content string, maxLength int) string {
 		}
 	}
 
-	// Fallback: return first few lines
+	// Fallback: returns only the first few lines
 	lines := strings.Split(strings.TrimSpace(preview), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -565,15 +580,28 @@ func (m *model) updateTableRows() {
 		}
 
 		// Extract clean preview from markdown content
-		preview := extractPreview(item.Content, m.previewWidth)
+		contentType := extractContentType(item.Metadata)
+		preview := ExtractPreview(item.Content, m.previewWidth, contentType)
+		strings.ReplaceAll(preview, "\n", "")
 
 		row := []string{
 			truncateString(title, m.titleWidth),
 			truncateString(author, m.authorWidth),
 			truncateString(item.CreatedAt.Format("2006-01-02"), m.dateWidth),
-			truncateString(preview, m.previewWidth),
+			truncateString(strings.ReplaceAll(preview, "\n", ""), m.previewWidth),
 		}
 		rows = append(rows, row)
+	}
+
+	// Ensure cursor is within valid bounds for the current page
+	itemsOnCurrentPage := len(rows)
+	if itemsOnCurrentPage > 0 {
+		if m.cursor >= itemsOnCurrentPage {
+			m.cursor = itemsOnCurrentPage - 1
+		}
+		if m.cursor < 0 {
+			m.cursor = 0
+		}
 	}
 
 	// Define colors
@@ -582,17 +610,17 @@ func (m *model) updateTableRows() {
 
 	borderStyle := lipgloss.NewStyle().Foreground(darkBlue)
 
-	// Create base styles
-	baseStyle := lipgloss.NewStyle().
-		Padding(0, 1)
-
-	headerStyle := baseStyle.Copy().
+	headerStyle := lipgloss.NewStyle().
+		Padding(0, 1).
 		Bold(true).
 		Foreground(darkBlue).
 		Align(lipgloss.Center)
 
-	// Create table with explicit width to use full horizontal space
-	m.table = table.New().
+	// Create a new table instance to avoid caching issues
+	// Force complete re-creation to fix border rendering on page changes
+	m.table = nil // Clear existing table first
+
+	newTable := table.New().
 		Width(m.tableWidth).
 		Border(lipgloss.ThickBorder()).
 		BorderStyle(borderStyle).
@@ -603,12 +631,15 @@ func (m *model) updateTableRows() {
 				return headerStyle
 			}
 			if row == m.cursor { // Selected row
-				return baseStyle.Copy().
+				return lipgloss.NewStyle().
+					Padding(0, 1).
 					Background(lightBlue).
 					Foreground(lipgloss.Color("0"))
 			}
-			return baseStyle
+			return lipgloss.NewStyle().Padding(0, 1)
 		})
+
+	m.table = newTable
 }
 
 func truncateString(s string, maxLen int) string {
@@ -633,6 +664,23 @@ func extractTitle(metadata sql.NullString) string {
 
 	if title, ok := meta["entry_title"].(string); ok {
 		return title
+	}
+
+	return ""
+}
+
+func extractContentType(metadata sql.NullString) string {
+	if !metadata.Valid {
+		return ""
+	}
+
+	var meta map[string]interface{}
+	if err := json.Unmarshal([]byte(metadata.String), &meta); err != nil {
+		return ""
+	}
+
+	if contentType, ok := meta["content_type"].(string); ok {
+		return contentType
 	}
 
 	return ""

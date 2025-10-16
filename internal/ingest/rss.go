@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"golang.org/x/net/html"
 	"io"
 	"log"
 	"net/http"
@@ -46,9 +45,10 @@ func NewRSSIngestor(appCfg config.AppConfig, timeoutSec int, minIntMs time.Durat
 
 // RSSMetadata contains the metadata structure of an RSS article
 type RSSMetadata struct {
-	FeedUrl    string
-	FeedTitle  string
-	EntryTitle string
+	FeedUrl     string
+	FeedTitle   string
+	EntryTitle  string
+	ContentType string
 }
 
 type rssTask struct {
@@ -231,13 +231,14 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 
 	// If YouTube video, fetch transcript instead of readability extraction (Webshare proxy optional via config)
 	didFetch := false
+	var contentType string
 	if youtube.IsYouTubeURL(url) {
-		content, didFetch = ri.FetchYoutubeTranscript(ctx, url)
+		content, contentType, didFetch = ri.FetchYoutubeTranscript(ctx, url)
 	} else {
-		content, didFetch = ri.FetchArticle(ctx, url)
+		content, contentType, didFetch = ri.FetchArticle(ctx, url)
 	}
 
-	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q}`, t.FeedURL, t.FeedTitle, title)
+	meta := fmt.Sprintf(`{"feed_url":%q,"feed_title":%q,"entry_title":%q,"content_type":%q}`, t.FeedURL, t.FeedTitle, title, contentType)
 	src := "article"
 	if youtube.IsYouTubeURL(url) {
 		src = "youtube"
@@ -265,9 +266,10 @@ func (ri *RSSIngestor) processOne(ctx context.Context, db *sql.DB, t rssTask, sa
 	return didFetch, nil
 }
 
-func (ri *RSSIngestor) FetchYoutubeTranscript(ctx context.Context, url string) (string, bool) {
+func (ri *RSSIngestor) FetchYoutubeTranscript(ctx context.Context, url string) (string, string, bool) {
 	didFetch := false
 	content := ""
+	contentType := "text/youtube-transcript"
 	var ws *youtube.WebshareProxyConfig
 	if ri.AppCfg.YouTubeProxyEnabled && strings.TrimSpace(ri.AppCfg.WebshareUsername) != "" && strings.TrimSpace(ri.AppCfg.WebsharePassword) != "" {
 		ws = &youtube.WebshareProxyConfig{
@@ -298,75 +300,46 @@ func (ri *RSSIngestor) FetchYoutubeTranscript(ctx context.Context, url string) (
 		}
 	}
 
-	return content, didFetch
+	return content, contentType, didFetch
 }
 
-func (ri *RSSIngestor) FetchArticle(ctx context.Context, url string) (string, bool) {
-	extracted := ExtractMainText(ctx, url, ri.Client)
+func (ri *RSSIngestor) FetchArticle(ctx context.Context, url string) (string, string, bool) {
+	extracted, contentType := ExtractMainText(ctx, url, ri.Client)
 	if strings.TrimSpace(extracted) != "" {
-		return extracted, true
+		return extracted, contentType, true
 	}
-	return "", true
+	return "", contentType, true
 }
 
-// nodeToText extracts text content from an HTML node
-func nodeToText(n *html.Node) string {
-	if n == nil {
-		return ""
-	}
-
-	var buf strings.Builder
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.TextNode {
-			buf.WriteString(n.Data)
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
-	f(n)
-	return buf.String()
-}
-
-// nodeToHTML extracts HTML content from an HTML node
-func nodeToHTML(n *html.Node) string {
-	if n == nil {
-		return ""
-	}
-
-	var buf strings.Builder
-	html.Render(&buf, n)
-	return buf.String()
-}
-
-func ExtractMainText(ctx context.Context, url string, client *http.Client) string {
+func ExtractMainText(ctx context.Context, url string, client *http.Client) (string, string) {
 	if strings.TrimSpace(url) == "" {
-		return ""
+		return "", ""
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 	req.Header.Set("User-Agent", "Colino/Go-Ingestor")
 	resp, err := client.Do(req)
 	if err != nil || resp == nil || resp.Body == nil {
-		return ""
+		return "", ""
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return ""
+		return "", ""
 	}
+	// Capture content type from response headers
+	contentType := resp.Header.Get("Content-Type")
+
 	// read body once; we'll feed it to trafilatura
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil || len(bodyBytes) == 0 {
-		return ""
+		return "", contentType
 	}
 	// extract with Trafilatura
 	// Note: go-trafilatura expects raw HTML and a base URL for resolving links/metadata.
 	res, err := trafilatura.Extract(bytes.NewReader(bodyBytes), trafilatura.Options{
-		OriginalURL: func() *neturl.URL { u, _ := neturl.Parse(url); return u }(),
-		// Favor balanced extraction; include fallback for robustness.
+		OriginalURL:    func() *neturl.URL { u, _ := neturl.Parse(url); return u }(),
 		EnableFallback: true,
 		Focus:          trafilatura.Balanced,
 	})
@@ -375,15 +348,15 @@ func ExtractMainText(ctx context.Context, url string, client *http.Client) strin
 		if res.ContentNode != nil {
 			markdown := markdown.ConvertNode(res.ContentNode)
 			if strings.TrimSpace(markdown) != "" && len(strings.TrimSpace(markdown)) > 100 {
-				return markdown
+				return markdown, "text/markdown"
 			}
 		}
 		// Fallback to ContentText if markdown conversion fails or is too short
 		if txt := strings.TrimSpace(res.ContentText); len(txt) > 100 {
-			return txt
+			return txt, contentType
 		}
 	}
-	return ""
+	return "", contentType
 }
 
 // Filtering removed: we ingest everything; LLM will filter downstream.
