@@ -1,11 +1,13 @@
-# Colino Demo Recording
+# Colino Setup Demo Recording
 # This tape demonstrates Colino's core functionality
 
-# Set up the terminal - output both GIF and ASCII golden file
-Output demo/demo.gif
-Output demo/golden.ascii
+# Set up the terminal with window chrome
+Output tapes/setup.gif
+Output tapes/setup.ascii
 Set TypingSpeed 0.05
 Set Shell zsh
+Set WindowBar Colorful
+Set WindowBarSize 40
 
 Sleep 1s
 

@@ -1,0 +1,1338 @@
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> ./colino tui
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> ./colino tui
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃                                                                       ┃
+ ┃  Product development cycles are perhaps the clearest example of our   ┃
+ ┃  binary seasons. During the "summer" of development, teams move       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃Scroll: 0%                                                             ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃                                                                       ┃
+ ┃  Product development cycles are perhaps the clearest example of our   ┃
+ ┃  binary seasons. During the "summer" of development, teams move       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃Scroll: 0%                                                             ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃  Product development cycles are perhaps the clearest example of our   ┃
+ ┃  binary seasons. During the "summer" of development, teams move       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃  warning or preparation.                                              ┃
+ ┃Scroll: 20%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃  Product development cycles are perhaps the clearest example of our   ┃
+ ┃  binary seasons. During the "summer" of development, teams move       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃  warning or preparation.                                              ┃
+ ┃Scroll: 20%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃  binary seasons. During the "summer" of development, teams move       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃  warning or preparation.                                              ┃
+ ┃                                                                       ┃
+ ┃Scroll: 40%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃  binary seasons. During the "summer" of development, teams move       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃  warning or preparation.                                              ┃
+ ┃                                                                       ┃
+ ┃Scroll: 40%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃  warning or preparation.                                              ┃
+ ┃                                                                       ┃
+ ┃  Part 3 of 4.                                                         ┃
+ ┃Scroll: 60%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Summer to Winter: The Abrupt Transitions of Product Cycles             ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/3                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-23 09:45                    ┃
+ ┃                                                                       ┃
+ ┃  fast, break things, and push boundaries. Resources flow freely,      ┃
+ ┃  experimentation is encouraged, and the pace is frantic. Then comes   ┃
+ ┃  the launch, and suddenly it's "winter."                              ┃
+ ┃                                                                       ┃
+ ┃  The transition isn't gradual. One day you're celebrating a           ┃
+ ┃  successful launch; the next you're in emergency mode fixing          ┃
+ ┃  production issues. The same codebase that was praised for its        ┃
+ ┃  innovative features is now criticized for its technical debt. The    ┃
+ ┃  same team that was empowered to take risks is now constrained by     ┃
+ ┃  the need to maintain stability.                                      ┃
+ ┃                                                                       ┃
+ ┃  This whiplash effect takes its toll on developers and organizations  ┃
+ ┃  alike. The skills that make someone great at product development     ┃
+ ┃  aren't necessarily the same skills that make someone great at        ┃
+ ┃  production maintenance. Yet we expect individuals and teams to       ┃
+ ┃  excel at both, often switching between these modes with little       ┃
+ ┃  warning or preparation.                                              ┃
+ ┃                                                                       ┃
+ ┃  Part 3 of 4.                                                         ┃
+ ┃Scroll: 60%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃                                                                       ┃
+ ┃  After years of fighting against the binary nature of development     ┃
+ ┃  work, I'm starting to wonder if the solution isn't to resist it,     ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃Scroll: 0%                                                             ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃                                                                       ┃
+ ┃  After years of fighting against the binary nature of development     ┃
+ ┃  work, I'm starting to wonder if the solution isn't to resist it,     ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃Scroll: 0%                                                             ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃  After years of fighting against the binary nature of development     ┃
+ ┃  work, I'm starting to wonder if the solution isn't to resist it,     ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃  Part 4 of 4.                                                         ┃
+ ┃Scroll: 33%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃  After years of fighting against the binary nature of development     ┃
+ ┃  work, I'm starting to wonder if the solution isn't to resist it,     ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃  Part 4 of 4.                                                         ┃
+ ┃Scroll: 33%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃  work, I'm starting to wonder if the solution isn't to resist it,     ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃  Part 4 of 4.                                                         ┃
+ ┃                                                                       ┃
+ ┃Scroll: 66%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃  work, I'm starting to wonder if the solution isn't to resist it,     ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃  Part 4 of 4.                                                         ┃
+ ┃                                                                       ┃
+ ┃Scroll: 66%                                                            ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃  Part 4 of 4.                                                         ┃
+ ┃                                                                       ┃
+ ┃                                                                       ┃
+ ┃Scroll: 100%                                                           ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃Embracing Binary Seasons: Finding Peace in Development's               ┃
+ ┃Rhythms                                                                ┃
+ ┃                                                                       ┃
+ ┃URL: http://localhost:8080/articles/4                                  ┃
+ ┃                                                                       ┃
+ ┃Author: Tech Insights Blog • Date: 2025-08-22 16:20                    ┃
+ ┃                                                                       ┃
+ ┃  but to embrace it. Instead of trying to force gradual transitions    ┃
+ ┃  where none naturally exist, maybe we should design our workflows,    ┃
+ ┃  teams, and expectations around these binary seasons.                 ┃
+ ┃                                                                       ┃
+ ┃  What if we accepted that development and maintenance require         ┃
+ ┃  different mindsets, skills, and even different people? What if we    ┃
+ ┃  built organizations that could pivot between creation and            ┃
+ ┃  preservation without the trauma that typically accompanies these     ┃
+ ┃  transitions? What if we learned to find beauty not in gentle         ┃
+ ┃  gradients, but in bold contrasts?                                    ┃
+ ┃                                                                       ┃
+ ┃  The two-season model of software development isn't a flaw to be      ┃
+ ┃  fixed—it's a reality to be understood. By working with this rhythm   ┃
+ ┃  instead of against it, we might just find ourselves more             ┃
+ ┃  productive, more satisfied, and more sane in the process.            ┃
+ ┃                                                                       ┃
+ ┃  Part 4 of 4.                                                         ┃
+ ┃                                                                       ┃
+ ┃                                                                       ┃
+ ┃Scroll: 100%                                                           ┃
+ ┃                                                                       ┃
+ ┃j/k: scroll • g/G: top/bottom • esc/q: back                            ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ Table [1] | Search [2]
+ ─────────────────────────────────────────────────────────────────────────
+ ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+ ┃        Title        ┃    Author    ┃    Date    ┃       Preview       ┃
+ ┣━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━┫
+ ┃ The Four Seasons    ┃ Tech Insi... ┃ 2025-10-22 ┃ It occurred to me   ┃
+ ┃ ...                 ┃              ┃            ┃ the ...             ┃
+ ┃ Beyond Autumn:      ┃ Tech Insi... ┃ 2025-08-24 ┃ The tech industry   ┃
+ ┃ Re...               ┃              ┃            ┃ love...             ┃
+ ┃ Summer to           ┃ Tech Insi... ┃ 2025-08-23 ┃ Product development ┃
+ ┃ Winter:...          ┃              ┃            ┃ cy...               ┃
+ ┃ Embracing Binary    ┃ Tech Insi... ┃ 2025-08-22 ┃ After years of      ┃
+ ┃ ...                 ┃              ┃            ┃ fightin...          ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━┛
+ j/k: move • l/h: page • g/G: home/end • Space: view details • q: quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

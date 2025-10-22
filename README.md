@@ -1,7 +1,7 @@
 
 # Colino 🌱
 
-![Colino Demo](demo/demo.gif)
+![Colino Demo](tapes/tui.gif)
 
 ## ✨ Key Features
 

@@ -16,16 +16,31 @@ test:
 
 # Clean demo artifacts
 demo-clean:
-	rm -f demo-server demo/demo.gif demo/golden.ascii demo/golden.ascii.tmp
+	rm -f demo-server tapes/setup.gif tapes/tui.gif tapes/setup.ascii tapes/tui.ascii tapes/setup.ascii.tmp tapes/tui.ascii.tmp
+
+# Record demo (usage: make demo DEMO=setup or make demo DEMO=tui)
+demo:
+	@if [ -z "$(DEMO)" ]; then \
+		echo "Usage: make demo DEMO=setup or make demo DEMO=tui"; \
+		exit 1; \
+	fi
+	@TEMP_HOME=$$(mktemp -d); \
+	echo "🏠 Using temporary home: $$TEMP_HOME"; \
+	nix-shell nix/shell.nix --run "HOME=$$TEMP_HOME go run ./cmd/vhs-helper $(DEMO)"; \
+	rm -rf $$TEMP_HOME
 
 # Force rebuild demo (clears nix cache)
 demo-fresh:
+	@if [ -z "$(DEMO)" ]; then \
+		echo "Usage: make demo-fresh DEMO=setup or make demo-fresh DEMO=tui"; \
+		exit 1; \
+	fi
 	@echo "🧹 Clearing build cache..."
-	@rm -f colino demo-server demo/demo.gif demo/golden.ascii demo/golden.ascii.tmp
-	@echo "🎬 Generating demo in fresh environment..."
+	@rm -f colino demo-server tapes/setup.gif tapes/tui.gif tapes/setup.ascii tapes/tui.ascii
+	@echo "🎬 Generating $(DEMO) demo in fresh environment..."
 	@TEMP_HOME=$$(mktemp -d); \
 	echo "🏠 Using temporary home: $$TEMP_HOME"; \
-	nix-shell nix/shell.nix --run "HOME=$$TEMP_HOME scripts/run-demo.sh"; \
+	nix-shell nix/shell.nix --run "HOME=$$TEMP_HOME make demo DEMO=$(DEMO)"; \
 	rm -rf $$TEMP_HOME
 
 # Help target
@@ -33,10 +48,7 @@ help:
 	@echo "Available targets:"
 	@echo "  build        - Build Colino binary"
 	@echo "  test         - Run tests"
-	@echo "  demo-build   - Build demo server binary"
-	@echo "  demo-server  - Run demo server on port 8080"
-	@echo "  demo-record  - Record demo using VHS (requires VHS)"
+	@echo "  demo         - Record demo (usage: make demo DEMO=setup|tui)"
 	@echo "  demo-clean   - Clean demo artifacts"
-	@echo "  demo         - Generate demo in clean nix-shell environment"
-	@echo "  demo-fresh   - Force rebuild demo with pure nix environment (no cache)"
+	@echo "  demo-fresh   - Force rebuild demo with pure nix environment (usage: make demo-fresh DEMO=setup|tui)"
 	@echo "  help         - Show this help message"

@@ -1,54 +1,48 @@
-package main
+package test
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
-func main() {
-	port := flag.Int("port", 8080, "Port to run the demo server on")
-	host := flag.String("host", "localhost", "Host to bind the demo server to")
-	flag.Parse()
+type DemoServer struct {
+	server *http.Server
+}
 
-	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", *host, *port),
-		Handler: createHandler(),
+func NewDemoServer(host string, port int) *DemoServer {
+	return &DemoServer{
+		server: &http.Server{
+			Addr:    fmt.Sprintf("%s:%d", host, port),
+			Handler: createHandler(),
+		},
 	}
+}
 
-	// Start server in a goroutine
+func NewDemoHandler() http.Handler {
+	return createHandler()
+}
+
+func (ds *DemoServer) Start() {
 	go func() {
-		log.Printf("Demo server starting on http://%s:%d", *host, *port)
-		log.Printf("RSS feed available at: http://%s:%d/rss", *host, *port)
-		log.Printf("Articles available at: http://%s:%d/articles/[1-4]", *host, *port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server failed to start: %v", err)
+		log.Printf("Demo server starting on %s", ds.server.Addr)
+		log.Printf("RSS feed available at: %s/rss", ds.server.Addr)
+		log.Printf("Articles available at: %s/articles/[1-4]", ds.server.Addr)
+		if err := ds.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("Server failed to start: %v", err)
 		}
 	}()
+}
 
-	// Wait for interrupt signal to gracefully shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
+func (ds *DemoServer) Stop() error {
 	log.Println("Shutting down demo server...")
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
-	}
-
-	log.Println("Demo server stopped")
+	return ds.server.Shutdown(ctx)
 }
 
 // createHandler creates the HTTP handler for the demo server
