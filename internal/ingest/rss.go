@@ -336,6 +336,11 @@ func ExtractMainText(ctx context.Context, url string, client *http.Client) (stri
 	if err != nil || len(bodyBytes) == 0 {
 		return "", contentType
 	}
+
+	if contentType == "application/pdf" {
+		return string(bodyBytes), contentType
+	}
+
 	// extract with Trafilatura
 	// Note: go-trafilatura expects raw HTML and a base URL for resolving links/metadata.
 	res, err := trafilatura.Extract(bytes.NewReader(bodyBytes), trafilatura.Options{

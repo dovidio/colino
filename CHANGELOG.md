@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.x] - Unreleased
 
 ## Added
-- TUI interface that makes searching and reading your content a breeze 
+- TUI interface for browsing your local content
 - Content is now scraped and saved as markdown
 
 ## [0.2.0] - 2025-09-12

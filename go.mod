@@ -1,8 +1,6 @@
 module golino
 
-go 1.24.0
-
-toolchain go1.24.3
+go 1.25.2
 
 require (
 	github.com/charmbracelet/bubbles v0.21.0

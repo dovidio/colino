@@ -44,10 +44,10 @@ func Run(ctx context.Context, url string) error {
 	}
 
 	fmt.Printf("Digesting %s with base url : %s\n", url, appConfig.AIConf.BaseUrl)
-	content, err := getContentFromCache(ctx, url)
+	content, err := GetContentFromCache(ctx, url)
 	if err != nil {
 		fmt.Printf("Content was not found in cache, scraping content...\n")
-		content, err = getFreshContent(ctx, appConfig, url)
+		content, err = GetFreshContent(ctx, appConfig, url)
 		if err != nil {
 			fmt.Printf("❌ Could not extract content from the website")
 			return err
@@ -123,7 +123,9 @@ func Run(ctx context.Context, url string) error {
 	}
 }
 
-func getContentFromCache(ctx context.Context, url string) (*Article, error) {
+// GetContentFromCache fetches article for a given url.
+// If not available, the returned article is nil
+func GetContentFromCache(ctx context.Context, url string) (*Article, error) {
 	dbPath, err := config.LoadDBPath()
 	if err != nil {
 		return nil, err
@@ -160,7 +162,8 @@ func getContentFromCache(ctx context.Context, url string) (*Article, error) {
 	return &article, nil
 }
 
-func getFreshContent(ctx context.Context, appConfig config.AppConfig, url string) (*Article, error) {
+// GetFreshContent makes a request to provided url to fetch the content.
+func GetFreshContent(ctx context.Context, appConfig config.AppConfig, url string) (*Article, error) {
 	ri := ingest.NewRSSIngestor(appConfig, 60, 0, log.Default())
 	content := ""
 	if youtube.IsYouTubeURL(url) {
